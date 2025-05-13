@@ -1,0 +1,129 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(18, 18, 18, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000000;
+}
+
+/* Close Button */
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.modal-content {
+    background: var(--white);
+    padding: 24px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 80vh; /* Set max height */
+    overflow-y: auto; /* Enable scrolling if content exceeds max height */
+}
+
+.close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--gray);
+    cursor: pointer;
+}
+
+.modal-title {
+    color: var(--dark-green);
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.subject-select {
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--gray);
+    font-size: 1rem;
+    width: 100%;
+    color: var(--dark-gray);
+}
+
+.subject-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.subject-img {
+    width: 100%;
+    max-height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.subject-description {
+    font-size: 1rem;
+    color: var(--gray);
+}
+
+.subject-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    color: var(--dark-gray);
+}
+
+.subject-item {
+    font-size: 1rem;
+    padding: 0.25rem 0;
+}
+
+.email-input {
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--gray);
+    font-size: 1rem;
+    width: 100%;
+    color: var(--dark-gray);
+    margin-bottom: 0px;
+}
+
+.error-text {
+    color: red;
+    font-size: 0.875rem;
+    margin-top: 0.32rem;
+    margin-bottom: 0.7rem;
+}
+
+.cta-btn {
+    background-color: var(--yellow);
+    color: var(--dark-green);
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.cta-btn:hover {
+    background-color: var(--dark-green);
+    color: var(--white);
+}

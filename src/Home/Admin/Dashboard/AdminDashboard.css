@@ -1,0 +1,233 @@
+/* Container for Admin Dashboard */
+.admin-dashboard {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+}
+
+/* Heading Style */
+.admin-dashboard h2 {
+    color: var(--dark-green);
+    font-size: 28px;
+    margin-top: 12px
+}
+
+/* Add Admin Button */
+.add-admin-btn {
+    background-color: var(--dark-green);
+    color: white;
+    border: none;
+    margin-top: 48px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    transition: background-color 0.3s ease;
+}
+
+.add-admin-btn:hover {
+    background-color: #e6b800;
+}
+
+/* Table Styles */
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #dddddd64;
+}
+
+.admin-table th {
+    background-color: #66666625;
+    color: #666;
+}
+
+.admin-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Action Buttons in Table */
+.admin-table button {
+    padding: 10px 12px;
+    margin-right: 8px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.admin-table button:hover {
+    opacity: 0.8;
+}
+
+.admin-table button:active {
+    transform: scale(0.98);
+}
+
+/* Disable Button */
+.admin-table button:nth-child(1) {
+    background-color: #ff9800;
+    color: white;
+}
+
+.admin-table button:nth-child(1):hover {
+    background-color: #f57c00;
+}
+
+/* Remove Button */
+.admin-table button:nth-child(2) {
+    background-color: #f44336;
+    color: white;
+}
+
+.admin-table button:nth-child(2):hover {
+    background-color: #d32f2f;
+}
+
+/* View Details Button */
+.admin-table button:nth-child(3) {
+    background-color: #2196F3;
+    color: white;
+}
+
+.admin-table button:nth-child(3):hover {
+    background-color: #1976D2;
+}
+
+/* Modal Slide-In Animation */
+@keyframes slideIn {
+    from {
+        transform: translateX(-50%) translateY(-10%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+    .admin-dashboard {
+        padding: 0px;
+    }
+
+    .admin-dashboard {
+        background-color: transparent;
+        border-radius: 8px;
+    }
+
+    .admin-dashboard h2 {
+        font-size: 28px;
+
+    }
+
+    /* Make the Add Admin Button more compact */
+    .add-admin-btn {
+        width: 100%;
+        font-size: 14px;
+        margin-top: 24px
+    }
+
+    .admin-table th {
+        display: none;
+    }
+
+    .admin-table td {
+
+        border-bottom: none;
+    }
+
+    /* Admin Table Adjustments */
+
+    .admin-table td {
+        padding: 8px;
+    }
+
+
+    /* Stack buttons in a column layout */
+    .admin-table button {
+        margin-right: 0;
+        margin-bottom: 5px;
+        width: 100%;
+    }
+
+    /* Make table text fit better on smaller screens */
+
+    .admin-table td {
+        font-size: 14px;
+    }
+
+    /* Hide the table borders and show a cleaner mobile view */
+    .admin-table {
+        border: none;
+    }
+
+    /* Align the table columns to be stacked for smaller screens */
+
+    .admin-table tbody {
+        display: block;
+
+    }
+
+    .admin-table tr {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 15px;
+        background-color: #fff;
+        padding: 16px;
+        border-radius: 16px;
+        gap: 12px
+    }
+
+
+    .admin-table td {
+        display: block;
+        width: 100%;
+        padding: 8px 10px;
+    }
+
+    .admin-table td {
+        padding-left: 30px;
+    }
+
+    .admin-table td:first-child {
+        font-weight: bold;
+        font-size: 16px;
+        /* Adjust the size as needed */
+    }
+
+}
+
+/* Very Small Screen Adjustments */
+@media (max-width: 480px) {
+    .admin-dashboard h2 {
+        font-size: 18px;
+    }
+
+    /* Apply bold and larger font size for the Name column */
+    .admin-table td:first-child {
+        font-weight: bold;
+        font-size: 18px;
+        /* Adjust the size for very small screens */
+    }
+
+    .add-admin-btn {
+        font-size: 12px;
+
+    }
+
+
+
+    .admin-table th,
+    .admin-table td {
+        padding: 6px;
+    }
+}

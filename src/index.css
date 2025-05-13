@@ -1,0 +1,62 @@
+:root {
+  font-family: 'Mont', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  /* color-scheme: light dark; */
+  --yellow-bg-opacity: #FFD00024;
+  --yellow: #FFD000;
+  --dark-green: #023009;
+  --dark-gray: #121212;
+  --white: #FFFFFF;
+  --gray: #666666;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Mont', sans-serif;
+
+  /* font-family: 'Plus Jakarta Sans', sans-serif; */
+}
+
+input,
+textarea {
+  padding: 0.7rem;
+  border-radius: 6px;
+  border: 1px solid #66666666;
+  font-size: 1rem;
+  width: 100%;
+  color: var(--dark-gray);
+  margin-bottom: 12px;
+}
+
+select {
+
+  padding: 0.7rem;
+  border-radius: 6px;
+  border: 1px solid #66666666;
+  font-size: 1rem;
+  width: 100%;
+  color: var(--dark-gray);
+  margin-bottom: 12px;
+
+}
+
+label {
+  margin-bottom: 0px
+}
+
+button {
+  border: none;
+  font-size: 16px;
+  padding: 16px 12px;
+  border-radius: 6px;
+}
