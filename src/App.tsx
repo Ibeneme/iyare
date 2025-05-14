@@ -21,6 +21,7 @@ import DashBoard from "./Home/Dashboard/DashBoard";
 import ScrollToTop from "./ScrollToTop";
 import NotFound from "./LandingPage/NotFound/NotFound";
 import Dashboard from "./Home/Dashboard/DashBoard";
+import ClassesGrid from "./Home/Classes/ClassesGrid";
 
 function App() {
   return (
@@ -79,6 +80,14 @@ function App() {
           element={
             <Layout>
               <Dashboard />
+            </Layout>
+          }
+        />
+        <Route
+          path="/classes/dashboard/:filter?"
+          element={
+            <Layout>
+              <ClassesGrid />
             </Layout>
           }
         />

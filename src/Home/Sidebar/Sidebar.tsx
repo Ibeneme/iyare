@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   MdDashboard,
@@ -25,14 +25,68 @@ const Sidebar: React.FC = () => {
     "/settings",
   ];
 
-  const showBottomNav = bottomNavRoutes.includes(location.pathname);
+  const hideBackArrowRoutes = [
+    "/classes/dashboard/all",
+    "/classes/dashboard/ongoing",
+    "/classes/dashboard/cancelled",
+    "/classes/dashboard/finished",
+    "/admin/dashboard/all",
+    "/admin/dashboard/active",
+    "/admin/dashboard/disabled",
+    "/student/dashboard/all",
+    "/student/dashboard/active",
+    "/student/dashboard/missed-3-classes",
+    "/student/dashboard/upcoming-classes",
+    "/parent/dashboard/all",
+    "/parent/dashboard/active",
+    "/parent/dashboard/disabled",
+    "/teacher/dashboard/all",
+    "/teacher/dashboard/active",
+    "/teacher/dashboard/suspended",
+    "/teacher/dashboard/in-class",
+    "/teacher/dashboard/upcoming-classes",
+    "/teacher/dashboard/reported",
+    "/department/dashboard/all",
+    "/department/dashboard/active",
+    "/department/dashboard/suspended",
+    "/course/dashboard/all",
+    "/course/dashboard/active",
+    "/course/dashboard/suspended",
+  ];
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize(); // Check initially if the screen is mobile-sized
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Check if the current route is in the hideBackArrowRoutes list
+  const showBackArrow = !hideBackArrowRoutes.includes(location.pathname);
+
+  const showBottomNav = bottomNavRoutes.includes(location.pathname) && isMobile;
 
   const sidebarData = [
     {
-      title: "Dashboard",
+      title: "Dashboard & Classes",
       icon: MdDashboard,
-      path: "/dashboard",
+      path: "/classes",
       type: "collapsible",
+      children: [
+        { title: "All Classes", path: "/classes/dashboard/all" },
+        { title: "Ongoing Classes", path: "/classes/dashboard/ngoing" },
+        { title: "Upcoming Classes", path: "/classes/dashboard/upcoming" },
+        { title: "Finished Classes", path: "/classes/dashboard/finished" },
+        { title: "Cancelled Classes", path: "/classes/dashboard/cancelled" },
+
+        // { title: "Add Admin", path: "/admin/add" },
+      ],
       //   children: [
       //     { title: "Users", path: "/dashboard/users", type: "collapsible", children: [
       //       { title: "All Users", path: "/dashboard/users/list" },
@@ -176,7 +230,8 @@ const Sidebar: React.FC = () => {
               <div key={item.title} className="sidebar-collapsible">
                 <div
                   className={`sidebar-option ${
-                    location?.pathname?.startsWith(item?.path?.slice(0, -1))
+                    location?.pathname?.startsWith(item?.path?.slice(0, -1)) ||
+                    location?.pathname === "/classes/dashboard/active"
                       ? "active-link"
                       : ""
                   }`}
@@ -185,6 +240,7 @@ const Sidebar: React.FC = () => {
                   <item.icon />
                   <span>{item.title}</span>
                 </div>
+
                 {activeCollapse === item.title && item.children && (
                   <div className="sidebar-suboptions">
                     {item.children.map((child) => (
@@ -221,12 +277,11 @@ const Sidebar: React.FC = () => {
               </div>
             );
           }
-
           return null;
         })}
       </div>
 
-      {!showBottomNav && (
+      {showBackArrow && (
         <div className="mobile-header">
           <button className="back-btn" onClick={() => navigate(-1)}>
             <MdArrowBack size={24} />
@@ -235,7 +290,7 @@ const Sidebar: React.FC = () => {
       )}
 
       {showBottomNav && (
-        <div className="bottom-nav">
+        <div className={`bottom-nav ${showBottomNav ? "show" : ""}`}>
           <NavLink to="/dashboard" className="bottom-option">
             <MdDashboard />
           </NavLink>
