@@ -11,7 +11,6 @@ import "./AdminDashboard.css";
 import ModalDropdown from "../../../Components/Modal/ModalDropdown";
 import AddUserModalContent from "./AddUserModalContent";
 
-// Types
 export type UserType =
   | "admin"
   | "parent"

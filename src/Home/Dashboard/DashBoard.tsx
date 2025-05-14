@@ -15,8 +15,8 @@ const Dashboard: React.FC = () => {
     "student",
     "teacher",
     "notFound",
-    'course',
-    'department'
+    "course",
+    "department",
   ];
   const resolvedUserType = validUserTypes.includes(userType as UserType)
     ? (userType as UserType)
@@ -24,7 +24,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="dashboard">
-      <AdminDashboard userType={resolvedUserType} filter={filter} />
+      <AdminDashboard userType={resolvedUserType} initialFilter={filter} />
     </div>
   );
 };
