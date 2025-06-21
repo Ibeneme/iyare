@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import "./FAQPage.css";
-// import MinusIcon from "../../Components/Icons/MinusIcon";
-import AddIcon from "../../Components/Icons/AddIcon";
+import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 interface FAQItem {
   question: string;
@@ -76,19 +75,20 @@ const FAQPage: React.FC = () => {
               <span
                 style={{
                   marginLeft: 12,
-                  backgroundColor: "#023009",
-                  border: "1px solid #023009",
-                  borderRadius: "50%",
-                  padding: 6,
+                  // backgroundColor: "#023009",
+                  // border: "1px solid #023009",
+                  // borderRadius: "50%",
+                  //padding: 6,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  color: `var(--dark-green)`,
                 }}
               >
                 {activeIndex === index ? (
-                  <AddIcon width={16} height={16} color="#FFD000" />
+                  <FaChevronUp size={16} />
                 ) : (
-                  <AddIcon width={16} height={16} color="#FFD000" />
+                  <FaChevronDown size={16} />
                 )}
               </span>
             </div>

@@ -1,0 +1,299 @@
+/* Google Meet Inspired Styles */
+
+/* Base Styles */
+body {
+    margin: 0;
+    font-family: 'Google Sans', 'Roboto', 'Arial', sans-serif; /* Prefer Google Sans if available, fall back to common ones */
+    background-color: #f8f9fa; /* Light grey/white background */
+    color: #202124; /* Dark grey text */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Modal Styling */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(32, 33, 36, 0.8); /* Darker overlay for modal */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #ffffff; /* White background for modal */
+    padding: 40px;
+    border-radius: 8px;
+    text-align: center;
+    color: #202124;
+    box-shadow: 0 16px 24px 2px rgba(0, 0, 0, 0.14),
+                0 6px 30px 5px rgba(0, 0, 0, 0.12),
+                0 8px 10px -5px rgba(0, 0, 0, 0.2);
+    max-width: 400px;
+    width: 90%;
+}
+
+.modal-content h2 {
+    margin-bottom: 25px;
+    font-size: 1.8rem;
+    color: #1a73e8; /* Google Meet blue */
+    font-weight: 500;
+}
+
+.modal-content input {
+    padding: 12px 15px;
+    margin-bottom: 25px;
+    border: 1px solid #dadce0; /* Light grey border */
+    border-radius: 4px;
+    width: calc(100% - 30px); /* Account for padding */
+    font-size: 1rem;
+    color: #202124;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.modal-content input:focus {
+    border-color: #1a73e8; /* Blue border on focus */
+    box-shadow: 0 0 0 1px #1a73e8;
+}
+
+.modal-content button {
+    background-color: #1a73e8; /* Google Meet blue */
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 500;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    width: 100%;
+}
+
+.modal-content button:hover {
+    background-color: #1765cf; /* Slightly darker blue on hover */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content button:disabled {
+    background-color: #a0c3f0; /* Lighter blue for disabled */
+    cursor: not-allowed;
+}
+
+.modal-content p {
+    margin-top: 20px;
+    font-size: 0.85em;
+    color: #5f6368; /* Muted grey for hints */
+    line-height: 1.4;
+}
+
+/* Main Container for Video Call */
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between; /* Pushes video to top, controls to bottom */
+    padding: 20px;
+    min-height: 100vh;
+    box-sizing: border-box; /* Include padding in height */
+    background-color: #202124; /* Google Meet dark background for call */
+}
+
+/* Video Display Area */
+.video-display-area {
+    position: relative; /* For absolute positioning of local video */
+    width: 100%;
+    max-width: 1280px; /* Max width for the video container */
+    flex-grow: 1; /* Allows it to take available space */
+    display: flex; /* For basic centering if only one video */
+    justify-content: center;
+    align-items: center;
+    background-color: #202124; /* Ensure background is dark */
+    border-radius: 8px; /* Slightly rounded corners */
+    overflow: hidden; /* Hide anything outside */
+    margin-bottom: 20px; /* Space between video and controls */
+}
+
+.video-item {
+    width: 100%;
+    height: 100%; /* Take full height of parent */
+    object-fit: cover; /* Cover the area, cropping if necessary */
+    display: block; /* Remove extra space below video */
+    background-color: #3c4043; /* Placeholder background */
+}
+
+.video-display-area {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-gap: 16px;
+    padding: 10px;
+    max-height: 80vh;
+    overflow-y: auto;
+    background-color: #202124;
+  }
+  
+  .video-stream-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border-radius: 8px;
+    background-color: #3c4043;
+  }
+  
+  .video-label {
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    padding: 2px 6px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border-radius: 4px;
+    font-size: 0.8rem;
+  }
+  
+
+/* Control Bar */
+.control-bar {
+    background-color: #202124; /* Same dark background as video area for seamless look */
+    padding: 10px 20px;
+    border-radius: 999px; /* Pill shape */
+    display: flex;
+    gap: 25px; /* Space between buttons */
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Subtle shadow */
+}
+
+.btn-item {
+    background-color: #3c4043; /* Dark grey for buttons */
+    color: #ffffff; /* White icons */
+    border: none;
+    width: 56px; /* Circular button size */
+    height: 56px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.8rem; /* Larger icon size */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    outline: none; /* Remove focus outline */
+}
+
+.btn-item:hover:not(:disabled) {
+    background-color: #5f6368; /* Lighter grey on hover */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-item:disabled {
+    background-color: #3c4043; /* Same as default but with reduced opacity */
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Specific button colors for Meet-like feel */
+.btn-item.mic-on {
+    background-color: #1a73e8; /* Blue when mic is on (like Meet's active state) */
+}
+.btn-item.mic-on:hover:not(:disabled) {
+    background-color: #1765cf;
+}
+.btn-item.mic-off {
+    background-color: #ea4335; /* Red when mic is off */
+}
+.btn-item.mic-off:hover:not(:disabled) {
+    background-color: #d93025;
+}
+
+/* Assuming FiVideo maps to "video on" (start button in your original code) */
+/* This button will be primarily used after joining to enable/disable video, not just "start" */
+.btn-item.video-on {
+    background-color: #1a73e8;
+}
+.btn-item.video-on:hover:not(:disabled) {
+    background-color: #1765cf;
+}
+.btn-item.video-off {
+    background-color: #ea4335; /* Red when video is off */
+}
+.btn-item.video-off:hover:not(:disabled) {
+    background-color: #d93025;
+}
+
+
+/* Hangup button (FiVideoOff used as hangup) */
+.btn-item.hangup-btn {
+    background-color: #ea4335; /* Red for hangup */
+}
+
+.btn-item.hangup-btn:hover:not(:disabled) {
+    background-color: #d93025; /* Darker red on hover */
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .modal-content {
+        padding: 25px;
+    }
+    .modal-content h2 {
+        font-size: 1.5rem;
+    }
+    .modal-content input, .modal-content button {
+        font-size: 1rem;
+        padding: 10px 15px;
+    }
+
+    .video-display-area {
+        flex-direction: column; /* Stack videos on smaller screens */
+        padding: 10px;
+    }
+
+    .video-item.local-video {
+        position: relative; /* Change to relative positioning */
+        bottom: auto;
+        right: auto;
+        width: 100%; /* Take full width */
+        height: 200px; /* Fixed height for smaller screen */
+        margin-bottom: 10px; /* Space between local and remote if stacked */
+    }
+
+    .video-item.remote-video {
+        width: 100%;
+        max-height: calc(100vh - 250px); /* Adjust height */
+    }
+
+    .control-bar {
+        padding: 8px 15px;
+        gap: 15px;
+    }
+
+    .btn-item {
+        width: 48px;
+        height: 48px;
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-content {
+        padding: 20px;
+    }
+    .modal-content h2 {
+        font-size: 1.3rem;
+    }
+    .modal-content p {
+        font-size: 0.8em;
+    }
+
+    .btn-item {
+        width: 44px;
+        height: 44px;
+        font-size: 1.3rem;
+    }
+}

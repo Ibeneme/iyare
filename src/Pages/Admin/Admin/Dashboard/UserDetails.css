@@ -1,0 +1,135 @@
+.page-wrapper {
+    background-color: #f4f4f4;
+    padding: 16px;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-x: auto;
+}
+
+.user-details-container {
+    max-width: 1280px;
+    width: 600px;
+    padding: 16px;
+    border-radius: 12px;
+    background-color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+}
+
+.back-button-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    margin-bottom: 1.75rem;
+}
+
+.back-button {
+    background: var(--dark-green);
+    cursor: pointer;
+    color: var(--yellow);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 16px;
+    border-radius: 48px;
+    padding: 16px;
+    transition: color 0.2s ease;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+
+.title {
+    margin-bottom: 1.75rem;
+    font-weight: 700;
+    font-size: 1.9rem;
+    color: #222;
+}
+
+.entry-container {
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    text-align: left;
+}
+
+.entry-key {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #555;
+}
+
+.entry-value {
+    font-size: 1rem;
+    color: #333;
+}
+
+
+.loading-error-text {
+    text-align: center;
+    margin-top: 2rem;
+    font-size: 1.1rem;
+}
+
+/* Error text color */
+.error-text {
+    color: #d9534f;
+}
+
+.entry-container {
+    display: flex;
+    flex-direction: column;
+    /* mobile default: stacked */
+    gap: 6px;
+    /* spacing between key and value */
+    align-items: flex-start;
+}
+
+.action-button-user {
+    background: #66666621;
+    cursor: pointer;
+    color: #666;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 16px;
+    border-radius: 48px;
+    padding: 16px;
+    transition: color 0.2s ease;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    /* optional padding for spacing */
+    padding-bottom: 8px;
+  }
+  
+
+@media (min-width: 768px) {
+    .entry-container {
+        flex-direction: row;
+        /* desktop: side by side */
+        justify-content: space-between;
+        /* space between key and value */
+        align-items: center;
+    }
+
+    .entry-key {
+        margin-bottom: 0;
+        /* remove bottom margin on desktop */
+    }
+}

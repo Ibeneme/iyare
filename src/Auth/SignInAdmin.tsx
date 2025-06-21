@@ -1,15 +1,74 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./SignIn.css";
 import logo from "../assets/images/logo.jpg";
 import backgroundImage from "../assets/images/books.jpg";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { loginAdmin } from "../Redux/Admin/Auth";
+import { AppDispatch, RootState } from "../Redux/store";
 
 const SignInAdmin: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const location = useLocation();
   const [userType, setUserType] = useState<"admin" | "teacher">("admin");
+
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const type = query.get("type");
+    if (type === "teacher") {
+      setUserType("teacher");
+    } else {
+      setUserType("admin");
+    }
+  }, [location.search]);
+
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const { loading, error } = useSelector((state: RootState) => state.adminAuth);
+
   const handleForgotPassword = () => {
     navigate("/forgot-password", { state: { userType } });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (userType !== "admin") {
+      //setError("Only admin login is implemented.");
+      return;
+    }
+
+    dispatch(loginAdmin({ email, password }))
+      .then((resultAction) => {
+        console.log("Raw resultAction:", resultAction);
+
+        if (loginAdmin.fulfilled.match(resultAction)) {
+          const { token, email, role, _id } = resultAction.payload;
+          console.log("Login successful:", resultAction.payload);
+
+          // ✅ Store token in localStorage
+          localStorage.setItem("yareadmintoken", token);
+
+          // Optionally store other data too
+          localStorage.setItem("yareadminemail", email);
+          localStorage.setItem("yareadminrole", role);
+          localStorage.setItem("yareadminid", _id);
+          navigate("/admin/dashboard/all");
+        } else if (loginAdmin.rejected.match(resultAction)) {
+          console.error(
+            "Login failed:",
+            resultAction.payload || resultAction.error
+          );
+          //setError("Login failed. Please check your credentials.");
+        }
+      })
+      .catch((error) => {
+        console.error("Unexpected error during login:", error);
+        //setError("Something went wrong. Please try again later.");
+      });
   };
 
   return (
@@ -74,7 +133,7 @@ const SignInAdmin: React.FC = () => {
           </button>
         </div>
 
-        <form className="signin-form">
+        <form className="signin-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="email">
               {userType === "admin" ? "Admin Email" : "Teacher Email"}
@@ -83,6 +142,8 @@ const SignInAdmin: React.FC = () => {
               type="email"
               id="email"
               placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
@@ -94,11 +155,24 @@ const SignInAdmin: React.FC = () => {
                 type={showPassword ? "text" : "password"}
                 id="password"
                 placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
+            </div>
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                justifyContent: "flex-end",
+              }}
+            >
               <button
                 type="button"
-                className="toggle-password"
+                style={{
+                  padding: 8,
+                  fontSize: 12,
+                }}
                 onClick={() => setShowPassword((prev) => !prev)}
               >
                 {showPassword ? "Hide" : "Show"}
@@ -114,14 +188,29 @@ const SignInAdmin: React.FC = () => {
                 backgroundColor: "white",
                 border: "none",
                 color: "gray",
+                fontSize: 13,
               }}
             >
               Forgot Password?
             </button>
           </div>
 
-          <button type="submit" className="signin-button">
-            Sign In
+          {error && (
+            <p
+              style={{
+                backgroundColor: "#ff000021",
+                color: "#ff0000",
+                padding: 12,
+                marginBottom: 24,
+                fontSize: 13,
+              }}
+            >
+              {error}
+            </p>
+          )}
+
+          <button type="submit" className="signin-button" disabled={loading}>
+            {loading ? "Signing in..." : "Sign In"}
           </button>
 
           <div className="go-back-link">

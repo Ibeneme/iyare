@@ -1,7 +1,8 @@
 import AboutUs from "./AboutUs/AboutUs";
 import FAQPage from "./FAQs/FAQPage";
 import Hero from "./Hero/Hero";
-import Footer from "./footer/Footer";
+import HomeFooter from "./HomeFooter/HomeFooter";
+
 
 const Index = () => {
   return (
@@ -9,7 +10,7 @@ const Index = () => {
       <Hero />
       <AboutUs />
       <FAQPage />
-      <Footer />
+      <HomeFooter />
     </div>
   );
 };

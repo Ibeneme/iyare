@@ -1,0 +1,38 @@
+/* src/pages/Admin/ClassDetails.css */
+
+.class-details-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 32px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .class-details-title {
+    font-size: 2rem;ƒ
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: #222;
+    text-align: center;
+  }
+  
+  .class-details-item {
+    margin-bottom: 16px;
+    font-size: 1rem;
+    color: #444;
+  }
+  
+  .class-details-item strong {
+    color: #111;
+    font-weight: 600;
+  }
+  
+  .class-details-error,
+  .class-details-empty {
+    text-align: center;
+    color: #d9534f;
+    margin-top: 32px;
+    font-size: 1.1rem;
+  }

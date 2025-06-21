@@ -7,7 +7,6 @@ import Navbar from "./LandingPage/NewNav/NewNav";
 import PrivacyPolicy from "./LandingPage/PrivacyPolicy/PrivacyPolicy";
 import TermsAndConditions from "./LandingPage/PrivacyPolicy/TermsAndConditions";
 import SubjectsPage from "./LandingPage/SubjectsPage/SubjectsPage";
-import Footer from "./LandingPage/footer/Footer";
 
 // Auth Components
 import SignIn from "./Auth/SignIn";
@@ -15,13 +14,17 @@ import SignInAdmin from "./Auth/SignInAdmin";
 import ForgotPassword from "./Auth/ForgotPassword";
 
 // Authenticated User Components
-import Layout from "./Home/Layout/Layout";
-import DashBoard from "./Home/Dashboard/DashBoard";
+import Layout from "./Pages/Admin/Layout/Layout";
+import DashBoard from "./Pages/Admin/Dashboard/DashBoard";
 
 import ScrollToTop from "./ScrollToTop";
 import NotFound from "./LandingPage/NotFound/NotFound";
-import Dashboard from "./Home/Dashboard/DashBoard";
-import ClassesGrid from "./Home/Classes/ClassesGrid";
+import Dashboard from "./Pages/Admin/Dashboard/DashBoard";
+import ClassesGrid from "./Pages/Admin/Classes/ClassesGrid";
+import HomeFooter from "./LandingPage/HomeFooter/HomeFooter";
+import UserDetails from "./Pages/Admin/Admin/Dashboard/UserDetails";
+import ClassDetails from "./Pages/Admin/Classes/ClassDetails";
+import WebRTCComponent from "./Pages/Admin/Admin/WebRTCComponent";
 
 function App() {
   return (
@@ -44,7 +47,7 @@ function App() {
             <>
               <Navbar />
               <PrivacyPolicy />
-              <Footer />
+              <HomeFooter />
             </>
           }
         />
@@ -54,7 +57,7 @@ function App() {
             <>
               <Navbar />
               <TermsAndConditions />
-              <Footer />
+              <HomeFooter />
             </>
           }
         />
@@ -64,16 +67,18 @@ function App() {
             <>
               <Navbar />
               <SubjectsPage />
-              <Footer />
+              <HomeFooter />
             </>
           }
         />
-
         {/* Auth Routes */}
         <Route path="/auth-sign-in" element={<SignIn />} />
         <Route path="/admin-sign-in" element={<SignInAdmin />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="*" element={<NotFound />} />
+        <Route path="/user-details/:userType/:id" element={<UserDetails />} />
+        <Route path="/class-details/:id" element={<ClassDetails />} />
+        <Route path="webrtc" element={<WebRTCComponent />} />
 
         <Route
           path="/:userType/dashboard/:filter?"

@@ -17,6 +17,7 @@ const Dashboard: React.FC = () => {
     "notFound",
     "course",
     "department",
+    "grade"
   ];
   const resolvedUserType = validUserTypes.includes(userType as UserType)
     ? (userType as UserType)

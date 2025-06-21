@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-type UserType = "admin" | "parent" | "student" | "teacher" | 'notFound' | null;
+type UserType = "admin" | "parent" | "student" | "teacher" | "grade" | "notFound" | "department" | "course" | null;
 
 const useUserType = (): UserType => {
     const [userType, setUserType] = useState<UserType>('parent');
@@ -12,7 +12,8 @@ const useUserType = (): UserType => {
             storedUserType === 'admin' ||
             storedUserType === 'parent' ||
             storedUserType === 'student' ||
-            storedUserType === 'teacher'
+            storedUserType === 'teacher' ||
+            storedUserType === 'grade'
         ) {
             setUserType(storedUserType);
         } else {

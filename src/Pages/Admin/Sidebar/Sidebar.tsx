@@ -62,12 +62,10 @@ const Sidebar: React.FC = () => {
     };
 
     window.addEventListener("resize", handleResize);
-    handleResize(); // Check initially if the screen is mobile-sized
-
+    handleResize();
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Check if the current route is in the hideBackArrowRoutes list
   const showBackArrow = !hideBackArrowRoutes.includes(location.pathname);
 
   const showBottomNav = bottomNavRoutes.includes(location.pathname) && isMobile;
@@ -151,6 +149,13 @@ const Sidebar: React.FC = () => {
         { title: "Disabled Parents", path: "/parent/dashboard/disabled" },
         //{ title: "Add Parent", path: "/parent/add" },
       ],
+    },
+    {
+      title: "Grades",
+      icon: MdGroups, // Use an appropriate icon, e.g., from react-icons
+      path: "/grade",
+      type: "collapsible",
+      children: [{ title: "All Grades", path: "/grade/dashboard/all" }],
     },
     {
       title: "Teachers",

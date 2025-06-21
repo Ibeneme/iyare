@@ -15,12 +15,14 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    "composite": true, // Or "incremental": true, as discussed before
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noFallthroughCasesInSwitch": true
+    // "noUncheckedSideEffectImports": true // <--- REMOVE THIS LINE
   },
   "include": ["src"]
 }

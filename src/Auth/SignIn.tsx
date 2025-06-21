@@ -1,12 +1,25 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./SignIn.css";
 import logo from "../assets/images/logo.jpg";
 import backgroundImage from "../assets/images/library.jpg";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const SignIn: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
+
+  const location = useLocation();
   const [userType, setUserType] = useState<"student" | "parent">("student");
+
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const type = query.get("type");
+    if (type === "parent") {
+      setUserType("parent");
+    } else {
+      setUserType("student");
+    }
+  }, [location.search]);
+
   const navigate = useNavigate();
   const handleForgotPassword = () => {
     navigate("/forgot-password", { state: { userType } });

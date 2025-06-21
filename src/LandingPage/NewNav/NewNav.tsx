@@ -33,7 +33,7 @@ const Navbar: React.FC = () => {
           />
         </div>
 
-        <div className={`nav-links ${isOpen ? "active" : ""}`}>
+        <div className={`nav-links ${isOpen ? "active-nav" : ""}`}>
           <NavLink to="/" className="nav-link" onClick={closeNavbar}>
             Home
           </NavLink>
@@ -79,10 +79,12 @@ const Navbar: React.FC = () => {
           {isOpen ? "✕" : "☰"}
         </div>
       </nav>
+
+      {isOpen && <div className="backdrop" onClick={closeNavbar}></div>}
+  
       {isModalOpen && (
         <ModalDropdownSubjects onClose={() => setIsModalOpen(false)} />
       )}
-      {isOpen && <div className="backdrop" onClick={closeNavbar}></div>}
     </>
   );
 };
