@@ -10,7 +10,7 @@ const Index = () => {
       <Hero />
       <AboutUs />
       <FAQPage />
-      <HomeFooter />
+      {/* <HomeFooter /> */}
     </div>
   );
 };

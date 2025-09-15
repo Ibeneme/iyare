@@ -1,299 +1,342 @@
-/* Google Meet Inspired Styles */
+.webrtc-webrtc {
 
-/* Base Styles */
-body {
     margin: 0;
-    font-family: 'Google Sans', 'Roboto', 'Arial', sans-serif; /* Prefer Google Sans if available, fall back to common ones */
-    background-color: #f8f9fa; /* Light grey/white background */
-    color: #202124; /* Dark grey text */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    padding: 0;
+    overflow: hidden;
+    background-color: var(--dark-green);
+    overflow-x: auto;
+    white-space: nowrap;
+    /* Google Meet background color */
+    color: var(--yellow);
+    min-height: 100vh;
+
+    /* Light text for dark background */
 }
 
-/* Modal Styling */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(32, 33, 36, 0.8); /* Darker overlay for modal */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
 
-.modal-content {
-    background-color: #ffffff; /* White background for modal */
-    padding: 40px;
-    border-radius: 8px;
-    text-align: center;
-    color: #202124;
-    box-shadow: 0 16px 24px 2px rgba(0, 0, 0, 0.14),
-                0 6px 30px 5px rgba(0, 0, 0, 0.12),
-                0 8px 10px -5px rgba(0, 0, 0, 0.2);
-    max-width: 400px;
-    width: 90%;
-}
-
-.modal-content h2 {
-    margin-bottom: 25px;
-    font-size: 1.8rem;
-    color: #1a73e8; /* Google Meet blue */
-    font-weight: 500;
-}
-
-.modal-content input {
-    padding: 12px 15px;
-    margin-bottom: 25px;
-    border: 1px solid #dadce0; /* Light grey border */
-    border-radius: 4px;
-    width: calc(100% - 30px); /* Account for padding */
-    font-size: 1rem;
-    color: #202124;
-    outline: none;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.modal-content input:focus {
-    border-color: #1a73e8; /* Blue border on focus */
-    box-shadow: 0 0 0 1px #1a73e8;
-}
-
-.modal-content button {
-    background-color: #1a73e8; /* Google Meet blue */
-    color: white;
-    padding: 12px 25px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1.1rem;
-    font-weight: 500;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    width: 100%;
-}
-
-.modal-content button:hover {
-    background-color: #1765cf; /* Slightly darker blue on hover */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.modal-content button:disabled {
-    background-color: #a0c3f0; /* Lighter blue for disabled */
-    cursor: not-allowed;
-}
-
-.modal-content p {
-    margin-top: 20px;
-    font-size: 0.85em;
-    color: #5f6368; /* Muted grey for hints */
-    line-height: 1.4;
-}
-
-/* Main Container for Video Call */
-.container {
+.webrtc-app-container {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: space-between; /* Pushes video to top, controls to bottom */
-    padding: 20px;
-    min-height: 100vh;
-    box-sizing: border-box; /* Include padding in height */
-    background-color: #202124; /* Google Meet dark background for call */
+    height: 100vh;
+    background-color: var(--dark-green);
+    overflow-x: auto;
+    white-space: nowrap;
+    position: relative;
 }
 
-/* Video Display Area */
-.video-display-area {
-    position: relative; /* For absolute positioning of local video */
+.webrtc-video-layout-container {
+    flex-grow: 1;
+    /* Takes all available space */
+    display: flex;
+    padding: 10px;
+    /* Small padding around the edges */
+    box-sizing: border-box;
+    /* Google Meet background color */
+    position: relative;
+    /* For positioning internal elements */
+}
+
+/* Default grid for participants when no screen share */
+.webrtc-participants-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--grid-cols, 3), 1fr);
+    /* Dynamic columns */
+    grid-auto-rows: 1fr;
+    /* Rows adjust to content */
+    gap: 10px;
+    /* Spacing between videos */
     width: 100%;
-    max-width: 1280px; /* Max width for the video container */
-    flex-grow: 1; /* Allows it to take available space */
-    display: flex; /* For basic centering if only one video */
+    height: 80%;
     justify-content: center;
     align-items: center;
-    background-color: #202124; /* Ensure background is dark */
-    border-radius: 8px; /* Slightly rounded corners */
-    overflow: hidden; /* Hide anything outside */
-    margin-bottom: 20px; /* Space between video and controls */
+
 }
 
-.video-item {
-    width: 100%;
-    height: 100%; /* Take full height of parent */
-    object-fit: cover; /* Cover the area, cropping if necessary */
-    display: block; /* Remove extra space below video */
-    background-color: #3c4043; /* Placeholder background */
-}
-
-.video-display-area {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    grid-gap: 16px;
-    padding: 10px;
-    max-height: 80vh;
-    overflow-y: auto;
-    background-color: #202124;
-  }
-  
-  .video-stream-wrapper {
+.webrtc-participant-video-wrapper {
     position: relative;
     width: 100%;
-    aspect-ratio: 16/9;
-    overflow: hidden;
+    padding-top: 75%;
+    /* 4:3 aspect ratio */
+    background-color: var(--dark-green);
+    /* Darker background for video tiles */
     border-radius: 8px;
-    background-color: #3c4043;
-  }
-  
-  .video-label {
+    overflow: hidden;
+    display: flex;
+    /* For centering video if object-fit is contain */
+    justify-content: center;
+    align-items: center;
+    border: 1px solid var(--yellow);
+    /* Default transparent border */
+    transition: all 0.2s ease;
+    max-height: 80vh;
+}
+
+.webrtc-participant-video-wrapper:focus-within {
+    /* Highlight on focus (e.g., clicking on it) */
+    border-color: #8ab4f8;
+    box-shadow: 0 0 0 2px #8ab4f8, 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.webrtc-participant-video {
     position: absolute;
-    bottom: 5px;
-    left: 5px;
-    padding: 2px 6px;
-    background: rgba(0,0,0,0.6);
-    color: #fff;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Fill the tile */
+    transform: scaleX(-1);
+    /* Mirror effect for camera feeds */
+    background-color: #3c4043;
+}
+
+.webrtc-participant-label {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background-color: rgba(32, 33, 36, 0.7);
+    /* Dark semi-transparent background */
+    color: #e8eaed;
+    padding: 4px 8px;
     border-radius: 4px;
     font-size: 0.8rem;
-  }
-  
+    font-weight: 500;
+    z-index: 1;
+}
+
+.webrtc-local-video-wrapper .webrtc-participant-label {
+    /* Example: blue border for local video */
+    border-color: #4285F4;
+}
+
+/* --- Screen Share Layout --- */
+.webrtc-video-layout-container.screen-sharing {
+    flex-direction: row;
+}
+
+.webrtc-main-content-area {
+    flex-grow: 1;
+    /* Takes most of the space */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #000;
+    /* Black background for screen share */
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.webrtc-screen-share-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* Ensure full screen content is visible */
+    transform: scaleX(1);
+    /* No mirror for screen share */
+    background-color: #000;
+}
+
+.webrtc-sidebar-participants {
+    width: 250px;
+    /* Fixed width for sidebar */
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-left: 10px;
+    /* Space between main content and sidebar */
+    overflow-y: auto;
+    /* Scroll for many participants */
+    scrollbar-width: thin;
+    /* Firefox */
+    scrollbar-color: #5f6368 #3c4043;
+    /* Firefox */
+}
+
+/* Custom scrollbar for Webkit browsers */
+.webrtc-sidebar-participants::-webkit-scrollbar {
+    width: 8px;
+}
+
+.webrtc-sidebar-participants::-webkit-scrollbar-track {
+    background: #3c4043;
+    border-radius: 4px;
+}
+
+.webrtc-sidebar-participants::-webkit-scrollbar-thumb {
+    background-color: #5f6368;
+    border-radius: 4px;
+    border: 2px solid #3c4043;
+}
+
+.webrtc-sidebar-participants .webrtc-participant-video-wrapper {
+    width: 100%;
+    padding-top: 75%;
+    /* 4:3 aspect ratio */
+    flex-shrink: 0;
+    /* Don't shrink videos in sidebar */
+}
 
 /* Control Bar */
-.control-bar {
-    background-color: #202124; /* Same dark background as video area for seamless look */
-    padding: 10px 20px;
-    border-radius: 999px; /* Pill shape */
+.webrtc-control-bar {
     display: flex;
-    gap: 25px; /* Space between buttons */
     justify-content: center;
     align-items: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Subtle shadow */
+    padding: 15px 20px;
+    color: var(--yellow);
+    /* Same as body for seamless look */
+    border-top: 1px solid #3c4043;
+    /* Slight separation line */
+    gap: 20px;
+    min-height: 80px;
 }
 
-.btn-item {
-    background-color: #3c4043; /* Dark grey for buttons */
-    color: #ffffff; /* White icons */
-    border: none;
-    width: 56px; /* Circular button size */
-    height: 56px;
+.webrtc-control-btn {
+    background-color: var(--yellow);
+    /* Dark grey button */
+    border: 1px solid var(--dark-green);
     border-radius: 50%;
-    cursor: pointer;
-    font-size: 1.8rem; /* Larger icon size */
+    width: 50px;
+    height: 50px;
     display: flex;
-    align-items: center;
     justify-content: center;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    outline: none; /* Remove focus outline */
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    color: var(--dark-green);
+    font-size: 1.3rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-.btn-item:hover:not(:disabled) {
-    background-color: #5f6368; /* Lighter grey on hover */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+.webrtc-control-btn:hover:not(:disabled) {
+    background-color: var(--yellow);
+    transform: translateY(-1px);
 }
 
-.btn-item:disabled {
-    background-color: #3c4043; /* Same as default but with reduced opacity */
-    opacity: 0.5;
+.webrtc-control-btn:disabled {
+    opacity: 0.6;
     cursor: not-allowed;
 }
 
-/* Specific button colors for Meet-like feel */
-.btn-item.mic-on {
-    background-color: #1a73e8; /* Blue when mic is on (like Meet's active state) */
-}
-.btn-item.mic-on:hover:not(:disabled) {
-    background-color: #1765cf;
-}
-.btn-item.mic-off {
-    background-color: #ea4335; /* Red when mic is off */
-}
-.btn-item.mic-off:hover:not(:disabled) {
-    background-color: #d93025;
+.webrtc-control-btn.red-bg {
+    background-color:  var(--dark-green);
+    color:  var(--yellow);
+    border: 1px solid var(--yellow);
+    /* Google Meet hangup red */
 }
 
-/* Assuming FiVideo maps to "video on" (start button in your original code) */
-/* This button will be primarily used after joining to enable/disable video, not just "start" */
-.btn-item.video-on {
-    background-color: #1a73e8;
-}
-.btn-item.video-on:hover:not(:disabled) {
-    background-color: #1765cf;
-}
-.btn-item.video-off {
-    background-color: #ea4335; /* Red when video is off */
-}
-.btn-item.video-off:hover:not(:disabled) {
-    background-color: #d93025;
+.webrtc-control-btn.red-bg:hover:not(:disabled) {
+    background-color: #d13a2d;
 }
 
-
-/* Hangup button (FiVideoOff used as hangup) */
-.btn-item.hangup-btn {
-    background-color: #ea4335; /* Red for hangup */
+.webrtc-control-btn.green-bg {
+    background-color: #34a853;
+    /* Google Meet green for active mic/cam */
 }
 
-.btn-item.hangup-btn:hover:not(:disabled) {
-    background-color: #d93025; /* Darker red on hover */
+.webrtc-control-btn.screen-share-active {
+    background-color: #fbbc04;
+    /* Google Meet yellow for active share */
+    color: var(--gray);
 }
 
+.webrtc-control-btn.screen-share-active:hover:not(:disabled) {
+    background-color: #e3a800;
+}
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
-    .modal-content {
-        padding: 25px;
-    }
-    .modal-content h2 {
-        font-size: 1.5rem;
-    }
-    .modal-content input, .modal-content button {
-        font-size: 1rem;
-        padding: 10px 15px;
+@media (max-width: 1024px) {
+    .webrtc-video-layout-container.screen-sharing {
+        flex-direction: column;
+        /* Stack main content and sidebar vertically */
     }
 
-    .video-display-area {
-        flex-direction: column; /* Stack videos on smaller screens */
+    .webrtc-sidebar-participants {
+        width: 100%;
+        height: 150px;
+        /* Fixed height for scrollable participant row */
+        flex-direction: row;
+        /* Make participants scroll horizontally */
+        padding-left: 0;
+        padding-top: 10px;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .webrtc-sidebar-participants .webrtc-participant-video-wrapper {
+        width: 180px;
+        /* Smaller width for horizontal scroll */
+        min-width: 150px;
+        /* Prevent shrinking too much */
+        padding-top: 135px;
+        /* maintain 4:3 */
+    }
+
+    .webrtc-sidebar-participants::-webkit-scrollbar {
+        height: 8px;
+        /* Horizontal scrollbar height */
+        width: auto;
+    }
+
+    .webrtc-sidebar-participants::-webkit-scrollbar-track {
+        background: #3c4043;
+    }
+
+    .webrtc-sidebar-participants::-webkit-scrollbar-thumb {
+        background-color: #5f6368;
+        border: 2px solid #3c4043;
+    }
+}
+
+@media (max-width: 768px) {
+    .webrtc-modal-content {
+        padding: 2rem 1.5rem;
+        gap: 1rem;
+    }
+
+    .webrtc-modal-content h2 {
+        font-size: 1.8rem;
+    }
+
+    .webrtc-modal-content input,
+    .webrtc-modal-content button {
+        padding: 0.9rem 1rem;
+        font-size: 1rem;
+    }
+
+    .webrtc-control-bar {
+        flex-wrap: wrap;
+        gap: 10px;
         padding: 10px;
     }
 
-    .video-item.local-video {
-        position: relative; /* Change to relative positioning */
-        bottom: auto;
-        right: auto;
-        width: 100%; /* Take full width */
-        height: 200px; /* Fixed height for smaller screen */
-        margin-bottom: 10px; /* Space between local and remote if stacked */
+    .webrtc-control-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
     }
 
-    .video-item.remote-video {
-        width: 100%;
-        max-height: calc(100vh - 250px); /* Adjust height */
+    .webrtc-participants-grid {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 5px;
     }
 
-    .control-bar {
-        padding: 8px 15px;
-        gap: 15px;
-    }
-
-    .btn-item {
-        width: 48px;
-        height: 48px;
-        font-size: 1.5rem;
+    .webrtc-sidebar-participants .webrtc-participant-video-wrapper {
+        width: 120px;
+        /* Even smaller on mobile */
+        padding-top: 90px;
     }
 }
 
-@media (max-width: 480px) {
-    .modal-content {
-        padding: 20px;
-    }
-    .modal-content h2 {
-        font-size: 1.3rem;
-    }
-    .modal-content p {
-        font-size: 0.8em;
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
     }
 
-    .btn-item {
-        width: 44px;
-        height: 44px;
-        font-size: 1.3rem;
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

@@ -1,0 +1,95 @@
+
+
+.settings-report-container h2 {
+    font-size: 20px;
+    color: #333;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.settings-report-container p {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.report-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #eee;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.report-form input,
+.report-form textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.report-form textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.submit-btn {
+    background-color: var(--dark-green);
+    color: var(--yellow);
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.submit-btn:hover {
+    background-color: #126343;
+}
+
+.support-info {
+    margin-top: 25px;
+}
+
+.support-info p {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.support-info a {
+    color: var(--dark-green);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.support-info a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive styles for smaller screens */
+@media (max-width: 600px) {
+    .price-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+}

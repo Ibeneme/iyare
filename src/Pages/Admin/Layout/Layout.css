@@ -1,44 +1,57 @@
 .layout {
-    display: flex;
-    min-height: 100vh;
-  }
+  display: flex;
+  min-height: 100vh;
+
+}
+
+/* Sidebar style for web */
+.sidebar {
+  width: 300px;
+  /* Sidebar takes 300px on web */
+  background-color: #023009;
+  color: white;
+  padding: 20px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: fixed;
+  /* Fixed sidebar on web */
+  left: 0;
+  top: 0px;
   
-  /* Sidebar style for web */
-  .sidebar {
-    width: 300px; /* Sidebar takes 300px on web */
-    background-color: #023009;
-    color: white;
-    padding: 20px;
-    height: 100vh;
-    display: flex;
+}
+
+/* Content style */
+.layout-content {
+  flex: 1;
+  padding: 16px;
+  background-color: #f9f9f9;
+  margin-left: 300px;
+  /* This ensures content starts after the sidebar */
+  overflow-y: auto;
+  padding-top: 48px
+  
+}
+
+/* On mobile, hide sidebar and make content full width */
+@media (max-width: 768px) {
+  .layout {
     flex-direction: column;
-    gap: 12px;
-    position: fixed; /* Fixed sidebar on web */
-    left: 0;
-    top: 0;
+
+    /* Stack elements vertically */
   }
-  
-  /* Content style */
+
+  .sidebar {
+    display: none;
+    /* Hide sidebar on mobile */
+  }
+
   .layout-content {
-    flex: 1;
-    padding: 16px;
-    background-color: #f9f9f9;
-    margin-left: 300px; /* This ensures content starts after the sidebar */
-    overflow-y: auto;
+    padding-bottom: 70px;
+    /* Space for bottom navigation */
+    margin-left: 0;
+    /* Full width content */
+    padding-top: 48px
   }
-  
-  /* On mobile, hide sidebar and make content full width */
-  @media (max-width: 768px) {
-    .layout {
-      flex-direction: column; /* Stack elements vertically */
-    }
-  
-    .sidebar {
-      display: none; /* Hide sidebar on mobile */
-    }
-  
-    .layout-content {
-      padding-bottom: 70px; /* Space for bottom navigation */
-      margin-left: 0; /* Full width content */
-    }
-  }
+}

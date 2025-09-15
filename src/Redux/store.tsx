@@ -6,6 +6,9 @@ import adminCourse from "./Admin/adminCourse";
 import adminUsers from "./Admin/adminUsers";
 import AdminGrade from "./Admin/AdminGrade";
 import adminClasses from "./Admin/adminClasses";
+import resource from "./Resource/Resource";
+import SettingsSlice from "./Settings/SettingsSlice";
+import awardSlice from "./Awards/awardSlice";
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +19,9 @@ export const store = configureStore({
     adminUsers: adminUsers,
     AdminGrade: AdminGrade,
     adminClasses: adminClasses,
+    resource: resource,
+    SettingsSlice: SettingsSlice,
+    awards: awardSlice,
   },
 });
 

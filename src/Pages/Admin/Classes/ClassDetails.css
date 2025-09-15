@@ -1,38 +1,82 @@
-/* src/pages/Admin/ClassDetails.css */
-
 .class-details-container {
-    max-width: 800px;
-    margin: 40px auto;
-    padding: 32px;
-    background-color: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  }
-  
-  .class-details-title {
-    font-size: 2rem;ƒ
-    font-weight: 700;
-    margin-bottom: 24px;
-    color: #222;
-    text-align: center;
-  }
-  
-  .class-details-item {
-    margin-bottom: 16px;
-    font-size: 1rem;
-    color: #444;
-  }
-  
-  .class-details-item strong {
-    color: #111;
-    font-weight: 600;
-  }
-  
-  .class-details-error,
-  .class-details-empty {
-    text-align: center;
-    color: #d9534f;
-    margin-top: 32px;
-    font-size: 1.1rem;
-  }
+
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+}
+
+.class-details-title {
+  font-size: 28px;
+  margin-bottom: 30px;
+}
+
+.class-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  row-gap: 20px;
+  text-align: left;
+}
+
+.detail-row {
+  display: contents;
+}
+
+.detail-key {
+  font-weight: bold;
+  color: #444;
+  text-align:left;
+  padding-right: 10px;
+}
+
+.detail-value {
+  color: #222;
+  text-align: left;
+  padding-left: 10px;
+}
+.class-details-buttons-centered {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.gray-button {
+  background-color: #66666621;
+  color: #666;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  transition: background-color 0.2s ease;
+}
+
+.gray-button:hover {
+  background-color: #c7c7c7;
+}
+
+.gray-button svg {
+  font-size: 16px;
+}
+.class-details-item {
+  margin-bottom: 16px;
+  font-size: 1rem;
+  color: #444;
+}
+
+.class-details-item strong {
+  color: #111;
+  font-weight: 600;
+}
+
+.class-details-error,
+.class-details-empty {
+  text-align: center;
+  color: #d9534f;
+  margin-top: 32px;
+  font-size: 1.1rem;
+}

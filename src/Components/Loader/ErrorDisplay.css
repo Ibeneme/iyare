@@ -1,0 +1,14 @@
+/* src/Components/ErrorDisplay/ErrorDisplay.css */
+
+.error-display-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Centers items horizontally */
+    justify-content: center;
+    /* Centers items vertically if there's available space */
+    text-align: center;
+
+
+    /* This helps center the block itself if it's within a larger flex/grid context */
+}

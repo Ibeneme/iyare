@@ -201,6 +201,17 @@ export const updateSelfAdmin = createAsyncThunk(
     }
 );
 
+// const getAuthHeaders = () => {
+//     const token =
+//       localStorage.getItem("yareadmintoken") || localStorage.getItem("token");
+  
+//     return {
+//       headers: {
+//         Authorization: `Bearer ${token || ""}`,
+//       },
+//     };
+//   };
+
 export const addAdmin = createAsyncThunk(
     "admin/add",
     async (
@@ -209,7 +220,7 @@ export const addAdmin = createAsyncThunk(
     ) => {
         try {
 
-            const token: string | null = localStorage.getItem("yareadmintoken");
+            const token: string | null =   localStorage.getItem("yareadmintoken") || localStorage.getItem("token");
 
             if (!token) {
                 return thunkAPI.rejectWithValue("Authorization token not found.");
@@ -313,9 +324,9 @@ const adminAuthSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchAllAdmins.fulfilled, (state, action: PayloadAction<Admin[]>) => {
+            .addCase(fetchAllAdmins.fulfilled, (state) => {
                 state.loading = false;
-                state.admins = action.payload;
+               // state.admins = action.payload;
             })
             .addCase(fetchAllAdmins.rejected, (state, action: PayloadAction<any>) => {
                 state.loading = false;
@@ -327,9 +338,9 @@ const adminAuthSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchAdminById.fulfilled, (state, action: PayloadAction<Admin>) => {
+            .addCase(fetchAdminById.fulfilled, (state) => {
                 state.loading = false;
-                state.currentAdmin = action.payload;
+               // state.currentAdmin = action.payload;
             })
             .addCase(fetchAdminById.rejected, (state, action: PayloadAction<any>) => {
                 state.loading = false;
@@ -359,8 +370,8 @@ const adminAuthSlice = createSlice({
             })
 
 
-            .addCase(updateSelfAdmin.fulfilled, (state, action: PayloadAction<Admin>) => {
-                state.currentAdmin = action.payload;
+            .addCase(updateSelfAdmin.fulfilled, (state) => {
+               // state.currentAdmin = action.payload;
                 state.successMessage = "Admin profile updated successfully";
             })
             .addCase(updateSelfAdmin.rejected, (state, action: PayloadAction<any>) => {
@@ -368,7 +379,7 @@ const adminAuthSlice = createSlice({
             })
 
 
-            .addCase(addAdmin.fulfilled, (state, action: PayloadAction<Admin>) => {
+            .addCase(addAdmin.fulfilled, (state) => {
                 //state.admins.push(action.payload);
                 state.successMessage = "Admin created successfully";
             })

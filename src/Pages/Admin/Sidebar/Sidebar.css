@@ -101,34 +101,12 @@
 
 
 /* Mobile Bottom Navigation */
-.bottom-nav {
-    display: none; /* Initially hidden */
+.bottom-nav-scroll {
+    display: none;
+    /* Initially hidden */
 }
 
-.bottom-nav.show {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    background-color: #023009;
-    justify-content: space-around;
-    padding: 16px 0;
-    z-index: 1000;
-}
 
-.bottom-option {
-    color: white;
-    font-size: 20px;
-    text-decoration: none;
-}
-
-.bottom-option.active {
-    color: var(--yellow);
-}
-
-.bottom-option:hover {
-    opacity: 0.8;
-}
 
 /* Mobile Header */
 .mobile-header {
@@ -139,16 +117,80 @@
 
 
 @media (max-width: 768px) {
-    .bottom-nav {
+    .centered {
         display: flex;
+        overflow-x: auto;
+        border-top: 1px solid #ddd;
+        padding: 10px 16px;
+        gap: 20px;
+        justify-content: flex-start;
         position: fixed;
         bottom: 0;
-        width: 100%;
-        background-color: #023009;
-        justify-content: space-around;
-        padding: 16px 0;
+        left: 0;
+        right: 0;
         z-index: 1000;
+        background-color: var(--dark-green);
+
+        scrollbar-width: none;
+        /* Firefox */
+        -ms-overflow-style: none;
+        align-items: center;
+        justify-content: center;
     }
+
+    .bottom-nav-scroll {
+        display: flex;
+        overflow-x: auto;
+        border-top: 1px solid #ddd;
+        padding: 10px 16px;
+        gap: 20px;
+        justify-content: flex-start;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background-color: var(--dark-green);
+
+        scrollbar-width: none;
+        /* Firefox */
+        -ms-overflow-style: none;
+        /* Internet Explorer/Edge */
+    }
+
+    .bottom-nav-scroll::-webkit-scrollbar {
+        display: none;
+        /* Chrome, Safari, Opera */
+    }
+
+
+
+    .bottom-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 70px;
+        color: #f9f9f9;
+        font-size: 13px;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .bottom-option svg {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+
+    .bottom-option span {
+        font-size: 11px;
+    }
+
+    .bottom-option.active {
+        color: var(--yellow);
+        font-weight: bold;
+    }
+
+
 
     .mobile-header {
         display: flex;
@@ -161,6 +203,7 @@
         width: 100%;
         z-index: 1000;
         height: 64px;
+
     }
 
     .sidebar {
@@ -199,13 +242,4 @@
     }
 
 
-    .bottom-option {
-        color: white;
-        text-decoration: none;
-        font-size: 20px;
-    }
-
-    .bottom-option:hover {
-        opacity: 0.8;
-    }
 }

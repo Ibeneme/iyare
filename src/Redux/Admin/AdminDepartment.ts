@@ -1,13 +1,53 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { BASE_URL } from '../baseurl';
 
-
 const API_BASE = `${BASE_URL}/api/departments`;
 
+// 📦 Define core types for data models and thunk arguments
+interface Course {
+    _id: string;
+    name: string;
+    // ... other course properties
+}
 
-// Fetch departments
-export const fetchDepartments = createAsyncThunk(
+interface Department {
+    _id: string;
+    name: string;
+    courses: Course[];
+}
+
+interface UpdateDepartmentParams {
+    id: string;
+    name: string;
+    courseIds: string[];
+}
+
+interface CreateDepartmentParams {
+    name: string;
+}
+
+interface DeleteDepartmentResult {
+    id: string;
+    message: string;
+}
+
+interface AdminDepartmentState {
+    departments: Department[];
+    currentDepartment: Department | null;
+    loading: boolean;
+    error: string | null;
+    successMessage: string | null;
+}
+
+// 🔄 Async Thunks
+
+// Fetch all departments
+export const fetchDepartments = createAsyncThunk<
+    Department[],
+    void,
+    { rejectValue: string }
+>(
     'adminDepartment/fetchDepartments',
     async (_, { rejectWithValue }) => {
         try {
@@ -16,14 +56,18 @@ export const fetchDepartments = createAsyncThunk(
                 headers: { Authorization: `Bearer ${token}` },
             });
             return res.data.departments;
-        } catch (err) {
+        } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || err.message);
         }
     }
 );
 
 // Fetch single department by id
-export const fetchDepartmentById = createAsyncThunk(
+export const fetchDepartmentById = createAsyncThunk<
+    Department,
+    string,
+    { rejectValue: string }
+>(
     'adminDepartment/fetchDepartmentById',
     async (id, { rejectWithValue }) => {
         try {
@@ -32,16 +76,20 @@ export const fetchDepartmentById = createAsyncThunk(
                 headers: { Authorization: `Bearer ${token}` },
             });
             return res.data.department;
-        } catch (err) {
+        } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || err.message);
         }
     }
 );
 
 // Create department
-export const createDepartment = createAsyncThunk(
+export const createDepartment = createAsyncThunk<
+    Department,
+    CreateDepartmentParams,
+    { rejectValue: string }
+>(
     'adminDepartment/createDepartment',
-    async ({ name }: any, { rejectWithValue }) => {
+    async ({ name }, { rejectWithValue }) => {
         try {
             const token = localStorage.getItem('yareadmintoken');
             const res = await axios.post(
@@ -52,14 +100,18 @@ export const createDepartment = createAsyncThunk(
                 }
             );
             return res.data.department;
-        } catch (err) {
+        } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || err.message);
         }
     }
 );
 
 // Update department
-export const updateDepartment = createAsyncThunk(
+export const updateDepartment = createAsyncThunk<
+    Department,
+    UpdateDepartmentParams,
+    { rejectValue: string }
+>(
     'adminDepartment/updateDepartment',
     async ({ id, name, courseIds }, { rejectWithValue }) => {
         try {
@@ -72,14 +124,18 @@ export const updateDepartment = createAsyncThunk(
                 }
             );
             return res.data.department;
-        } catch (err) {
+        } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || err.message);
         }
     }
 );
 
 // Delete department
-export const deleteDepartment = createAsyncThunk(
+export const deleteDepartment = createAsyncThunk<
+    DeleteDepartmentResult,
+    string,
+    { rejectValue: string }
+>(
     'adminDepartment/deleteDepartment',
     async (id, { rejectWithValue }) => {
         try {
@@ -88,25 +144,25 @@ export const deleteDepartment = createAsyncThunk(
                 headers: { Authorization: `Bearer ${token}` },
             });
             return { id, message: res.data.message };
-        } catch (err) {
+        } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || err.message);
         }
     }
 );
 
+// 📦 Initial State
+const initialState: AdminDepartmentState = {
+    departments: [],
+    currentDepartment: null,
+    loading: false,
+    error: null,
+    successMessage: null,
+};
 
-
-
-
+// 🧩 Slice
 const adminDepartmentSlice = createSlice({
     name: 'adminDepartment',
-    initialState: {
-        departments: [],
-        currentDepartment: null,
-        loading: false,
-        error: null,
-        successMessage: null,
-    },
+    initialState,
     reducers: {
         clearMessages(state) {
             state.error = null;
@@ -120,26 +176,26 @@ const adminDepartmentSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchDepartments.fulfilled, (state, action) => {
+            .addCase(fetchDepartments.fulfilled, (state, action: PayloadAction<Department[]>) => {
                 state.loading = false;
                 state.departments = action.payload;
             })
             .addCase(fetchDepartments.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload;
+                state.error = action.payload as string;
             })
             // fetchDepartmentById
             .addCase(fetchDepartmentById.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchDepartmentById.fulfilled, (state, action) => {
+            .addCase(fetchDepartmentById.fulfilled, (state, action: PayloadAction<Department>) => {
                 state.loading = false;
                 state.currentDepartment = action.payload;
             })
             .addCase(fetchDepartmentById.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload;
+                state.error = action.payload as string;
             })
             // createDepartment
             .addCase(createDepartment.pending, (state) => {
@@ -147,14 +203,14 @@ const adminDepartmentSlice = createSlice({
                 state.error = null;
                 state.successMessage = null;
             })
-            .addCase(createDepartment.fulfilled, (state, action) => {
+            .addCase(createDepartment.fulfilled, (state, action: PayloadAction<Department>) => {
                 state.loading = false;
                 state.departments.push(action.payload);
                 state.successMessage = 'Department created successfully';
             })
             .addCase(createDepartment.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload;
+                state.error = action.payload as string;
             })
             // updateDepartment
             .addCase(updateDepartment.pending, (state) => {
@@ -162,7 +218,7 @@ const adminDepartmentSlice = createSlice({
                 state.error = null;
                 state.successMessage = null;
             })
-            .addCase(updateDepartment.fulfilled, (state, action) => {
+            .addCase(updateDepartment.fulfilled, (state, action: PayloadAction<Department>) => {
                 state.loading = false;
                 const index = state.departments.findIndex(d => d._id === action.payload._id);
                 if (index !== -1) {
@@ -175,7 +231,7 @@ const adminDepartmentSlice = createSlice({
             })
             .addCase(updateDepartment.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload;
+                state.error = action.payload as string;
             })
             // deleteDepartment
             .addCase(deleteDepartment.pending, (state) => {
@@ -183,7 +239,7 @@ const adminDepartmentSlice = createSlice({
                 state.error = null;
                 state.successMessage = null;
             })
-            .addCase(deleteDepartment.fulfilled, (state, action) => {
+            .addCase(deleteDepartment.fulfilled, (state, action: PayloadAction<DeleteDepartmentResult>) => {
                 state.loading = false;
                 state.departments = state.departments.filter(d => d._id !== action.payload.id);
                 if (state.currentDepartment && state.currentDepartment._id === action.payload.id) {
@@ -193,7 +249,7 @@ const adminDepartmentSlice = createSlice({
             })
             .addCase(deleteDepartment.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload;
+                state.error = action.payload as string;
             });
     },
 });

@@ -8,10 +8,13 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <div className="layout">
-      <Sidebar />
-      <div className="layout-content">
-        {children}
+    <div>
+      <div style={{ marginTop: 0 }}>
+    
+      </div>
+      <div className="layout">
+        <Sidebar />
+        <div className="layout-content">{children}</div>
       </div>
     </div>
   );

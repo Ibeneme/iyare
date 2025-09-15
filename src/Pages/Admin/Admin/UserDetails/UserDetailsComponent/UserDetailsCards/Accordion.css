@@ -1,0 +1,112 @@
+.teacher-list-container {
+    max-width: 768px;
+    margin: 2rem 24px;
+    padding: 16px;
+    margin-top: 24px
+}
+
+/* Card Styling */
+.teacher-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    margin-top: 8px;
+    overflow: hidden;
+    transition: transform 0.2s ease-in-out;
+}
+
+
+
+/* Header and Toggle Button */
+.teacher-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    cursor: pointer;
+    background-color: #004D00;
+    border-bottom: 1px solid #e5e5e5;
+    transition: background-color 0.2s ease-in-out;
+}
+
+
+
+.teacher-name {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #FFD000;
+}
+
+.toggle-icon {
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: #FFD000;
+    transition: transform 0.3s ease-in-out;
+}
+
+.teacher-header[aria-expanded="true"] .toggle-icon {
+    transform: rotate(45deg);
+}
+
+/* Content Area */
+.teacher-content {
+    padding: 1.5rem;
+    line-height: 1.6;
+}
+
+.teacher-content p {
+    margin: 0 0 1rem;
+    color: #616161;
+}
+
+.teacher-content strong {
+    color: #2c3e50;
+}
+
+/* Class List */
+.class-list {
+    margin-top: 4rem;
+    border-top: 1px dashed #e0e0e0;
+    padding-top: 2rem;
+}
+
+.classes-heading {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+}
+
+.class-item {
+    background-color: #fcfdfe;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.no-classes {
+    font-style: italic;
+    color: #888;
+}
+
+/* Join Button */
+.join-button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background-color: #FFD000;
+    color: #004D00;
+    border: 2px solid #004D00;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.join-button:hover {
+    background-color: #2980b9;
+    transform: translateY(-1px);
+}

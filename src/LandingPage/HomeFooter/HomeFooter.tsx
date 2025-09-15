@@ -105,7 +105,7 @@ const HomeFooter: React.FC = () => {
                 style={{ color: "#fff" }}
                 href="mailto:info@IyareLearningHub.com"
               >
-                info@IyareLearningHub.com
+                info@yareLearningHub.com
               </a>
             </div>
           </div>

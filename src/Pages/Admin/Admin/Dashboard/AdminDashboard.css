@@ -1,80 +1,210 @@
+/* --- CSS Variables (Ensure these are defined, e.g., in :root {}) --- */
+/*
+:root {
+    --dark-green: #0A3D2A;
+    --yellow: #FFC107;
+    --red: #DC3545;
+    --blue: #2196F3;
+    --grey-light: #eee;
+    --grey-medium: #6c757d;
+    --text-dark: #333;
+}
+*/
+
+/* --- Base Styles (Mobile-First) --- */
+
 /* Container for Admin Dashboard */
 .admin-dashboard {
-    padding: 20px;
+    padding: 12px;
+    /* 16px padding on small screens */
     background-color: #fff;
-    border-radius: 8px;
+    border-radius: 0.5rem;
+    /* 8px border-radius */
+    box-sizing: border-box;
+    /* Include padding in element's total width and height */
+    overflow-x: hidden;
+    /* Prevent horizontal scroll on body from overflow */
 }
 
 /* Heading Style */
 .admin-dashboard h2 {
-    color: var(--dark-green);
-    font-size: 28px;
-    margin-top: 12px
+    color: var(--dark-green, #0A3D2A);
+    /* Fallback color */
+    font-size: 1.75rem;
+    /* 28px */
+    margin-top: 0.75rem;
+    /* 12px */
+    margin-bottom: 1rem;
+    /* Added for consistency */
+    line-height: 1.2;
 }
+
+/* Tabs Container */
+.tabs-container {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+
+    /* 8px gap */
+    margin-top: 1.5rem;
+    /* 24px */
+
+    /* 24px */
+}
+
+.tab-btn {
+    padding: 12px 16px;
+    border: none;
+    background-color: #eee;
+    border-radius: 53px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    font-size: 13px;
+}
+
+.tab-btn.active {
+    background-color: var(--yellow);
+    color:var(--dark-green);
+    border: 1px solid var(--dark-green);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+
 
 /* Add Admin Button */
 .add-admin-btn {
-    background-color: var(--dark-green);
+    display: block;
+    /* Make it a block element to take full width */
+    width: 100%;
+    /* Full width on small screens */
+    padding: 0.875rem 1.25rem;
+    /* 14px 20px */
+    background-color: var(--dark-green, #0A3D2A);
     color: white;
     border: none;
     cursor: pointer;
-    font-size: 16px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    transition: background-color 0.3s ease;
-    margin-top: 32px
+    font-size: 1rem;
+    /* 16px */
+    border-radius: 0.75rem;
+    /* 12px */
+    margin-top: 1.5rem;
+    /* 24px */
+    margin-bottom: 1.5rem;
+    /* 24px */
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    box-sizing: border-box;
 }
 
 .add-admin-btn:hover {
     background-color: #e6b800;
+    /* Adjusted hover color for yellow effect */
+    transform: translateY(-2px);
+    /* Subtle lift */
 }
 
-/* Table Styles */
+.add-admin-btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+
+/* --- Admin Table Styles (Mobile-First - Now with Horizontal Scroll) --- */
+
+/* Wrapper for horizontal scrolling on mobile */
+.table-responsive-wrapper {
+    /* On mobile, this will enable horizontal scrolling */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scrolling on iOS */
+    margin-top: 1rem;
+    /* Match existing margin-top */
+    border-radius: 0.5rem;
+    /* Match admin-dashboard border-radius */
+    background-color: #fff;
+    /* Table background */
+    /* Light shadow for the table area */
+}
+
 .admin-table {
     width: 100%;
+    /* Ensure table fills its wrapper by default */
     border-collapse: collapse;
-    margin-top: 20px;
-
+    min-width: 32rem;
+    /* Minimum width to force scroll on small phones, adjust as needed */
+    /* Remove margin-top here as it's on the wrapper */
 }
 
 .admin-table th,
 .admin-table td {
-    padding: 12px;
+    padding: 0.75rem 0.625rem;
     text-align: left;
-    border-bottom: 1px solid #dddddd64;
+    box-sizing: border-box;
+    white-space: nowrap;
+    /* Prevent content from wrapping by default, forcing scroll */
 }
 
 .admin-table th {
-    background-color: #eee;
-    color: #666;
+    background-color: var(--grey-light, #eee);
+    color: var(--grey-medium, #666);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .admin-table tr:hover {
-    background-color: #f1f1f1;
+    background-color: var(--grey-light, #f8f8f8);
+    /* Subtle hover */
+}
+
+.admin-table td {
+    font-size: 0.95rem;
+}
+
+/* Table action buttons (Edit, Delete, Suspend/Activate) */
+.action-buttons {
+    display: flex;
+    flex-wrap: nowrap;
+    /* Keep buttons in a single line within the cell */
+    gap: 0.5rem;
+    /* Space between action buttons */
+    /* No margin-top here as it's part of the cell content */
+    justify-content: flex-start;
+    /* Align buttons to the start */
 }
 
 .admin-table button {
-    padding: 10px 12px;
-    margin-right: 8px;
+    padding: 0.625rem 0.75rem;
+    /* 10px 12px */
     border: none;
-    border-radius: 4px;
+    border-radius: 0.25rem;
+    /* 4px */
     cursor: pointer;
-    font-size: 14px;
+    font-size: 0.875rem;
+    /* 14px */
+    flex-shrink: 0;
+    /* Prevent buttons from shrinking */
+    transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.1s ease;
+    box-sizing: border-box;
 }
 
 .admin-table button:hover {
-    opacity: 0.8;
+    opacity: 0.9;
 }
 
 .admin-table button:active {
     transform: scale(0.98);
 }
 
+/* Specific button colors */
 .admin-table button:nth-child(1) {
-    background-color: var(--yellow);
-    color: var(--dark-green);
-    border: 0.7px solid var(--dark-green);
-
+    /* Edit button */
+    background-color: var(--yellow, #FFC107);
+    color: var(--dark-green, #0A3D2A);
+    border: 0.7px solid var(--dark-green, #0A3D2A);
 }
 
 .admin-table button:nth-child(1):hover {
@@ -82,6 +212,7 @@
 }
 
 .admin-table button:nth-child(2) {
+    /* Delete button */
     background-color: #f44336;
     color: white;
 }
@@ -91,7 +222,8 @@
 }
 
 .admin-table button:nth-child(3) {
-    background-color: #2196F3;
+    /* View/Suspend/Activate button */
+    background-color: var(--blue, #2196F3);
     color: white;
 }
 
@@ -99,330 +231,349 @@
     background-color: #1976D2;
 }
 
-.tabs-container {
-    display: none;
+/* Suspended status button style */
+.action-btn-handleToggleStatusClick.suspended {
+    background-color: var(--grey-medium, #66666634);
+    color: var(--text-dark, #666);
+    border: 1px solid var(--grey-medium, #999);
+    padding: 4px
 }
 
-.tab-btn {
-    padding: 12px 12px;
-    border: none;
-    background-color: #eee;
-    cursor: pointer;
-    border-radius: 8px;
-}
-
-.tab-btn.active {
-    background-color: var(--dark-green);
+.action-btn-handleToggleStatusClick.suspended:hover {
+    background-color: #b0b0b0;
     color: white;
 }
 
 
+/* --- Confirmation Modal Styles --- */
+/* (These remain largely unchanged as they are not directly table related) */
 .admin-dashboard__confirm-modal {
     text-align: center;
-
     background-color: #fff;
-    border-radius: 10px;
+    border-radius: 0.625rem;
     width: 100%;
     margin: 0 auto;
+    box-sizing: border-box;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .admin-dashboard__confirm-heading {
-    font-size: 1.5rem;
-    margin-bottom: 0rem;
+    font-size: 1.6rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-dark, #333);
 }
 
 .admin-dashboard__confirm-text {
-    color: #666;
-    font-size: 15px;
-    margin-bottom: 1rem;
+    color: var(--grey-medium, #666);
+    font-size: 0.9375rem;
+    margin-bottom: 1.25rem;
 }
 
 .admin-dashboard__confirm-image {
     width: 100%;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    max-height: 350px;
-    max-width: 350px;
+    height: auto;
+    max-width: 18rem;
+    max-height: 18rem;
+    object-fit: contain;
+    border-radius: 0.5rem;
+    margin: 0 auto 1.25rem auto;
+    display: block;
+}
+
+.admin-dashboard__confirm-button,
+.admin-dashboard__cancel-button {
+    width: 100%;
+    padding: 1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    margin-bottom: 0.75rem;
+    box-sizing: border-box;
 }
 
 .admin-dashboard__confirm-button {
-    width: 100%;
-    padding: 16px;
-    background-color: red;
+    background-color: #dc3545;
     color: white;
-    font-weight: bold;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    margin-bottom: 12px;
-    transition: background-color 0.2s ease;
+}
+
+.admin-dashboard__confirm-button:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
 }
 
 .admin-dashboard__cancel-button {
-    width: 100%;
-    padding: 16px;
-    background-color: #66666621;
-    color: #666;
-    font-weight: bold;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
+    background-color: rgba(102, 102, 102, 0.13);
+    color: var(--grey-medium, #666);
+    margin-bottom: 0;
 }
 
 .admin-dashboard__cancel-button:hover {
-    background-color: #d4d4d4;
+    background-color: rgba(102, 102, 102, 0.2);
+    transform: translateY(-1px);
 }
 
+/* --- Admin Form Modal (ModalDropdown content) --- */
+/* (These also remain largely unchanged) */
 
 .admin0dashboard-add-admin-modal {
     padding: 0px;
     background: white;
-    border-radius: 10px;
-    max-width: 500px;
+    border-radius: 0.625rem;
+    max-width: 400px;
     width: 100%;
+    box-sizing: border-box;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .admin0dashboard-modal-title {
-    font-size: 20px;
-    margin-bottom: 15px;
+    font-size: 16px;
+    margin-bottom: 1.25rem;
+    text-align: center;
 }
 
 .admin0dashboard-label {
     display: block;
-    margin-bottom: 10px;
+    margin-bottom: 0.2rem;
     font-weight: 500;
     font-size: 14px;
-    margin-top: 16px
+    margin-top: 1rem;
 }
 
 .admin0dashboard-input {
-    width: 400px;
-    padding: 12px;
-    margin-top: 4px;
-    margin-bottom: 10px;
+    width: 100%;
+    padding: 0.75rem;
+    margin-top: 0.1rem;
+    margin-bottom: 0.625rem;
     border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 14px
+    border-radius: 0.375rem;
+    font-size: 13px;
+    box-sizing: border-box;
 }
 
 .admin0dashboard-modal-buttons {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 0.625rem;
+    margin-top: 1.5rem;
 }
 
-.admin0dashboard-submit-btn {
-    background-color: var(--dark-green);
+.admin0dashboard-submit-btn,
+.admin0dashboard-cancel-btn {
+    background-color: var(--dark-green, #0A3D2A);
     color: white;
-    padding: 16px;
+    padding: 1rem;
     border: none;
-    border-radius: 6px;
+    border-radius: 0.375rem;
     cursor: pointer;
     width: 100%;
-
+    font-weight: bold;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    box-sizing: border-box;
 }
 
 .admin0dashboard-cancel-btn {
     background-color: #ccc;
     color: black;
-    padding: 16px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    width: 100%;
 }
 
+.admin0dashboard-submit-btn:hover {
+    background-color: #082d20;
+    transform: translateY(-1px);
+}
 
+.admin0dashboard-cancel-btn:hover {
+    background-color: #b3b3b3;
+    transform: translateY(-1px);
+}
 
 @keyframes slideInDashboard {
     from {
-        transform: translateX(-50%) translateY(-10%);
+        transform: translateY(-20px);
         opacity: 0;
     }
 
     to {
-        transform: translateX(-50%) translateY(0);
+        transform: translateY(0);
         opacity: 1;
     }
 }
 
 
-/* Mobile Responsive Adjustments */
-@media (max-width: 768px) {
-    .tabs-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 64px;
-        margin-top: 32px;
-    }
+/* --- Media Queries for Larger Screens (Tablets and Desktops) --- */
 
+/* Small Tablets and Up (e.g., min-width 576px) */
+@media (min-width: 36rem) {
 
+    /* 576px */
     .admin-dashboard {
-        padding: 0px;
-        padding-top: 64px
-    }
-
-    .admin-dashboard {
-        background-color: transparent;
-        border-radius: 8px;
+        padding: 1.25rem;
+        /* 20px padding */
     }
 
     .admin-dashboard h2 {
-        font-size: 28px;
-
+        font-size: 2rem;
+        /* 32px */
     }
 
-    /* Make the Add Admin Button more compact */
     .add-admin-btn {
-        width: 100%;
-        font-size: 14px;
-        margin-top: 24px
+        width: auto;
+        /* Button can go back to auto width */
+        padding: 0.875rem 1.5rem;
+        /* More horizontal padding */
+        font-size: 1.05rem;
+        /* Slightly larger text */
+    }
+
+    .tabs-container {
+        justify-content: flex-start;
+        /* Align tabs to start */
+        margin-bottom: 2rem;
+        /* More space below tabs */
+        margin-top: 2rem;
+        /* More space above tabs */
+    }
+
+    .tab-btn {
+        flex: none;
+        /* Don't force them to grow equally */
+        min-width: unset;
+        /* Remove min-width constraint */
+        padding: 0.75rem 1rem;
+        /* Adjust padding */
+    }
+
+    /* Revert table styles for larger screens */
+    .table-responsive-wrapper {
+        overflow-x: visible;
+        /* No scroll on desktop */
+        background-color: #fff;
+        /* Keep shadow for the table */
+    }
+
+    .admin-table {
+        min-width: unset;
+        /* Remove min-width */
     }
 
     .admin-table th {
-        display: none;
+        display: table-cell;
+        /* Show headers */
     }
 
     .admin-table td {
-
-        border-bottom: none;
-    }
-
-    /* Admin Table Adjustments */
-
-    .admin-table td {
-        padding: 8px;
-    }
-
-
-    /* Stack buttons in a column layout */
-    .admin-table button {
-        margin-right: 0;
-        margin-bottom: 5px;
-        width: 100%;
-    }
-
-    /* Make table text fit better on smaller screens */
-
-    .admin-table td {
-        font-size: 14px;
-    }
-
-    /* Hide the table borders and show a cleaner mobile view */
-    .admin-table {
-        border: none;
-    }
-
-    /* Align the table columns to be stacked for smaller screens */
-
-    .admin-table tbody {
-        display: block;
-
+        display: table-cell;
+        /* Show cells as table cells */
+        white-space: normal;
+        /* Allow text to wrap on desktop */
     }
 
     .admin-table tr {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 15px;
-        background-color: #fff;
-        padding: 16px;
-        border-radius: 16px;
-        gap: 12px
+        flex-direction: initial;
+        /* Unset flex direction */
+        margin-bottom: 0;
+        /* No margin between rows */
+        background-color: transparent;
+        /* No background per row */
+        padding: 0;
+        /* No padding per row */
+        border-radius: 0;
+        /* No border radius per row */
+        box-shadow: none;
+        /* No shadow per row */
     }
 
-
-    .admin-table td {
-        display: block;
-        width: 100%;
-        padding: 8px 10px;
-    }
-
-    .admin-table td {
-        padding-left: 30px;
+    .admin-table tr:hover {
+        background-color: var(--grey-light, #f8f8f8);
+        /* Subtle hover */
     }
 
     .admin-table td:first-child {
-        font-weight: bold;
-        font-size: 16px;
-        /* Adjust the size as needed */
-    }
-
-}
-
-/* Very Small Screen Adjustments */
-@media (max-width: 480px) {
-    .admin-dashboard h2 {
-        font-size: 18px;
-    }
-
-    /* Apply bold and larger font size for the Name column */
-    .admin-table td:first-child {
-        font-weight: bold;
-        font-size: 18px;
-        /* Adjust the size for very small screens */
-    }
-
-    .add-admin-btn {
-        font-size: 12px;
-
-    }
-
-
-
-    .admin-table th,
-    .admin-table td {
-        padding: 6px;
+        font-weight: normal;
+        /* Unset bold for first column */
+        font-size: 0.95rem;
+        /* Reset font size */
+        padding-left: 0.75rem;
+        /* Adjust padding */
     }
 
     .action-buttons {
-        display: flex;
-        gap: 12px
+        flex-wrap: nowrap;
+        /* Keep buttons in a single line */
+        justify-content: flex-start;
+        gap: 0.5rem;
+        /* Smaller gap */
+        margin-top: 0;
+        /* Reset margin */
     }
 
-
-    /* Base button style */
-    .action-btn-handleToggleStatusClick {
-        background-color: var(--dark-green);
-        color: white;
-        padding: 0.5rem;
-        border: none;
-        border-radius: 4px;
-        margin-right: 0.5rem;
-        cursor: pointer;
-        font-size: 1rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
+    .admin-table button {
+        flex-shrink: 0;
+        /* Ensure buttons don't shrink */
+        width: auto;
+        /* Buttons take auto width */
+        margin-right: 0;
+        /* No margin-right in flex gap setup */
+        margin-bottom: 0;
+        /* No bottom margin */
+        padding: 0.625rem 0.75rem;
+        /* 10px 12px */
     }
 
-
-    .admin0dashboard-input {
-        width: 100%;
-        padding: 12px;
-        margin-top: 4px;
-        margin-bottom: 10px;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        font-size: 14px
-    }
-
-.admin0dashboard-cancel-btn {
-    background-color: #ccc;
-    color: black;
-    padding: 16px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    width: 100%;
 }
 
-    /* Suspended state */
-    .action-btn-handleToggleStatusClick .suspended-handleToggleStatusClick {
-        background-color: #66666634;
-        color: #666;
+/* Medium Tablets and Laptops (e.g., min-width 768px) */
+@media (min-width: 48rem) {
+
+    /* 768px */
+    .admin-dashboard {
+        padding: 16px;
+        margin-top: 0px;
+        /* 40px */
     }
 
+    .admin-dashboard h2 {
+        font-size: 2.1rem;
+        /* 36px */
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 12px;
+        /* More padding */
+    }
+
+    .admin-dashboard__confirm-modal {
+        max-width: 30rem;
+        /* 480px */
+
+        /* 40px */
+    }
+
+    .admin-dashboard__confirm-heading {
+        font-size: 1.8rem;
+    }
+}
+
+/* Desktops and Larger Screens (e.g., min-width 1024px) */
+@media (min-width: 64rem) {
+
+    /* 1024px */
+    .admin-dashboard {
+        padding: 24px;
+        /* 48px */
+    }
+
+    .admin-dashboard h2 {
+        font-size: 2.1rem;
+        /* 40px */
+    }
+
+    .admin0dashboard-add-admin-modal {
+        max-width: 32rem;
+        /* 720px */
+    }
 }

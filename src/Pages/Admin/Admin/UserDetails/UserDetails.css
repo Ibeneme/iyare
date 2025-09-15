@@ -6,11 +6,20 @@
     align-items: center;
     justify-content: center;
     overflow-x: auto;
+    width: 100%;
+}
+
+
+.page-wrapper-new {
+    min-height: 100vh;
+    padding: 16px;
+    background-color: #f4f4f4;
+    padding-bottom: 240px;
 }
 
 .user-details-container {
-    max-width: 1280px;
-    width: 600px;
+    /* max-width: 1280px;
+    width: 600px; */
     padding: 16px;
     border-radius: 12px;
     background-color: #ffffff;
@@ -116,8 +125,8 @@
     gap: 16px;
     /* optional padding for spacing */
     padding-bottom: 8px;
-  }
-  
+}
+
 
 @media (min-width: 768px) {
     .entry-container {

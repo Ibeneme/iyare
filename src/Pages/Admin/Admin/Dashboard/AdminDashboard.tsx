@@ -4,8 +4,8 @@ import {
   FaChevronRight,
   FaUserPlus,
   FaTrashAlt,
-  FaToggleOn,
-  FaToggleOff,
+  //FaToggleOn,
+  //FaToggleOff,
 } from "react-icons/fa";
 import "./AdminDashboard.css";
 import ModalDropdown from "../../../../Components/Modal/ModalDropdown";
@@ -17,14 +17,15 @@ import { addAdmin } from "../../../../Redux/Admin/Auth";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../../../Redux/store";
 import { useToast } from "../../../../Context/ToastProvider";
-import { createDepartment } from "../../../../Redux/Admin/adminDepartment";
-import { useDepartmentActions } from "../../../../Hooks/useDepartments";
+//import { createDepartment } from "../../../../Redux/Admin/adminDepartment";
+//import { useDepartmentActions } from "../../../../Hooks/useDepartments";
 import { useCourseActions } from "../../../../Hooks/useCourses";
 import {
   createUser,
   fetchAllUsersByType,
 } from "../../../../Redux/Admin/adminUsers";
 import { createGrade } from "../../../../Redux/Admin/AdminGrade";
+import useUserRole from "../../../../Hooks/useUserRole";
 
 interface AdminUser {
   _id: string;
@@ -50,7 +51,6 @@ export type FilterType =
   | "upcomingClass"
   | "reported"
   | "missed3Classes"
-  | "upcomingReported"
   | "subscribed";
 
 interface AdminDashboardProps {
@@ -69,21 +69,29 @@ const filterOptions: Record<UserType, FilterType[]> = {
     "upcomingClass",
     "reported",
   ],
-  teacher: ["all", "active", "disabled", "inClass", "upcomingReported"],
-  course: ["all", "active", "subscribed"],
+  teacher: ["all", "active", "disabled", "inClass"],
+  course: ["all", "active"],
   department: ["all", "active", "suspended"],
   grade: ["all"],
   notFound: ["all"],
 };
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
+  const { userRole, isSuperadmin } = useUserRole();
+
+  useEffect(() => {
+    if (userRole) {
+      console.log("User role is:", userRole);
+    }
+  }, [userRole]);
+
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { addToast } = useToast();
   const [isLoading, setLoading] = useState(true);
   const { suspendAdmin, removeAdmin } = useAdminActions();
-  const { getDepartments } = useDepartmentActions();
+  //const { getDepartments } = useDepartmentActions();
   const { getCourses, addCourse } = useCourseActions();
   const [adminsFilter, setAdminsFilter] = useState<any[]>([]);
   const [addAdminEmail, setAddAdminEmail] = useState("");
@@ -93,9 +101,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
   const [addAdminPassword, setAddAdminPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [departmentName, setDepartmentName] = useState("");
-  const [departmentNameErr, setDepartmentNameErr] = useState("");
+  //const [departmentNameErr, setDepartmentNameErr] = useState("");
   const [departmentsFetched, setDepartmentsFetched] = useState<any[]>([]);
-  const [gradeFetched, setGradeFetched] = useState<any[]>([]);
   const [userFirstName, setUserFirstName] = useState("");
   const [userLastName, setUserLastName] = useState("");
   const [userEmail, setUserEmail] = useState("");
@@ -105,13 +112,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
   const [parents, setParents] = useState([]);
   const [students, setStudents] = useState([]);
   const [parentId, setParentId] = useState("");
+ // const [courseId, setCourseId] = useState("");
   const [coursesFetched, setCourseFetched] = useState<any[]>([]);
   const [courseTitle, setCourseTitle] = useState("");
   const [courseDescription, setCourseDescription] = useState("");
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
+  //const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
   const [courseTitleErr, setCourseTitleErr] = useState("");
   const [courseDescriptionErr, setCourseDescriptionErr] = useState("");
-  const [selectedDepartmentIdErr, setSelectedDepartmentIdErr] = useState("");
+  //const [selectedDepartmentIdErr, setSelectedDepartmentIdErr] = useState("");
   const [formErrors, setFormErrors] = useState({
     email: "",
     role: "",
@@ -133,7 +141,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
   const [gradesFetched, setGradesFetched] = useState<any[]>([]);
 
   // UPDATED STATE: To hold the selected grade ID for student creation
-  const [selectedGradeId, setSelectedGradeId] = useState<string>("");
+  //const [selectedGradeId, setSelectedGradeId] = useState<string>("");
 
   console.log(userType, "grade");
 
@@ -252,7 +260,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
       case "admin":
         return adminsFilter;
       case "grade":
-        return gradesFetched; // Corrected to use gradesFetched
+        return gradesFetched;
       default:
         return [];
     }
@@ -264,10 +272,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
     userType: UserType;
   } | null>(null);
 
-  const handleToggleStatusClick = (user: AdminUser) => {
-    const actionType = user.isSuspended ? "unsuspend" : "suspend";
-    setConfirmModal({ type: actionType, id: user._id, userType });
-  };
+  // const handleToggleStatusClick = (user: AdminUser) => {
+  //   const actionType = user.isSuspended ? "unsuspend" : "suspend";
+  //   setConfirmModal({ type: actionType, id: user._id, userType });
+  // };
 
   const handleRemoveAdminClick = (user: AdminUser) => {
     setConfirmModal({ type: "remove", id: user._id, userType });
@@ -278,7 +286,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
 
     const { id, type, userType } = confirmModal;
     setLoading(true);
-
+    setConfirmModal(null);
     let action: Promise<any>;
     switch (type) {
       case "suspend":
@@ -326,7 +334,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
   };
 
   const handleViewDetails = (id: string) => {
-    // Changed type to string as _id is string
     navigate(`/user-details/${userType}/${id}`);
   };
 
@@ -354,32 +361,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
     setLoading(true);
 
     try {
-      if (userType === "department") {
-        if (!departmentName.trim()) {
-          setDepartmentNameErr("Department name is required");
-          setIsModalOpen(true); // Reopen modal if validation fails
-          setLoading(false);
-          return;
-        }
-
-        const resultAction = await dispatch(
-          createDepartment({ name: departmentName })
-        );
-        if (createDepartment.rejected.match(resultAction)) {
-          setDepartmentNameErr(
-            (resultAction.payload as string) || "Failed to add department"
-          );
-          setIsModalOpen(true); // Reopen modal
-          setLoading(false);
-          return;
-        }
-
-        const department = await getDepartments();
-        setDepartmentsFetched(department?.data);
-        addToast("success", "Department created successfully!");
-        setDepartmentName("");
-        setDepartmentNameErr("");
-      } else if (userType === "course") {
+      if (userType === "course") {
         let hasError = false;
         if (!courseTitle.trim()) {
           setCourseTitleErr("Course title is required");
@@ -391,11 +373,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
           hasError = true;
         } else setCourseDescriptionErr("");
 
-        if (!selectedDepartmentId) {
-          setSelectedDepartmentIdErr("Please select a department");
-          hasError = true;
-        } else setSelectedDepartmentIdErr("");
-
         if (hasError) {
           setIsModalOpen(true); // Reopen modal if validation fails
           setLoading(false);
@@ -405,7 +382,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
         const result = await addCourse({
           title: courseTitle,
           description: courseDescription,
-          departmentId: selectedDepartmentId,
         });
 
         if (result.success) {
@@ -415,7 +391,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
           }
           setCourseTitle("");
           setCourseDescription("");
-          setSelectedDepartmentId("");
           addToast("success", "Course added successfully!");
         }
       } else if (userType === "grade") {
@@ -431,7 +406,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
         } else setGradeDescriptionErr("");
 
         if (hasError) {
-          setIsModalOpen(true); // Reopen modal if validation fails
+          setIsModalOpen(true);
           setLoading(false);
           return;
         }
@@ -444,7 +419,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
         ).unwrap();
 
         if (result.success as any) {
-          fetchUsers(); // Re-fetch all users to update grade list
+          fetchUsers();
           setGradeTitle("");
           setGradeDescription("");
           addToast("success", "Grade created successfully!");
@@ -483,7 +458,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
 
         setFormErrors(errors);
         if (hasError) {
-          setIsModalOpen(true); // Reopen modal if validation fails
+          setIsModalOpen(true);
           setLoading(false);
           return;
         }
@@ -512,7 +487,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
         userType === "student" ||
         userType === "teacher"
       ) {
-        // Validation for user creation (parent, student, teacher)
         let hasError = false;
         const newFormErrorsUsers: any = {};
 
@@ -524,6 +498,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
           newFormErrorsUsers.lastName = "Last name is required.";
           hasError = true;
         }
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(userEmail)) {
           newFormErrorsUsers.email = "Please enter a valid email address.";
@@ -534,17 +509,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
           hasError = true;
         }
 
-        // Specific validation for student: grade selection
-        // UPDATED: Check for selectedGradeId
-        if (userType === "student" && !selectedGradeId.trim()) {
-          newFormErrorsUsers.gradeId = "Please select a grade."; // Error message for grade ID
-          hasError = true;
-        }
+        // if (userType === "student" && !selectedGradeId.trim()) {
+        //   newFormErrorsUsers.gradeId = "Please select a grade.";
+        //   hasError = true;
+        // }
 
         setFormErrorsUsers(newFormErrorsUsers);
 
         if (hasError) {
-          setIsModalOpen(true); // Reopen modal if validation fails
+          setIsModalOpen(true);
           setLoading(false);
           return;
         }
@@ -556,22 +529,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
           phoneNumber: userPhoneNumber,
           userType,
           parentId,
-          // UPDATED: Conditionally add gradeId if userType is student
-          ...(userType === "student" && { gradeId: selectedGradeId }),
+          ...(userType === "student" && { parentId: parentId }),
         };
 
         const res: any = await dispatch(createUser(body as any));
         if (res.payload?.success) {
           fetchUsers();
           addToast("success", `${userType} created successfully!`);
-          setIsModalOpen(false); // Close modal on success
-          // Clear form fields
+          setIsModalOpen(false);
           setUserFirstName("");
           setUserLastName("");
           setUserEmail("");
           setUserPhoneNumber("");
           setParentId("");
-          setSelectedGradeId(""); // Clear selected grade ID
+         // setSelectedGradeId("");
         } else {
           const errorMsg = res.payload?.error || res.error?.message;
           if (
@@ -583,32 +554,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
               email: "Email already in use.",
             });
           } else {
-            addToast("error", "Something went wrong! " + errorMsg); // Show more specific error
+            addToast("error", "Something went wrong! " + errorMsg);
           }
-          setIsModalOpen(true); // Reopen modal on error
+          setIsModalOpen(true);
         }
       }
     } catch (error) {
       console.error("Submit Error:", error);
-      addToast("error", "Something went wrong!");
-      setIsModalOpen(true); // Reopen modal on unhandled error
+      addToast("error", error as any);
+      setIsModalOpen(true);
     } finally {
       setLoading(false);
     }
   };
 
-  const adminRole = localStorage.getItem("yareadminrole");
+  //const adminRole = localStorage.getItem("yareadminrole");
 
   return (
     <div className="admin-dashboard">
-      {isLoading && (
-        <ModalDropdown onClose={() => setConfirmModal(null)} hideCloseButton>
-          <Loader />
-        </ModalDropdown>
-      )}
-      <h2>{getTitle()}</h2>
+      {isLoading && <Loader />}
+      <h2 style={{ fontSize: 22, marginBottom: 4 }}>{getTitle()}</h2>
 
-      <p>View all data for {userType}s.</p>
+      <p style={{ marginTop: 0, fontSize: 14 }}>
+        Browse through a comprehensive list of all registered {userType}s. This
+        section provides access to key information such as names, roles, and
+        status updates. Whether you're here to stay informed or simply explore,
+        you’ll find all the relevant details you need about each {userType} in
+        one place.
+      </p>
 
       <div className="tabs-container">
         {userType &&
@@ -618,152 +591,205 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
               key={f}
               className={`tab-btn ${filter === f ? "active" : ""}`}
               onClick={() => navigate(`/${userType}/dashboard/${f}`)}
+              style={{ fontSize: 14 }}
             >
               {formatFilterText(f)}
             </button>
           ))}
       </div>
 
-      {adminRole === "superadmin" && (
+      {/* {adminRole === "superadmin" && (
         <button className="add-admin-btn" onClick={() => setIsModalOpen(true)}>
+          <FaUserPlus /> Add {userType}
+        </button>
+      )} */}
+
+      {(userRole === "admin" && isSuperadmin) && (
+        <button
+          className="add-admin-btn"
+          style={{
+            fontSize: 12,
+            backgroundColor: `var(--dark-green)`,
+            color: `var(--yellow)`,
+            padding: 15,
+            display: "flex",
+            gap: 4,
+          }}
+          onClick={() => setIsModalOpen(true)}
+        >
           <FaUserPlus /> Add {userType}
         </button>
       )}
 
-      <table className="admin-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            {userType !== "course" && userType !== "department" && (
-              <th>Email</th>
-            )}
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {dataToDisplay.length === 0 ? (
+      <div className="table-responsive-wrapper">
+        <table className="admin-table">
+          <thead>
             <tr>
-              <td
-                colSpan={
-                  userType !== "course" && userType !== "department" ? 4 : 3
-                }
-              >
-                No items available
-              </td>
+              <th>Name</th>
+              {userType !== "course" && userType !== "department" && (
+                <th>Email</th>
+              )}
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
-          ) : (
-            dataToDisplay.map(
-              (
-                user: any // Added any type to user
-              ) => (
-                <tr key={user._id}>
-                  {" "}
-                  {/* Changed user.id to user._id */}
-                  <td>
-                    {user?.name ||
-                      `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
-                      user.title}
-                  </td>{" "}
-                  {/* Improved name display */}
-                  {userType !== "course" && userType !== "department" && (
-                    <td>{user.email}</td>
-                  )}
-                  <td>
-                    {user.status || (user.isSuspended ? "Suspended" : "Active")}
-                  </td>
-                  <td>
-                    <div className="action-buttons">
-                      <button
-                        style={{
-                          backgroundColor: user.isSuspended
-                            ? "#66666634"
-                            : "var(--yellow)",
-                          color: user.isSuspended
-                            ? "#666"
-                            : "var(--dark-green)",
-                        }}
-                        onClick={() => handleToggleStatusClick(user)}
-                        className={`action-btn-handleToggleStatusClick ${
-                          user.isSuspended
-                            ? "suspended-handleToggleStatusClick"
-                            : ""
-                        }`}
-                      >
-                        {user.isSuspended ? <FaToggleOff /> : <FaToggleOn />}
-                      </button>
+          </thead>
+          <tbody>
+            {dataToDisplay.length === 0 ? (
+              <tr>
+                <td
+                  style={{
+                    fontSize: 14,
 
-                      <button
-                        onClick={() => handleRemoveAdminClick(user)}
-                        className={`action-btn-handleToggleStatusClick ${
-                          user.isSuspended
-                            ? "suspended-handleToggleStatusClick"
-                            : ""
-                        }`}
-                        style={{
-                          backgroundColor: user.isSuspended
-                            ? "#66666634"
-                            : "var(--yellow)",
-                          color: user.isSuspended
-                            ? "#666"
-                            : "var(--dark-green)",
-                        }}
-                      >
-                        <FaTrashAlt />
-                      </button>
+                    padding: `48px 0px`,
+                  }}
+                  colSpan={
+                    userType !== "course" && userType !== "department" ? 4 : 3
+                  }
+                >
+                  No items available
+                </td>
+              </tr>
+            ) : (
+              dataToDisplay.map(
+                (
+                  user: any // Added any type to user
+                ) => (
+                  <tr key={user._id} style={{ fontSize: 12 }}>
+                    {" "}
+                    {/* Changed user.id to user._id */}
+                    <td style={{ fontSize: 14 }}>
+                      {user?.name ||
+                        `${user.firstName || ""} ${
+                          user.lastName || ""
+                        }`.trim() ||
+                        user.title}
+                    </td>{" "}
+                    {/* Improved name display */}
+                    {userType !== "course" && userType !== "department" && (
+                      <td style={{ fontSize: 14 }}>{user.email}</td>
+                    )}
+                    <td style={{ fontSize: 14 }}>
+                      {user.status ||
+                        (user.isSuspended ? "Suspended" : "Active")}
+                    </td>
+                    <td>
+                      <div className="action-buttons">
+                        {/* <button
+                          style={{
+                            backgroundColor: user.isSuspended
+                              ? "#66666634"
+                              : "var(--yellow)",
+                            color: user.isSuspended
+                              ? "#666"
+                              : "var(--dark-green)",
+                          }}
+                          onClick={() => handleToggleStatusClick(user)}
+                          className={`action-btn-handleToggleStatusClick ${
+                            user.isSuspended
+                              ? "suspended-handleToggleStatusClick"
+                              : ""
+                          }`}
+                        >
+                          {user.isSuspended ? <FaToggleOff /> : <FaToggleOn />}
+                        </button> */}
 
-                      {/* This block seems duplicated, remove one if not needed.
+                        <button
+                          onClick={() => handleRemoveAdminClick(user)}
+                          className={`action-btn-handleToggleStatusClick ${
+                            user.isSuspended
+                              ? "suspended-handleToggleStatusClick"
+                              : ""
+                          }`}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            padding: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center", // ✅ Correct this line
+                            backgroundColor: user.isSuspended
+                              ? "#66666634"
+                              : "var(--yellow)",
+                            color: user.isSuspended
+                              ? "#666"
+                              : "var(--dark-green)",
+                            border: "none",
+                            borderRadius: 4, // optional rounding
+                            cursor: "pointer", // optional pointer on hover
+                          }}
+                        >
+                          <FaTrashAlt size={12} />
+                        </button>
+
+                        {/* This block seems duplicated, remove one if not needed.
                         I'm keeping it as is based on the original request but
                         you might want to consolidate or clarify its purpose. */}
-                      {userType === "admin" && (
-                        <>
-                          <button
-                            onClick={() => handleRemoveAdminClick(user)}
-                            className={`action-btn-handleToggleStatusClick ${
-                              user.isSuspended
-                                ? "suspended-handleToggleStatusClick"
-                                : ""
-                            }`}
-                            style={{
-                              backgroundColor: user.isSuspended
-                                ? "#66666634"
-                                : "var(--yellow)",
-                              color: user.isSuspended
-                                ? "#666"
-                                : "var(--dark-green)",
-                            }}
-                          >
-                            <FaTrashAlt />
-                          </button>
-                        </>
-                      )}
+                        {/* {userType === "admin" && (
+                          <>
+                            <button
+                              onClick={() => handleRemoveAdminClick(user)}
+                              className={`action-btn-handleToggleStatusClick ${
+                                user.isSuspended
+                                  ? "suspended-handleToggleStatusClick"
+                                  : ""
+                              }`}
+                              style={{
+                                width: 24,
+                                height: 24,
+                                padding: 0,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center", // ✅ Correct this line
 
-                      <button
-                        onClick={() => handleViewDetails(user._id)}
-                        className={`action-btn-handleToggleStatusClick ${
-                          user.isSuspended
-                            ? "suspended-handleToggleStatusClick"
-                            : ""
-                        }`}
-                        style={{
-                          backgroundColor: `var(--dark-green)`,
-                          color: `var(--yellow)`,
-                        }}
-                      >
-                        <FaChevronRight />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                                backgroundColor: user.isSuspended
+                                  ? "#66666634"
+                                  : "var(--yellow)",
+                                color: user.isSuspended
+                                  ? "#666"
+                                  : "var(--dark-green)",
+                              }}
+                            >
+                              <FaTrashAlt size={12} />
+                            </button>
+                          </>
+                        )} */}
+
+                        <button
+                          onClick={() => handleViewDetails(user._id)}
+                          className={`action-btn-handleToggleStatusClick ${
+                            user.isSuspended
+                              ? "suspended-handleToggleStatusClick"
+                              : ""
+                          }`}
+                          style={{
+                            backgroundColor: `var(--dark-green)`,
+                            color: `var(--yellow)`,
+                            width: 28,
+                            height: 28,
+                            padding: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center", // ✅ Correct this line
+                          }}
+                        >
+                          <FaChevronRight size={12} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
               )
-            )
-          )}
-        </tbody>
-      </table>
+            )}
+          </tbody>
+        </table>
+      </div>
       {confirmModal && (
         <ModalDropdown onClose={() => setConfirmModal(null)}>
           <div className="admin-dashboard__confirm-modal">
-            <h2 className="admin-dashboard__confirm-heading">
+            <h2
+              className="admin-dashboard__confirm-heading"
+              style={{ fontSize: 20, marginBottom: 6 }}
+            >
               {confirmModal.type === "suspend"
                 ? "Confirm Suspension"
                 : confirmModal.type === "unsuspend"
@@ -816,80 +842,129 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
         <ModalDropdown onClose={() => setIsModalOpen(false)}>
           {userType === "admin" && (
             <div className="admin0dashboard-add-admin-modal">
-              <h2 className="admin0dashboard-modal-title">Add New Admin</h2>
+              <h2
+                style={{
+                  fontSize: 20,
+                  textAlign: "left",
+                  marginBottom: 8,
+                  fontWeight: 600,
+                  color: "#222",
+                }}
+                className="admin0dashboard-modal-title"
+              >
+                Add New Admin
+              </h2>
+
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "#555",
+                  marginBottom: "1.5rem",
+                  textAlign: "left",
+                  lineHeight: 1.4,
+                  backgroundColor: "#66666618",
+                  padding: 12,
+                  borderRadius: 12,
+                }}
+              >
+                Provide the new admin’s email, name, role, and a secure
+                password. Ensure roles are correctly assigned for appropriate
+                access.
+              </p>
+
               <form className="admin0dashboard-form" onSubmit={handleSubmitAll}>
+                {/* Email Field */}
                 <div>
-                  <label className="admin0dashboard-label">
+                  <label htmlFor="adminEmail" className="admin0dashboard-label">
                     Email
-                    <input
-                      type="email"
-                      className="admin0dashboard-input"
-                      placeholder="Enter email address"
-                      value={addAdminEmail}
-                      onChange={(e) => setAddAdminEmail(e.target.value)}
-                    />
                   </label>
+                  <input
+                    type="email"
+                    id="adminEmail" // Added ID for accessibility with label's htmlFor
+                    className="admin0dashboard-input"
+                    placeholder="Enter email address"
+                    value={addAdminEmail}
+                    onChange={(e) => setAddAdminEmail(e.target.value)}
+                  />
                   {formErrors.email && (
                     <p className="error-text">{formErrors.email}</p>
                   )}
                 </div>
-                <div>
-                  <label className="admin0dashboard-label">
-                    Role
-                    <select
-                      className="admin0dashboard-input"
-                      value={addAdminRole}
-                      onChange={(e) => setAddAdminRole(e.target.value)}
-                    >
-                      <option value="">Select Role</option>
-                      <option value="superadmin">Super Admin</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </label>
 
+                {/* Role Field */}
+                <div>
+                  <label htmlFor="adminRole" className="admin0dashboard-label">
+                    Role
+                  </label>
+                  <select
+                    id="adminRole" // Added ID for accessibility
+                    className="admin0dashboard-input"
+                    value={addAdminRole}
+                    onChange={(e) => setAddAdminRole(e.target.value)}
+                  >
+                    <option value="">Select Role</option>
+                    <option value="superadmin">Super Admin</option>
+                    <option value="admin">Admin</option>
+                  </select>
                   {formErrors.role && (
                     <p className="error-text">{formErrors.role}</p>
                   )}
                 </div>
 
+                {/* First Name Field */}
                 <div>
-                  <label className="admin0dashboard-label">
+                  <label
+                    htmlFor="adminFirstName"
+                    className="admin0dashboard-label"
+                  >
                     First Name
-                    <input
-                      type="text"
-                      className="admin0dashboard-input"
-                      placeholder="Enter first name"
-                      value={addAdminFirstName}
-                      onChange={(e) => setAddAdminFirstName(e.target.value)}
-                    />
                   </label>
+                  <input
+                    type="text"
+                    id="adminFirstName" // Added ID for accessibility
+                    className="admin0dashboard-input"
+                    placeholder="Enter first name"
+                    value={addAdminFirstName}
+                    onChange={(e) => setAddAdminFirstName(e.target.value)}
+                  />
                   {formErrors.firstName && (
                     <p className="error-text">{formErrors.firstName}</p>
                   )}
                 </div>
 
+                {/* Last Name Field */}
                 <div>
-                  <label className="admin0dashboard-label">
+                  <label
+                    htmlFor="adminLastName"
+                    className="admin0dashboard-label"
+                  >
                     Last Name
-                    <input
-                      type="text"
-                      className="admin0dashboard-input"
-                      placeholder="Enter last name"
-                      value={addAdminLastName}
-                      onChange={(e) => setAddAdminLastName(e.target.value)}
-                    />
                   </label>
+                  <input
+                    type="text"
+                    id="adminLastName" // Added ID for accessibility
+                    className="admin0dashboard-input"
+                    placeholder="Enter last name"
+                    value={addAdminLastName}
+                    onChange={(e) => setAddAdminLastName(e.target.value)}
+                  />
                   {formErrors.lastName && (
                     <p className="error-text">{formErrors.lastName}</p>
                   )}
                 </div>
 
+                {/* Password Field (already had separate label) */}
                 <div className="form-group relative">
-                  <label htmlFor="adminPassword">Password</label>
+                  <label
+                    htmlFor="adminPassword"
+                    className="admin0dashboard-label"
+                  >
+                    Password
+                  </label>
                   <input
                     type={showPassword ? "text" : "password"}
                     id="adminPassword"
-                    className="form-control pr-10"
+                    className="form-control pr-10 admin0dashboard-input" // Added admin0dashboard-input for consistent styling
                     placeholder="Enter password"
                     value={addAdminPassword}
                     onChange={(e) => setAddAdminPassword(e.target.value)}
@@ -903,7 +978,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                       alignSelf: "flex-end",
                     }}
                     onClick={() => setShowPassword((prev: any) => !prev)}
-                    className="absolute right-3 top-9 text-gray-600 focus:outline-none"
+                    className="absolute right-3 top-9 text-gray-600 focus:outline-none" // Adjust top if necessary based on label height
                   >
                     {showPassword ? "hide" : "show"}
                   </button>
@@ -936,20 +1011,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
               </h2>
               <form className="admin0dashboard-form" onSubmit={handleSubmitAll}>
                 <div>
-                  <label className="admin0dashboard-label">
+                  <label
+                    htmlFor="departmentName"
+                    className="admin0dashboard-label"
+                  >
                     Department Name
-                    <input
-                      type="text"
-                      className="admin0dashboard-input"
-                      placeholder="Enter department name"
-                      value={departmentName}
-                      onChange={(e) => setDepartmentName(e.target.value)}
-                      required
-                    />
                   </label>
-                  {departmentNameErr && (
+                  <input
+                    type="text"
+                    id="departmentName" // Added ID
+                    placeholder="Enter department name"
+                    value={departmentName}
+                    onChange={(e) => setDepartmentName(e.target.value)}
+                    required
+                  />
+                  {/* {departmentNameErr && (
                     <p className="error-text">{departmentNameErr}</p>
-                  )}
+                  )} */}
                 </div>
 
                 <div className="admin0dashboard-modal-buttons">
@@ -970,62 +1048,104 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
 
           {userType === "course" && (
             <div className="admin0dashboard-add-admin-modal">
-              <h2 className="admin0dashboard-modal-title">Add New Course</h2>
+              <h2
+                className="admin0dashboard-modal-title"
+                style={{
+                  fontSize: 20,
+                  textAlign: "left",
+                  marginBottom: 8,
+                  fontWeight: 600,
+                  color: "#222",
+                }}
+              >
+                Add New Course
+              </h2>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "#555",
+                  marginBottom: "1.5rem",
+                  textAlign: "left",
+                  lineHeight: 1.4,
+                  backgroundColor: "#66666618",
+                  padding: 12,
+                  borderRadius: 12,
+                }}
+              >
+                Use the form below to create a new course. Include a clear
+                title, a brief description, and assign it to a department. All
+                fields are required.
+              </p>
               <form className="admin0dashboard-form" onSubmit={handleSubmitAll}>
+                {/* Course Title Field */}
                 <div>
-                  <label className="admin0dashboard-label">
+                  <label
+                    htmlFor="courseTitle"
+                    className="admin0dashboard-label"
+                  >
                     Course Title
-                    <input
-                      type="text"
-                      className="admin0dashboard-input"
-                      placeholder="Enter course title"
-                      value={courseTitle}
-                      onChange={(e) => setCourseTitle(e.target.value)}
-                      required
-                    />
                   </label>
+                  <input
+                    type="text"
+                    id="courseTitle" // Added ID
+                    className="admin0dashboard-input"
+                    placeholder="Enter course title"
+                    value={courseTitle}
+                    onChange={(e) => setCourseTitle(e.target.value)}
+                    required
+                  />
                   {courseTitleErr && (
                     <p className="error-text">{courseTitleErr}</p>
                   )}
                 </div>
 
+                {/* Course Description Field */}
                 <div>
-                  <label className="admin0dashboard-label">
+                  <label
+                    htmlFor="courseDescription"
+                    className="admin0dashboard-label"
+                  >
                     Course Description
-                    <textarea
-                      className="admin0dashboard-input"
-                      placeholder="Enter course description"
-                      value={courseDescription}
-                      onChange={(e) => setCourseDescription(e.target.value)}
-                      required
-                    />
                   </label>
+                  <textarea
+                    id="courseDescription" // Added ID
+                    className="admin0dashboard-input"
+                    placeholder="Enter course description"
+                    value={courseDescription}
+                    onChange={(e) => setCourseDescription(e.target.value)}
+                    required
+                  />
                   {courseDescriptionErr && (
                     <p className="error-text">{courseDescriptionErr}</p>
                   )}
                 </div>
 
-                <div>
-                  <label className="admin0dashboard-label">
+                {/* Select Department Field */}
+                {/* <div>
+                  <label
+                    htmlFor="selectDepartment"
+                    className="admin0dashboard-label"
+                  >
                     Select Department
-                    <select
-                      className="admin0dashboard-input"
-                      value={selectedDepartmentId}
-                      onChange={(e) => setSelectedDepartmentId(e.target.value)}
-                      required
-                    >
-                      <option value="">-- Select Department --</option>
-                      {departmentsFetched?.map((dept: any) => (
-                        <option key={dept._id} value={dept._id}>
-                          {dept.name}
-                        </option>
-                      ))}
-                    </select>
                   </label>
+                  <select
+                    id="selectDepartment" // Added ID
+                    className="admin0dashboard-input"
+                    value={selectedDepartmentId}
+                    onChange={(e) => setSelectedDepartmentId(e.target.value)}
+                    required
+                  >
+                    <option value="">-- Select Department --</option>
+                    {departmentsFetched?.map((dept: any) => (
+                      <option key={dept._id} value={dept._id}>
+                        {dept.name}
+                      </option>
+                    ))}
+                  </select>
                   {selectedDepartmentIdErr && (
                     <p className="error-text">{selectedDepartmentIdErr}</p>
                   )}
-                </div>
+                </div> */}
 
                 <div className="admin0dashboard-modal-buttons">
                   <button type="submit" className="admin0dashboard-submit-btn">
@@ -1047,34 +1167,41 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
             <div className="admin0dashboard-add-admin-modal">
               <h2 className="admin0dashboard-modal-title">Add New Grade</h2>
               <form className="admin0dashboard-form" onSubmit={handleSubmitAll}>
+                {/* Grade Title Field */}
                 <div>
-                  <label className="admin0dashboard-label">
+                  <label htmlFor="gradeTitle" className="admin0dashboard-label">
                     Grade Title
-                    <input
-                      type="text"
-                      className="admin0dashboard-input"
-                      placeholder="e.g., Grade 1, Junior High"
-                      value={gradeTitle}
-                      onChange={(e) => setGradeTitle(e.target.value)}
-                      required
-                    />
                   </label>
+                  <input
+                    type="text"
+                    id="gradeTitle" // Added ID
+                    className="admin0dashboard-input"
+                    placeholder="e.g., Grade 1, Junior High"
+                    value={gradeTitle}
+                    onChange={(e) => setGradeTitle(e.target.value)}
+                    required
+                  />
                   {gradeTitleErr && (
                     <p className="error-text">{gradeTitleErr}</p>
                   )}
                 </div>
 
+                {/* Grade Description Field */}
                 <div>
-                  <label className="admin0dashboard-label">
+                  <label
+                    htmlFor="gradeDescription"
+                    className="admin0dashboard-label"
+                  >
                     Grade Description
-                    <textarea
-                      className="admin0dashboard-input"
-                      placeholder="e.g., First year of primary school"
-                      value={gradeDescription}
-                      onChange={(e) => setGradeDescription(e.target.value)}
-                      required
-                    />
                   </label>
+                  <textarea
+                    id="gradeDescription" // Added ID
+                    className="admin0dashboard-input"
+                    placeholder="e.g., First year of primary school"
+                    value={gradeDescription}
+                    onChange={(e) => setGradeDescription(e.target.value)}
+                    required
+                  />
                   {gradeDescriptionErr && (
                     <p className="error-text">{gradeDescriptionErr}</p>
                   )}
@@ -1084,6 +1211,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                   <button type="submit" className="admin0dashboard-submit-btn">
                     Add Grade
                   </button>
+                  <br />
                   <button
                     type="button"
                     className="admin0dashboard-cancel-btn"
@@ -1096,118 +1224,193 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
             </div>
           )}
 
-          {/* REFACTORED: Add Student Modal with Grade ID Dropdown */}
           {userType === "student" && (
             <div className="admin0dashboard-add-admin-modal">
-              <h2 className="admin0dashboard-modal-title">Add New Student</h2>
+              <h2
+                style={{
+                  fontSize: 20,
+                  textAlign: "left",
+                  marginBottom: 8,
+                  fontWeight: 600,
+                  color: "#222",
+                }}
+                className="admin0dashboard-modal-title"
+              >
+                Add New Student
+              </h2>
+
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "#555",
+                  marginBottom: "1.5rem",
+                  textAlign: "left",
+                  lineHeight: 1.4,
+                  backgroundColor: "#66666618",
+                  padding: 12,
+                  borderRadius: 12,
+                }}
+              >
+                Add a new student by filling in their name, contact details,
+                grade level, and assigning a parent if applicable.
+              </p>
+
               <form className="admin0dashboard-form" onSubmit={handleSubmitAll}>
+                {/* First Name Field */}
                 <div>
-                  <label className="admin0dashboard-label">
+                  <label
+                    htmlFor="userFirstName"
+                    className="admin0dashboard-label"
+                  >
                     First Name
-                    <input
-                      type="text"
-                      className="admin0dashboard-input"
-                      placeholder="Enter first name"
-                      value={userFirstName}
-                      onChange={(e) => setUserFirstName(e.target.value)}
-                      required
-                    />
                   </label>
+                  <input
+                    type="text"
+                    id="userFirstName" // Added ID
+                    className="admin0dashboard-input"
+                    placeholder="Enter first name"
+                    value={userFirstName}
+                    onChange={(e) => setUserFirstName(e.target.value)}
+                    required
+                  />
                   {formErrorsUsers.firstName && (
                     <p className="error-text">{formErrorsUsers.firstName}</p>
                   )}
                 </div>
 
+                {/* Last Name Field */}
                 <div>
-                  <label className="admin0dashboard-label">
+                  <label
+                    htmlFor="userLastName"
+                    className="admin0dashboard-label"
+                  >
                     Last Name
-                    <input
-                      type="text"
-                      className="admin0dashboard-input"
-                      placeholder="Enter last name"
-                      value={userLastName}
-                      onChange={(e) => setUserLastName(e.target.value)}
-                      required
-                    />
                   </label>
+                  <input
+                    type="text"
+                    id="userLastName" // Added ID
+                    className="admin0dashboard-input"
+                    placeholder="Enter last name"
+                    value={userLastName}
+                    onChange={(e) => setUserLastName(e.target.value)}
+                    required
+                  />
                   {formErrorsUsers.lastName && (
                     <p className="error-text">{formErrorsUsers.lastName}</p>
                   )}
                 </div>
 
+                {/* Email Field */}
                 <div>
-                  <label className="admin0dashboard-label">
+                  <label htmlFor="userEmail" className="admin0dashboard-label">
                     Email
-                    <input
-                      type="email"
-                      className="admin0dashboard-input"
-                      placeholder="Enter email address"
-                      value={userEmail}
-                      onChange={(e) => setUserEmail(e.target.value)}
-                      required
-                    />
                   </label>
+                  <input
+                    type="email"
+                    id="userEmail" // Added ID
+                    className="admin0dashboard-input"
+                    placeholder="Enter email address"
+                    value={userEmail}
+                    onChange={(e) => setUserEmail(e.target.value)}
+                    required
+                  />
                   {formErrorsUsers.email && (
                     <p className="error-text">{formErrorsUsers.email}</p>
                   )}
                 </div>
 
+                {/* Phone Number Field */}
                 <div>
-                  <label className="admin0dashboard-label">
+                  <label
+                    htmlFor="userPhoneNumber"
+                    className="admin0dashboard-label"
+                  >
                     Phone Number
-                    <input
-                      type="text" // Or "tel" for mobile friendly keyboards
-                      className="admin0dashboard-input"
-                      placeholder="Enter phone number"
-                      value={userPhoneNumber}
-                      onChange={(e) => setUserPhoneNumber(e.target.value)}
-                      required
-                    />
                   </label>
+                  <input
+                    type="text" // Or "tel" for mobile friendly keyboards
+                    id="userPhoneNumber" // Added ID
+                    className="admin0dashboard-input"
+                    placeholder="Enter phone number"
+                    value={userPhoneNumber}
+                    onChange={(e) => setUserPhoneNumber(e.target.value)}
+                    required
+                  />
                   {formErrorsUsers.phoneNumber && (
                     <p className="error-text">{formErrorsUsers.phoneNumber}</p>
                   )}
                 </div>
 
-                {/* UPDATED: Grade ID Dropdown */}
-                <div>
-                  <label className="admin0dashboard-label">
+                {/* Select Grade Field */}
+                {/* <div>
+                  <label
+                    htmlFor="selectGrade"
+                    className="admin0dashboard-label"
+                  >
                     Select Grade
-                    <select
-                      className="admin0dashboard-input"
-                      value={selectedGradeId}
-                      onChange={(e) => setSelectedGradeId(e.target.value)}
-                      required
-                    >
-                      <option value="">-- Select Grade --</option>
-                      {gradesFetched?.map((grade: any) => (
-                        <option key={grade._id} value={grade._id}>
-                          {grade.name}
-                        </option>
-                      ))}
-                    </select>
                   </label>
+                  <select
+                    id="selectGrade" // Added ID
+                    className="admin0dashboard-input"
+                    value={selectedGradeId}
+                    onChange={(e) => setSelectedGradeId(e.target.value)}
+                    required
+                  >
+                    <option value="">-- Select Grade --</option>
+                    {gradesFetched?.map((grade: any) => (
+                      <option key={grade._id} value={grade._id}>
+                        {grade.name}
+                      </option>
+                    ))}
+                  </select>
                   {formErrorsUsers.gradeId && (
                     <p className="error-text">{formErrorsUsers.gradeId}</p>
                   )}
-                </div>
+                </div> */}
+
+                {/* Assign Parent Field */}
+                {/* <div>
+                  <label
+                    htmlFor="assignParent"
+                    className="admin0dashboard-label"
+                  >
+                    Assign a Course
+                  </label>
+                  <select
+                    id="assignParent" // Added ID
+                    className="admin0dashboard-input"
+                    value={parentId}
+                    onChange={(e) => setParentId(e.target.value)}
+                  >
+                    <option value="">-- Select Parent --</option>
+                    {coursesFetched.map((parent: any) => (
+                      <option key={parent._id} value={parent._id}>
+                        {parent.name} 
+                      </option>
+                    ))}
+                  </select>
+                </div> */}
 
                 <div>
-                  <label className="admin0dashboard-label">
+                  <label
+                    htmlFor="assignParent"
+                    className="admin0dashboard-label"
+                  >
                     Assign Parent
-                    <select
-                      className="admin0dashboard-input"
-                      value={parentId}
-                      onChange={(e) => setParentId(e.target.value)}
-                    >
-                      <option value="">-- Select Parent --</option>
-                      {parents.map((parent: any) => (
-                        <option key={parent._id} value={parent._id}>
-                          {parent.name} - {parent.email}
-                        </option>
-                      ))}
-                    </select>
                   </label>
+                  <select
+                    id="assignParent" // Added ID
+                    className="admin0dashboard-input"
+                    value={parentId}
+                    onChange={(e) => setParentId(e.target.value)}
+                  >
+                    <option value="">-- Select Parent --</option>
+                    {parents.map((parent: any) => (
+                      <option key={parent._id} value={parent._id}>
+                        {parent.name} - {parent.email}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="admin0dashboard-modal-buttons">
                   <button type="submit" className="admin0dashboard-submit-btn">
@@ -1225,104 +1428,140 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
             </div>
           )}
 
-          {(userType === "parent" || userType === "teacher") &&
-            userType !== "student" && (
-              <div className="admin0dashboard-add-admin-modal">
-                <h2 className="admin0dashboard-modal-title">
-                  Add New {userType.charAt(0).toUpperCase() + userType.slice(1)}
-                </h2>
-                <form
-                  className="admin0dashboard-form"
-                  onSubmit={handleSubmitAll}
-                >
-                  <div>
-                    <label className="admin0dashboard-label">
-                      First Name
-                      <input
-                        type="text"
-                        className="admin0dashboard-input"
-                        placeholder="Enter first name"
-                        value={userFirstName}
-                        onChange={(e) => setUserFirstName(e.target.value)}
-                        required
-                      />
-                    </label>
-                    {formErrorsUsers.firstName && (
-                      <p className="error-text">{formErrorsUsers.firstName}</p>
-                    )}
-                  </div>
+          {/* Parent/Teacher Section */}
+          {(userType === "parent" || userType === "teacher") && ( // Corrected logical OR operator
+            <div className="admin0dashboard-add-admin-modal">
+              <h2
+                style={{
+                  fontSize: 20,
+                  textAlign: "left",
+                  marginBottom: 8,
+                  fontWeight: 600,
+                  color: "#222",
+                }}
+                className="admin0dashboard-modal-title"
+              >
+                Add New {userType.charAt(0).toUpperCase() + userType.slice(1)}
+              </h2>
 
-                  <div>
-                    <label className="admin0dashboard-label">
-                      Last Name
-                      <input
-                        type="text"
-                        className="admin0dashboard-input"
-                        placeholder="Enter last name"
-                        value={userLastName}
-                        onChange={(e) => setUserLastName(e.target.value)}
-                        required
-                      />
-                    </label>
-                    {formErrorsUsers.lastName && (
-                      <p className="error-text">{formErrorsUsers.lastName}</p>
-                    )}
-                  </div>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "#555",
+                  marginBottom: "1.5rem",
+                  textAlign: "left",
+                  lineHeight: 1.4,
+                  backgroundColor: "#66666618",
+                  padding: 12,
+                  borderRadius: 12,
+                }}
+              >
+                Fill in the basic information of the {userType}. All fields are
+                required. This includes their name, contact details, and email
+                for communication.
+              </p>
 
-                  <div>
-                    <label className="admin0dashboard-label">
-                      Email
-                      <input
-                        type="email"
-                        className="admin0dashboard-input"
-                        placeholder="Enter email address"
-                        value={userEmail}
-                        onChange={(e) => setUserEmail(e.target.value)}
-                        required
-                      />
-                    </label>
-                    {formErrorsUsers.email && (
-                      <p className="error-text">{formErrorsUsers.email}</p>
-                    )}
-                  </div>
+              <form className="admin0dashboard-form" onSubmit={handleSubmitAll}>
+                {/* First Name Field */}
+                <div>
+                  <label
+                    htmlFor="userFirstName"
+                    className="admin0dashboard-label"
+                  >
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    id="userFirstName" // Added ID
+                    className="admin0dashboard-input"
+                    placeholder="Enter first name"
+                    value={userFirstName}
+                    onChange={(e) => setUserFirstName(e.target.value)}
+                    required
+                  />
+                  {formErrorsUsers.firstName && (
+                    <p className="error-text">{formErrorsUsers.firstName}</p>
+                  )}
+                </div>
 
-                  <div>
-                    <label className="admin0dashboard-label">
-                      Phone Number
-                      <input
-                        type="text"
-                        className="admin0dashboard-input"
-                        placeholder="Enter phone number"
-                        value={userPhoneNumber}
-                        onChange={(e) => setUserPhoneNumber(e.target.value)}
-                        required
-                      />
-                    </label>
-                    {formErrorsUsers.phoneNumber && (
-                      <p className="error-text">
-                        {formErrorsUsers.phoneNumber}
-                      </p>
-                    )}
-                  </div>
+                {/* Last Name Field */}
+                <div>
+                  <label
+                    htmlFor="userLastName"
+                    className="admin0dashboard-label"
+                  >
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    id="userLastName" // Added ID
+                    className="admin0dashboard-input"
+                    placeholder="Enter last name"
+                    value={userLastName}
+                    onChange={(e) => setUserLastName(e.target.value)}
+                    required
+                  />
+                  {formErrorsUsers.lastName && (
+                    <p className="error-text">{formErrorsUsers.lastName}</p>
+                  )}
+                </div>
 
-                  <div className="admin0dashboard-modal-buttons">
-                    <button
-                      type="submit"
-                      className="admin0dashboard-submit-btn"
-                    >
-                      Add {userType.charAt(0).toUpperCase() + userType.slice(1)}
-                    </button>
-                    <button
-                      type="button"
-                      className="admin0dashboard-cancel-btn"
-                      onClick={() => setIsModalOpen(false)}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
+                {/* Email Field */}
+                <div>
+                  <label htmlFor="userEmail" className="admin0dashboard-label">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="userEmail" // Added ID
+                    className="admin0dashboard-input"
+                    placeholder="Enter email address"
+                    value={userEmail}
+                    onChange={(e) => setUserEmail(e.target.value)}
+                    required
+                  />
+                  {formErrorsUsers.email && (
+                    <p className="error-text">{formErrorsUsers.email}</p>
+                  )}
+                </div>
+
+                {/* Phone Number Field */}
+                <div>
+                  <label
+                    htmlFor="userPhoneNumber"
+                    className="admin0dashboard-label"
+                  >
+                    Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    id="userPhoneNumber" // Added ID
+                    className="admin0dashboard-input"
+                    placeholder="Enter phone number"
+                    value={userPhoneNumber}
+                    onChange={(e) => setUserPhoneNumber(e.target.value)}
+                    required
+                  />
+                  {formErrorsUsers.phoneNumber && (
+                    <p className="error-text">{formErrorsUsers.phoneNumber}</p>
+                  )}
+                </div>
+
+                <div className="admin0dashboard-modal-buttons">
+                  <button type="submit" className="admin0dashboard-submit-btn">
+                    Add {userType.charAt(0).toUpperCase() + userType.slice(1)}
+                  </button>
+                  <button
+                    type="button"
+                    className="admin0dashboard-cancel-btn"
+                    onClick={() => setIsModalOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
         </ModalDropdown>
       )}
     </div>

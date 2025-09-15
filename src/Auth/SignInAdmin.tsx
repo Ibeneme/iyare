@@ -1,18 +1,25 @@
 import React, { useEffect, useState } from "react";
 import "./SignIn.css";
 import logo from "../assets/images/logo.jpg";
-import backgroundImage from "../assets/images/books.jpg";
+import backgroundImage from "../assets/images/library.jpg";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { loginAdmin } from "../Redux/Admin/Auth";
-import { AppDispatch, RootState } from "../Redux/store";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "../Redux/store";
+import { signInUser } from "../Redux/Admin/adminUsers";
 
 const SignInAdmin: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const location = useLocation();
+
   const [userType, setUserType] = useState<"admin" | "teacher">("admin");
 
   useEffect(() => {
@@ -25,50 +32,45 @@ const SignInAdmin: React.FC = () => {
     }
   }, [location.search]);
 
-  const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>();
-  const { loading, error } = useSelector((state: RootState) => state.adminAuth);
-
   const handleForgotPassword = () => {
     navigate("/forgot-password", { state: { userType } });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (userType !== "admin") {
-      //setError("Only admin login is implemented.");
-      return;
+    setLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    const loginData = {
+      userType,
+      email,
+      password,
+    };
+
+    try {
+      const resultAction = await dispatch(signInUser(loginData));
+      const payload = resultAction.payload as any;
+
+      if (payload.success) {
+        setSuccessMessage(payload.message);
+
+        localStorage.setItem("user", JSON.stringify(payload.data));
+        localStorage.setItem("userType", userType);
+        localStorage.setItem("token", payload.token);
+
+        setTimeout(() => {
+          navigate(`/classes/dashboard/all`);
+        }, 100);
+      } else {
+        setError(payload.message || "An unknown error occurred.");
+      }
+    } catch (err: any) {
+      setError(err.message || "An unknown error occurred.");
+    } finally {
+      setLoading(false);
     }
-
-    dispatch(loginAdmin({ email, password }))
-      .then((resultAction) => {
-        console.log("Raw resultAction:", resultAction);
-
-        if (loginAdmin.fulfilled.match(resultAction)) {
-          const { token, email, role, _id } = resultAction.payload;
-          console.log("Login successful:", resultAction.payload);
-
-          // ✅ Store token in localStorage
-          localStorage.setItem("yareadmintoken", token);
-
-          // Optionally store other data too
-          localStorage.setItem("yareadminemail", email);
-          localStorage.setItem("yareadminrole", role);
-          localStorage.setItem("yareadminid", _id);
-          navigate("/admin/dashboard/all");
-        } else if (loginAdmin.rejected.match(resultAction)) {
-          console.error(
-            "Login failed:",
-            resultAction.payload || resultAction.error
-          );
-          //setError("Login failed. Please check your credentials.");
-        }
-      })
-      .catch((error) => {
-        console.error("Unexpected error during login:", error);
-        //setError("Something went wrong. Please try again later.");
-      });
   };
 
   return (
@@ -76,13 +78,12 @@ const SignInAdmin: React.FC = () => {
       className="signin-page"
       style={{
         background: `url(${backgroundImage})`,
-        backgroundSize: "100%",
-        backgroundPosition: "cover",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
         minHeight: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        objectFit: "cover",
       }}
     >
       <div className="signin-container">
@@ -90,7 +91,7 @@ const SignInAdmin: React.FC = () => {
           <img src={logo} alt="Oyare Learning Hub" className="signin-logo" />
         </div>
 
-        <h2 className="signin-title">Admin Portal</h2>
+        <h2 className="signin-title">Sign In</h2>
 
         {/* User type toggle */}
         <div
@@ -135,16 +136,14 @@ const SignInAdmin: React.FC = () => {
 
         <form className="signin-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">
-              {userType === "admin" ? "Admin Email" : "Teacher Email"}
-            </label>
+            <label htmlFor="email">Email Address</label>
             <input
               type="email"
               id="email"
-              placeholder="Enter your email"
+              placeholder={`Enter your ${userType} email`}
+              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
             />
           </div>
 
@@ -155,11 +154,12 @@ const SignInAdmin: React.FC = () => {
                 type={showPassword ? "text" : "password"}
                 id="password"
                 placeholder="Enter your password"
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
               />
             </div>
+
             <div
               style={{
                 width: "100%",
@@ -188,30 +188,28 @@ const SignInAdmin: React.FC = () => {
                 backgroundColor: "white",
                 border: "none",
                 color: "gray",
-                fontSize: 13,
               }}
             >
               Forgot Password?
             </button>
           </div>
 
-          {error && (
-            <p
+          <button type="submit" className="signin-button" disabled={loading}>
+            {loading ? "Signing In..." : "Sign In"}
+          </button>
+
+          {(error || successMessage) && (
+            <div
               style={{
-                backgroundColor: "#ff000021",
-                color: "#ff0000",
-                padding: 12,
-                marginBottom: 24,
-                fontSize: 13,
+                marginTop: "10px",
+                color: error ? "red" : "green",
+                textAlign: "center",
+                fontSize: "14px",
               }}
             >
-              {error}
-            </p>
+              {error || successMessage}
+            </div>
           )}
-
-          <button type="submit" className="signin-button" disabled={loading}>
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
 
           <div className="go-back-link">
             <a href="/">← Go Back</a>
@@ -223,3 +221,4 @@ const SignInAdmin: React.FC = () => {
 };
 
 export default SignInAdmin;
+

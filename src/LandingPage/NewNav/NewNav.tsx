@@ -24,8 +24,8 @@ const Navbar: React.FC = () => {
           <img
             src={logo}
             style={{
-              width: 36,
-              height: 36,
+              width: 20,
+              height: 20,
               objectFit: "cover",
               objectPosition: "center",
               transform: "scale(2.1)",

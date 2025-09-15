@@ -1,0 +1,582 @@
+.user-banner-wrapper {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    position: relative;
+    padding-bottom: 56px;
+    /* Important for absolute positioning */
+}
+
+.user-details-wrapper-padded {
+    padding: 16px;
+    background-color: #fff;
+    border-radius: 24px;
+}
+
+.user-details-wrapper-padded-spread {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 16px;
+}
+
+.user-banner-image {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 20px;
+}
+
+.user-details-title {
+    font-size: 24px;
+}
+
+.user-details-title-margin {
+    margin-bottom: 4px;
+}
+
+.initials-avatar {
+    width: 140px;
+    height: 140px;
+    border-radius: 24px;
+    font-weight: 700;
+    font-size: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    position: absolute;
+    bottom: 0px;
+    left: 16px;
+}
+
+
+.back-button-container {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 2;
+}
+
+.back-button {
+    border: none;
+    width: fit-content;
+}
+
+.email-contact-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 48px;
+}
+
+.email-text {
+    font-size: 14px;
+    color: #666;
+    margin: 0px;
+}
+
+.mail-button {
+    padding: 12px 12px;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    gap: 12px;
+    width: fit-content;
+    padding-right: 24px;
+}
+
+.mail-icon-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4px;
+    border-radius: 48px;
+    width: 28px;
+    height: 28px;
+}
+
+.mail-icon {
+    margin-right: 6px;
+}
+
+.email-extra-text {
+    font-size: 12px;
+    color: #666;
+    margin-top: 3px
+}
+
+.email-placeholder {
+    font-size: 14px;
+    color: #aaa;
+    margin-bottom: 12px;
+}
+
+.languages-section {
+    margin: 10px 0;
+}
+
+.skills-section {
+    margin-top: 16px;
+}
+
+.languages-skills-heading {
+    margin-bottom: 6px;
+    color: #555;
+    font-size: 13px;
+}
+
+.languages-skills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.language-skill-tag {
+    background-color: #99999921;
+    color: #666;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+}
+
+.languages-skills-placeholder {
+    font-size: 13px;
+    color: #aaa;
+}
+
+.entry-container {
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.entry-even {
+    background-color: #f4f4f4;
+}
+
+.entry-odd {
+    background-color: #ffffff;
+}
+
+.entry-key {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.entry-value {
+    font-weight: 700;
+    color: #666;
+}
+
+.section-heading {
+    text-align: left;
+    margin-top: 24px;
+    margin-bottom: 3px;
+    font-size: 16px;
+}
+
+/* Courses in Department */
+.department-courses {
+    margin-top: 2rem;
+}
+
+.department-courses h2 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+
+.children-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    justify-content: flex-start;
+    /* ensures alignment to the left */
+}
+
+
+
+.child-card {
+    flex: 0 1 calc(25% - 1.5rem);
+    /* Adjust width as needed */
+    min-width: 200px;
+    cursor: pointer;
+    text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    border-radius: 12px;
+    text-align: left;
+    overflow: hidden;
+    background-color: #fff;
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+
+
+}
+
+
+
+.students-flex-grid,
+.courses-grid,
+.children-flex-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: flex-start;
+    /* ensures alignment to the left */
+}
+
+
+
+.student-card,
+.child-card {
+    flex: 0 1 calc(25% - 1.5rem);
+    /* Adjust width as needed */
+    min-width: 200px;
+
+    cursor: pointer;
+    text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    border-radius: 12px;
+    text-align: left;
+    overflow: hidden;
+    background-color: #fff;
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+
+
+}
+.course-card{
+    flex: 0 1 calc(25% - 1.5rem);
+    /* Adjust width as needed */
+    min-width: 200px;
+    cursor: pointer;
+    text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    border-radius: 12px;
+    text-align: left;
+    overflow: hidden;
+    background-color: #fff;
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+
+}
+
+
+.parent-card {
+    border-radius: 12px;
+    text-align: left;
+    overflow: hidden;
+    background-color: #fff;
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 400px;
+}
+
+
+
+.course-image-full-width {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    background-color: #ececec;
+    border-radius: 12px;
+}
+
+.course-card-body h3 {
+ 
+    font-size: 15px;
+}
+
+.course-description {
+    margin: 1px 0;
+    font-size: 14px;
+    color: #444;
+    margin-bottom: 32px;
+}
+
+.view-details-button,
+.view-details-button-child {
+    margin-top: 10px;
+    cursor: pointer;
+    background-color: #830cfa12;
+    color: #830cfa;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 24px;
+    transition: background 0.3s ease;
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 700;
+    width: fit-content
+}
+
+.view-details-icon {
+    margin-left: 12px;
+    font-size: 10px;
+    margin-top: 1.5px;
+}
+
+.empty-message {
+    font-size: 14px;
+    color: #aaa;
+}
+
+/* === PARENT DETAILS === */
+.parent-details {
+    margin-top: 40px;
+    cursor: pointer;
+}
+
+
+.parent-image {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+
+.parent-card p {
+    font-size: 14px;
+    margin: 0px;
+    gap: 0px;
+}
+
+.parent-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+}
+
+.parent-actions button,
+.parent-action-button {
+    margin-top: 10px;
+    cursor: pointer;
+    background-color: #0f6df912;
+    color: #0f6df9;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 24px;
+    transition: background 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.parent-action-icon {
+    margin-right: 6px;
+}
+
+/* === CHILDREN LIST === */
+.children-list {
+    margin-top: 40px;
+}
+
+.children-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+/* 
+.child-card {
+    border-radius: 12px;
+    text-align: left;
+    overflow: hidden;
+    background-color: #fff;
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+} */
+
+.child-image {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+}
+
+.child-card h3 {
+    margin-top: 16px;
+}
+
+.child-card p {
+    margin: -4px 0;
+    font-size: 0.9rem;
+    color: #444;
+}
+
+
+
+/* === STUDENTS IN GRADE === */
+.students-in-grade {
+    margin-top: 40px;
+}
+
+/* .students-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.student-card {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 16px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+} */
+
+.student-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 8px;
+}
+
+/* === STUDENT GRADES === */
+.student-grades {
+    margin-top: 40px;
+}
+
+
+
+.grades-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.grade-item {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    background-color: #fdfdfd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+}
+
+.grade-subject {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.grade-score,
+.grade-comments,
+.grade-date {
+    margin: 5px 0 0 0;
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.edit-grade-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.edit-grade-btn:hover {
+    background-color: #005fc1;
+}
+
+
+@media (max-width: 768px) {
+
+    .student-card,
+    .course-card,
+    .child-card {
+        flex: 0 1 100%;
+    }
+
+    .user-details-wrapper-padded-spread {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding-bottom: 16px;
+        gap: 48px
+    }
+
+    .user-details-title {
+        font-size: 18px;
+    }
+
+    .user-banner-image {
+        width: 100%;
+        height: 170px;
+        object-fit: cover;
+        border-radius: 20px;
+    }
+
+    .initials-avatar {
+        width: 110px;
+        height: 110px;
+        border-radius: 24px;
+        font-weight: 700;
+        font-size: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-transform: uppercase;
+        position: absolute;
+        bottom: 12px;
+        left: 12px;
+    }
+}

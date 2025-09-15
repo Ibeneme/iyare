@@ -1,0 +1,63 @@
+.notifications-container {
+
+    height: 100%;
+    overflow-y: auto;
+  }
+  
+  .notifications-container h2 {
+    font-size: 16px;
+    color: #333;
+    margin-top: 20px;
+
+  }
+  
+  .notification-status {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .toggle-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+  }
+  
+  .toggle-item span {
+    font-size: 16px;
+    color: #333;
+  }
+  
+  .toggle-btn {
+    width: 50px;
+    height: 28px;
+    background-color: #ccc;
+    border-radius: 14px;
+    position: relative;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.3s ease;
+  }
+  
+  .toggle-btn.active {
+    background-color: var(--dark-green);
+  }
+  
+  .toggle-indicator {
+    width: 24px;
+    height: 24px;
+    background-color: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .toggle-btn.active .toggle-indicator {
+    transform: translateX(22px);
+  }

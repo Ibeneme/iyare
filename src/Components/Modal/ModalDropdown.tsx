@@ -21,7 +21,7 @@ const ModalDropdown: React.FC<ModalDropdownProps> = ({
           alignItems: "center",
           display: "flex",
           flexDirection: "column",
-          maxWidth: 500,
+          maxWidth: 600,
           gap: 16,
         }}
       >
@@ -44,7 +44,15 @@ const ModalDropdown: React.FC<ModalDropdownProps> = ({
             <FaTimes fontSize={14} />
           </button>
         )}
-        <div className="modal-content">{children}</div>
+        <div
+          className="modal-content"
+          style={{
+            maxWidth: 700,
+       
+          }}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );

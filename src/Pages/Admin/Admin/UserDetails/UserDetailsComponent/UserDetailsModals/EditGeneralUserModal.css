@@ -1,0 +1,163 @@
+.multi-select-box input[type="checkbox"] {
+    /* For better alignment and consistent sizing */
+    width: 16px;
+    height: 16px;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+    cursor: pointer;
+    /* Basic styling for unchecked state */
+    appearance: none;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    position: relative;
+    top: -1px;
+    /* Adjust as needed for vertical alignment */
+}
+
+.multi-select-box input[type="checkbox"]:checked {
+    background-color: var(--dark-green);
+    color: var(--yellow);
+}
+
+/* Checkmark icon for checked state */
+.multi-select-box input[type="checkbox"]:checked::after {
+    content: '\2713';
+    font-size: 12px;
+    color: #fff;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.multi-select-label {
+    font-size: 15px;
+}
+
+.multi-select-box label {
+    background-color: #f4f4f4;
+    border-radius: 48px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 12px
+}
+
+.multi-select-box label:has(input[type="checkbox"]:checked) {
+    background-color: var(--dark-green);
+    color: var(--yellow);
+    padding: 12px
+}
+
+.user-modal.edit-general-user {
+    max-width: 600px;
+    width: 100%;
+    background: #fff;
+    overflow-y: none;
+    max-height: 80vh;
+    padding-bottom: 48px;
+}
+
+.user-modal.edit-general-user h2 {
+    margin-bottom: 1.5rem;
+    font-size: 20px;
+    font-weight: 600;
+    color: #222;
+
+}
+
+.user-modal label {
+    display: block;
+    margin-bottom: 1rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.user-modal input[type="text"],
+.user-modal input[type="email"],
+.user-modal input[type="tel"],
+.user-modal select,
+.user-modal textarea {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    margin-top: 0.25rem;
+    transition: border 0.3s ease;
+}
+
+.user-modal input:focus,
+.user-modal select:focus,
+.user-modal textarea:focus {
+    border-color: #005fcc;
+    outline: none;
+}
+
+.multi-select-box {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+
+
+.user_moda_h2 {
+    font-size: 19px;
+}
+
+.user_moda_p {
+    font-size: 14px;
+    color: #666;
+}
+
+.user-modal__image {
+    max-width: 400px;
+    width: 100%
+}
+
+.user-modal__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px
+}
+
+.user-modal__actions button {
+    font-size: 14px;
+    padding: 16px
+}
+
+.user-modal__actions-danger {
+    background-color: #ff0000;
+    color: #fff;
+}
+
+.user-modal__actions .primary {
+    background-color: var(--dark-green);
+    color: var(--yellow);
+    border-radius: 8px;
+}
+
+@media screen and (max-width: 600px) {
+    .user-modal.edit-general-user {
+        padding: 1.5rem;
+    }
+
+    .multi-select-box {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .multi-select-box label {
+        width: 100%;
+    }
+
+    .user-modal__actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

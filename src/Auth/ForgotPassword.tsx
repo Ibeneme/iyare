@@ -1,63 +1,69 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import "./SignIn.css";
+import "./SignIn.css"; // Assuming this CSS file contains necessary styles
 import logo from "../assets/images/logo.jpg";
-import backgroundImage from "../assets/images/library.jpg";
-import backgroundImages from "../assets/images/books.jpg";
-import { useDispatch, useSelector } from "react-redux";
+import backgroundImage from "../assets/images/library.jpg"; // For student
+import { useDispatch } from "react-redux";
 import {
   forgotPassword,
-  verifyOtp,
+  verifyForgotPassword,
   resetPassword,
   resendOtp,
-} from "../Redux/Admin/Auth";
-import { AppDispatch, RootState } from "../Redux/store";
+} from "../Redux/Admin/adminUsers"; // Ensure this path is correct
+import { AppDispatch } from "../Redux/store";
 
 const ForgotPassword: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const { error: reduxError } = useSelector(
-    (state: RootState) => state.adminAuth
+
+  // State to manage the user type selected from the dropdown
+  const [userType, setUserType] = useState(
+    location.state?.userType ?? "student"
   );
 
-  const userType = location.state?.userType ?? "student";
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  // Component state for managing the flow and UI feedback
+  const [step, setStep] = useState<1 | 2 | 3>(1); // 1: Email, 2: OTP, 3: New Password
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [localSuccessMessage, setLocalSuccessMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [resetToken, setResetToken] = useState<string | null>(null); // To store the token for password reset
+  const [showNewPassword, setShowNewPassword] = useState(false); // State for new password visibility
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State for confirm password visibility
+
+  // Effect to clear messages when step changes
+  useEffect(() => {
+    setError(null);
+    setSuccessMessage(null);
+  }, [step]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const isValid = /\S+@\S+\.\S+/.test(email);
-    if (!isValid) return setError("Please enter a valid email address.");
-    setError("");
-    setLocalSuccessMessage("");
+    setError(null);
+    setSuccessMessage(null);
+
+    const isValidEmail = /\S+@\S+\.\S+/.test(email);
+    if (!isValidEmail) {
+      return setError("Please enter a valid email address.");
+    }
+
     setLoading(true);
-
     try {
-      if (userType === "admin") {
-        const response = await dispatch<any>(forgotPassword({ email }));
-        console.log("Forgot Password Response:", response);
+      const resultAction = await dispatch(forgotPassword({ userType, email }));
+      const payload = resultAction.payload as any;
 
-        if (
-          response.type === "admin/forgotPassword/fulfilled" &&
-          response.payload === "OTP sent to email."
-        ) {
-          setLocalSuccessMessage("OTP sent to email.");
-          setStep(2);
-        } else {
-          console.error("Failed to send OTP:", response);
-          setError("Failed to send OTP.");
-        }
+      if (payload.success) {
+        setSuccessMessage(payload.message || "OTP sent to your email.");
+        setStep(2);
+      } else {
+        setError(payload.message || "Failed to send OTP. Please try again.");
       }
-    } catch (err) {
-      console.error("Forgot Password Error:", err);
-      setError("An error occurred while sending OTP.");
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }
@@ -65,131 +71,130 @@ const ForgotPassword: React.FC = () => {
 
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    console.log("OTP Submitted:", otp);
+    setError(null);
+    setSuccessMessage(null);
 
     if (otp.length !== 6) {
-      console.log("Invalid OTP length");
-      return setError("Enter the 6-digit OTP sent to your email.");
+      return setError("Please enter the 6-digit OTP sent to your email.");
     }
 
-    setError("");
-    setLocalSuccessMessage("");
     setLoading(true);
-
     try {
-      if (userType === "admin") {
-        console.log("Dispatching verifyOtp with:", { email, otp });
+      const resultAction = await dispatch(verifyForgotPassword({ email, otp }));
+      const payload = resultAction.payload as any;
 
-        const result = await dispatch<any>(verifyOtp({ email, otp }));
-        console.log("verifyOtp result:", result);
-
-        // Ensure the OTP verification succeeded
-        if (
-          result.type === "admin/verifyOtp/fulfilled" &&
-          typeof result.payload === "string"
-        ) {
-          const token = result.payload;
-          console.log("OTP verification successful, token:", token);
-
-          // Store the token in localStorage
-          localStorage.setItem("prToken", token);
-
-          // Move to step 3 (reset password)
-          setStep(3);
-          return;
-        } else {
-          console.log("OTP verification failed or response invalid");
-          setError("OTP verification failed.");
-          return;
-        }
+      console.log(payload, "payload");
+      if (payload.success && payload.resetToken) {
+        setSuccessMessage(payload.message || "OTP verified successfully.");
+        setResetToken(payload.resetToken);
+        setStep(3);
+      } else {
+        setError(
+          payload.message || "OTP verification failed. Please try again."
+        );
       }
-    } catch (err) {
-      console.error("OTP verification error:", err);
-      setError("An error occurred during OTP verification.");
+    } catch (err: any) {
+      setError(
+        err.message || "An unexpected error occurred during OTP verification."
+      );
     } finally {
       setLoading(false);
-      console.log("OTP submission loading complete");
     }
   };
 
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
 
-    if (password !== confirmPassword)
+    if (password !== confirmPassword) {
       return setError("Passwords do not match.");
-    if (password.length < 6)
-      return setError("Password must be at least 6 characters.");
+    }
+    if (password.length < 6) {
+      return setError("Password must be at least 6 characters long.");
+    }
+    if (!resetToken) {
+      return setError(
+        "Session expired. Please restart the password reset process."
+      );
+    }
 
-    setError("");
-    setLocalSuccessMessage("");
     setLoading(true);
-
     try {
-      if (userType === "admin") {
-        const prToken = localStorage.getItem("prToken");
+      const resultAction = await dispatch(
+        resetPassword({ userType, email, password, token: resetToken })
+      );
+      const payload = resultAction.payload as any;
 
-        if (!prToken) {
-          setError("Session expired. Please verify OTP again.");
-          return;
-        }
-
-        const result = await dispatch<any>(
-          resetPassword({
-            email,
-            password,
-            resetToken: prToken,
-          })
-        );
-
-        console.log("Reset password result:", result);
-
-        if (result.meta.requestStatus === "fulfilled") {
-          // ✅ Success: clear token and navigate
-          localStorage.removeItem("prToken");
-
+      if (payload.success) {
+        setSuccessMessage(payload.message || "Password reset successfully!");
+        setResetToken(null);
+        setTimeout(() => {
           navigate(
             userType === "admin" || userType === "teacher"
               ? `/admin-sign-in?type=${userType}`
               : `/auth-sign-in?type=${userType}`
           );
-        } else {
-          // ❌ Rejected
-          setError(result.payload || "Password reset failed.");
-        }
+        }, 1500);
+      } else {
+        setError(payload.message || "Password reset failed. Please try again.");
       }
-    } catch (err) {
-      console.error("Password reset error:", err);
-      setError("An error occurred while resetting the password.");
+    } catch (err: any) {
+      setError(
+        err.message || "An unexpected error occurred during password reset."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const resultAction = await dispatch(resendOtp({ userType, email }));
+      const payload = resultAction.payload as any;
+
+      if (payload.success) {
+        setSuccessMessage(payload.message || "OTP resent successfully!");
+      } else {
+        setError(payload.message || "Failed to resend OTP.");
+      }
+    } catch (err: any) {
+      setError(
+        err.message || "An unexpected error occurred while resending OTP."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoBack = () => {
-    setError("");
-    setLocalSuccessMessage("");
+    setError(null);
+    setSuccessMessage(null);
 
-    if (step === 3) return setStep(2);
-    if (step === 2) return setStep(1);
-    navigate(location.state?.from || -1);
+    if (step === 3) {
+      setStep(2);
+    } else if (step === 2) {
+      setStep(1);
+    } else {
+      navigate(location.state?.from || -1);
+    }
   };
 
   return (
     <div
       className="signin-page"
       style={{
-        background: `url(${
-          userType === "student" ? backgroundImage : backgroundImages
-        })`,
-        backgroundSize: "100%",
-        backgroundPosition: "cover",
-        // backgroundRepeat: "no-repeat",
+        background: `url(${backgroundImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
         minHeight: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        // objectFit: "contain",
       }}
     >
       <div className="signin-container">
@@ -198,7 +203,8 @@ const ForgotPassword: React.FC = () => {
         </div>
 
         <h2 className="signin-title">Forgot Password</h2>
-        {(error || reduxError) && (
+
+        {error && (
           <p
             className="error-message"
             style={{
@@ -206,12 +212,13 @@ const ForgotPassword: React.FC = () => {
               color: "#ff0000",
               padding: 12,
               marginBottom: 24,
+              borderRadius: "8px",
             }}
           >
-            {error || reduxError}
+            {error}
           </p>
         )}
-        {localSuccessMessage && (
+        {successMessage && (
           <p
             className="success-message"
             style={{
@@ -219,14 +226,29 @@ const ForgotPassword: React.FC = () => {
               color: "#1A4806",
               padding: 12,
               marginBottom: 24,
+              borderRadius: "8px",
             }}
           >
-            {localSuccessMessage}
+            {successMessage}
           </p>
         )}
 
         {step === 1 && (
           <form onSubmit={handleEmailSubmit} className="signin-form">
+            <div className="form-group">
+              <label htmlFor="user-type">Account Type</label>
+              <select
+                id="user-type"
+                value={userType}
+                onChange={(e) => setUserType(e.target.value)}
+                disabled={loading}
+              >
+                <option value="student">Student</option>
+                <option value="teacher">Teacher</option>
+                <option value="parent">Parent</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
             <div className="form-group">
               <label htmlFor="email">Enter your email</label>
               <input
@@ -236,10 +258,11 @@ const ForgotPassword: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
+                disabled={loading}
               />
             </div>
             <button type="submit" className="signin-button" disabled={loading}>
-              {loading ? "Sending..." : "Send OTP"}
+              {loading ? "Sending OTP..." : "Send OTP"}
             </button>
           </form>
         )}
@@ -258,32 +281,16 @@ const ForgotPassword: React.FC = () => {
                 placeholder="Enter OTP"
                 maxLength={6}
                 required
+                disabled={loading}
               />
             </div>
-
             <button type="submit" className="signin-button" disabled={loading}>
-              {loading ? "Verifying..." : "Verify OTP"}
+              {loading ? "Verifying OTP..." : "Verify OTP"}
             </button>
-
             <button
               type="button"
               className="resend-otp-button"
-              onClick={async () => {
-                setLoading(true);
-                setError("");
-                try {
-                  const result = await dispatch<any>(resendOtp({ email }));
-                  if (result.meta.requestStatus === "rejected") {
-                    setError(result.payload || "Failed to resend OTP.");
-                  } else {
-                    setLocalSuccessMessage("OTP resent successfully.");
-                  }
-                } catch (err) {
-                  setError("An unexpected error occurred.");
-                } finally {
-                  setLoading(false);
-                }
-              }}
+              onClick={handleResendOtp}
               disabled={loading}
               style={{
                 marginTop: "1rem",
@@ -299,32 +306,71 @@ const ForgotPassword: React.FC = () => {
             </button>
           </form>
         )}
+
         {step === 3 && (
           <form onSubmit={handlePasswordReset} className="signin-form">
             <div className="form-group">
               <label htmlFor="password">New Password</label>
               <input
-                type="password"
+                type={showNewPassword ? "text" : "password"}
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter new password"
                 required
+                disabled={loading}
               />
+              <div
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "flex-end",
+                }}
+              >
+                <button
+                  type="button"
+                  style={{
+                    padding: 8,
+                    fontSize: 12,
+                  }}
+                  onClick={() => setShowNewPassword((prev) => !prev)}
+                >
+                  {showNewPassword ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
             <div className="form-group">
               <label htmlFor="confirmPassword">Confirm New Password</label>
               <input
-                type="password"
+                type={showConfirmPassword ? "text" : "password"}
                 id="confirmPassword"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm password"
                 required
+                disabled={loading}
               />
+              <div
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "flex-end",
+                }}
+              >
+                <button
+                  type="button"
+                  style={{
+                    padding: 8,
+                    fontSize: 12,
+                  }}
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                >
+                  {showConfirmPassword ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
             <button type="submit" className="signin-button" disabled={loading}>
-              {loading ? "Resetting..." : "Reset Password"}
+              {loading ? "Resetting Password..." : "Reset Password"}
             </button>
           </form>
         )}
@@ -337,6 +383,7 @@ const ForgotPassword: React.FC = () => {
             border: "none",
             color: "gray",
             marginTop: "1rem",
+            cursor: "pointer",
           }}
         >
           ← Go Back
