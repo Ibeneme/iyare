@@ -13,12 +13,10 @@ import Loader from "../../../Components/Loader/Loader";
 import ModalDropdown from "../../../Components/Modal/ModalDropdown";
 import { useToast } from "../../../Context/ToastProvider";
 import { useUserActions } from "../../../Hooks/useUsers";
-import "./ClassDetails.css";
 import ClassDetailsComponent from "./ClassDetailsComponent";
-//import { FaEdit, FaTrash } from "react-icons/fa";
 import { FaExclamationTriangle, FaTrashAlt } from "react-icons/fa";
-import WarningNotice from "./WarningNotice";
 import ResourceManager from "./ResourceManager";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface DropdownOption {
   _id: string;
@@ -32,7 +30,6 @@ const generateExactDurationOptions = (): { value: string; label: string }[] => {
   const durationsInMinutes = [
     30, 45, 60, 80, 90, 105, 120, 140, 150, 165, 180, 210, 225, 240, 270, 300,
   ];
-
   return durationsInMinutes.map((minutes) => {
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
@@ -52,13 +49,10 @@ const generateExactDurationOptions = (): { value: string; label: string }[] => {
     if (minutes === 180) label = "3hrs";
     if (minutes === 240) label = "4hrs";
     if (minutes === 300) label = "5hrs";
-
-    return {
-      value: String(minutes),
-      label: label,
-    };
+    return { value: String(minutes), label };
   });
 };
+
 const durationOptions = generateExactDurationOptions();
 
 const ClassDetails: React.FC = () => {
@@ -67,6 +61,7 @@ const ClassDetails: React.FC = () => {
   const navigate = useNavigate();
   const { addToast } = useToast();
   const { getAllUsersByType } = useUserActions();
+
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedClass, setSelectedClass] = useState<any>(null);
@@ -74,10 +69,6 @@ const ClassDetails: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const [isLoadingDropdowns, setIsLoadingDropdowns] = useState(false);
 
-  // const [availableGrades, setAvailableGrades] = useState<DropdownOption[]>([]);
-  // const [availableDepartments, setAvailableDepartments] = useState<
-  //   DropdownOption[]
-  // >([]);
   const [availableTeachers, setAvailableTeachers] = useState<DropdownOption[]>(
     []
   );
@@ -101,87 +92,54 @@ const ClassDetails: React.FC = () => {
     setIsLoadingDropdowns(true);
     try {
       const [teachersRes, coursesRes] = await Promise.all([
-        // getAllUsersByType("grade"),
-        // getAllUsersByType("department"),
         getAllUsersByType("teacher"),
         getAllUsersByType("course"),
       ]);
-
-      //if (gradesRes.success)
-      //setAvailableGrades(gradesRes.data || []);
-      // addToast("error", gradesRes.error || "Failed to fetch grades.");
-      //else if (departmentsRes.success)
-      // setAvailableDepartments(departmentsRes.data || []);
-
-      console.log(teachersRes, "teachersRes");
       if (teachersRes.success) setAvailableTeachers(teachersRes.data || []);
-      //else addToast("error", teachersRes.error || "Failed to fetch teachers.");
-
       if (coursesRes.success) setAvailableCourses(coursesRes.data || []);
-      // else addToast("error", coursesRes.error || "Failed to fetch courses.");
-    } catch (error) {
-      console.error("Error fetching dropdown data:", error);
-      addToast("error", "Failed to load class creation options.");
+    } catch {
+      addToast("error", "Failed to load options.");
     } finally {
       setIsLoadingDropdowns(false);
     }
   };
 
   useEffect(() => {
-    // if (isUpdateModalOpen) {
-    //   fetchDropdownData();
-    // }
     fetchDropdownData();
   }, [isUpdateModalOpen]);
 
   useEffect(() => {
-    if (id) {
-      setLoading(true);
-      dispatch(fetchClassById(id))
-        .then((result) => {
-          console.log(result);
-          if (fetchClassById.fulfilled.match(result)) {
-            const classData = result.payload?.data;
-            setSelectedClass(classData);
-            setUpdateFormData({
-              title: classData?.title || "",
-              course: classData?.courseId?._id || "",
-              courseId: classData?.courseId?._id || "",
-              gradeId: classData?.gradeId?._id || "",
-              departmentId: classData?.departmentId?._id || "",
-              teacherId: classData?.teacherId?._id || "",
-              date: classData?.date
-                ? new Date(classData.date).toISOString().split("T")[0]
-                : "",
-              time: classData?.time || "",
-              duration: classData?.duration || 0,
-            });
-            setError(null);
-          } else if (fetchClassById.rejected.match(result)) {
-            const err = result.payload as { message?: string };
-            setError(err?.message || "Failed to fetch class details.");
-          }
-        })
-        .catch((err) => {
-          console.error("Unexpected error:", err);
-          setError("Something went wrong while loading the class details.");
-        })
-        .finally(() => setLoading(false));
-    }
+    if (!id) return;
+    setLoading(true);
+    dispatch(fetchClassById(id))
+      .then((result) => {
+        if (fetchClassById.fulfilled.match(result)) {
+          const classData = result.payload?.data;
+          setSelectedClass(classData);
+          setUpdateFormData({
+            title: classData?.title || "",
+            course: classData?.courseId?._id || "",
+            courseId: classData?.courseId?._id || "",
+            gradeId: classData?.gradeId?._id || "",
+            departmentId: classData?.departmentId?._id || "",
+            teacherId: classData?.teacherId?._id || "",
+            date: classData?.date
+              ? new Date(classData.date).toISOString().split("T")[0]
+              : "",
+            time: classData?.time || "",
+            duration: classData?.duration || 0,
+          });
+        } else {
+          setError("Failed to fetch class.");
+        }
+      })
+      .catch(() => setError("Network error."))
+      .finally(() => setLoading(false));
 
     return () => {
       dispatch(clearSelectedClass());
-      setSelectedClass(null);
-      setError(null);
-      setLoading(false);
     };
   }, [dispatch, id]);
-
-  const handleOpenUpdateModal = () => setIsUpdateModalOpen(true);
-  const handleCloseUpdateModal = () => setIsUpdateModalOpen(false);
-
-  const handleOpenDeleteModal = () => setIsDeleteModalOpen(true);
-  const handleCloseDeleteModal = () => setIsDeleteModalOpen(false);
 
   const handleUpdateChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -196,456 +154,285 @@ const ClassDetails: React.FC = () => {
   const handleUpdateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id) return;
-
     const result = await dispatch(updateClass({ id, data: updateFormData }));
     if (updateClass.fulfilled.match(result)) {
-      addToast("success", "Class updated successfully!");
-      handleCloseUpdateModal();
-      // Refetch class details to show updated data
-      dispatch(fetchClassById(id)).then((resultAction) => {
-        if (fetchClassById.fulfilled.match(resultAction)) {
-          setSelectedClass(resultAction.payload?.data);
-        }
+      addToast("success", "Class updated!");
+      setIsUpdateModalOpen(false);
+      dispatch(fetchClassById(id)).then((res) => {
+        if (fetchClassById.fulfilled.match(res))
+          setSelectedClass(res.payload?.data);
       });
     } else {
-      addToast("error", "Failed to update class.");
+      addToast("error", "Update failed.");
     }
   };
 
   const handleDelete = async () => {
     if (!id) return;
-
     const result = await dispatch(deleteClass(id));
     if (deleteClass.fulfilled.match(result)) {
-      addToast("success", "Class deleted successfully!");
+      addToast("success", "Class deleted!");
       navigate(-1);
     } else {
-      addToast("error", "Failed to delete class.");
-      handleCloseDeleteModal();
+      addToast("error", "Delete failed.");
+      setIsDeleteModalOpen(false);
     }
   };
 
   if (loading) return <Loader />;
-  if (error)
-    return <p style={{ color: "red", textAlign: "center" }}>{error}</p>;
+  if (error) return <p className="text-center text-red-600 py-8">{error}</p>;
   if (!selectedClass)
-    return <p style={{ textAlign: "center" }}>No class data found.</p>;
+    return <p className="text-center text-gray-500 py-8">No class found.</p>;
 
   return (
-    <div className="">
+    <div className="px-4 md:px-0">
+      {/* Class Details */}
       <ClassDetailsComponent
         classData={selectedClass}
-        handleOpenDeleteModal={handleOpenDeleteModal}
-        handleOpenUpdateModal={handleOpenUpdateModal}
-        //formatDateTime={formatDateTime}
+        handleOpenUpdateModal={() => setIsUpdateModalOpen(true)}
+        handleOpenDeleteModal={() => setIsDeleteModalOpen(true)}
       />
 
-      {/* <div className="class-details-container">
-        <div className="class-details-buttons-centered" style={{ gap: 12 }}>
-          <button onClick={handleOpenUpdateModal} className="gray-button">
-            <FaEdit style={{ marginRight: "8px" }} />
-            Update Class
-          </button>
-          <button onClick={handleOpenDeleteModal} className="gray-button">
-            <FaTrash style={{ marginRight: "8px" }} />
-            Delete Class
-          </button>
-        </div>
-      </div> */}
-
-
-
-
-      <div style={{backgroundColor:'#f4f4f4'}}>
-        <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+      {/* Resources */}
+      <div className="bg-gradient-to-b from-gray-50 to-white py-10 mt-10 rounded-2xl">
+        <div className="max-w-4xl mx-auto px-4">
           <ResourceManager classId={selectedClass?._id} />
         </div>
       </div>
-      {isUpdateModalOpen && (
-        <ModalDropdown onClose={handleCloseUpdateModal}>
-          <div
-            className="add-class-modal-content"
-            style={{
-              maxWidth: "520px",
-              margin: "auto",
-              background: "#fff",
-              borderRadius: "12px",
-            }}
-          >
-            <h2
-              style={{
-                marginBottom: "10px",
-                fontSize: "1.3rem",
-                fontWeight: 600,
-              }}
-            >
-              Update Class
-            </h2>
 
-            <p
-              style={{
-                fontSize: 13,
-                paddingBottom: 12,
-                color: "#555",
-                padding: 12,
-                backgroundColor: "#66666621",
-                borderRadius: 16,
-              }}
+      {/* Update Modal */}
+      <AnimatePresence>
+        {isUpdateModalOpen && (
+          <ModalDropdown onClose={() => setIsUpdateModalOpen(false)}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="relative bg-white/95 backdrop-blur-xl rounded-3xl mx-4 md:mx-auto border border-white/20 pt-8"
             >
-              Modify the details of this class as needed. You can change the
-              title, course, associated teacher, schedule, and more. Once you're
-              done, save your updates to apply the changes.
-            </p>
+              {/* Gradient Border Top */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-t-3xl" />
 
-            {isLoadingDropdowns ? (
-              <Loader />
-            ) : (
-              <form onSubmit={handleUpdateSubmit}>
-                {/* Class Title */}
-                <div style={{ marginBottom: "15px" }}>
-                  <label className="admin0dashboard-label">
-                    Class Title:
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Update Class
+              </h2>
+              <p className="text-sm text-gray-600 mb-6">
+                Make changes and save to update the class.
+              </p>
+
+              {isLoadingDropdowns ? (
+                <div className="flex justify-center py-12">
+                  <Loader />
+                </div>
+              ) : (
+                <form onSubmit={handleUpdateSubmit} className="space-y-6">
+                  {/* Floating Label Input */}
+                  <div className="relative">
                     <input
                       type="text"
                       name="title"
                       value={updateFormData.title}
                       onChange={handleUpdateChange}
                       required
-                      className="admin0dashboard-input"
-                      style={{
-                        width: "100%",
-                        padding: "8px",
-                        borderRadius: "6px",
-                        border: "1px solid #ccc",
-                        marginTop: "4px",
-                      }}
+                      className="peer w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                      placeholder="Class Title"
                     />
-                  </label>
-                </div>
+                    <label className="absolute left-4 -top-2.5 bg-white px-2 text-xs font-medium text-emerald-600 transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3.5 peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-emerald-600">
+                      Class Title
+                    </label>
+                  </div>
 
-                {/* Course */}
-                <div style={{ marginBottom: "15px" }}>
-                  <label className="admin0dashboard-label">
-                    Course:
+                  {/* Course */}
+                  <div className="relative">
                     <select
                       name="courseId"
                       value={updateFormData.courseId}
                       onChange={handleUpdateChange}
                       required
-                      className="admin0dashboard-input"
-                      style={{
-                        width: "100%",
-                        padding: "8px",
-                        borderRadius: "6px",
-                        border: "1px solid #ccc",
-                        marginTop: "4px",
-                      }}
+                      className="peer w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 appearance-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                     >
                       <option value="">-- Select Course --</option>
-                      {availableCourses.map((course) => (
-                        <option key={course._id} value={course._id}>
-                          {course.title || course.name}
+                      {availableCourses.map((c) => (
+                        <option key={c._id} value={c._id}>
+                          {c.title || c.name}
                         </option>
                       ))}
                     </select>
-                  </label>
-                </div>
+                    <label className="absolute left-4 -top-2.5 bg-white px-2 text-xs font-medium text-emerald-600 transition-all">
+                      Course
+                    </label>
+                  </div>
 
-                {/* Grade */}
-                {/* <div style={{ marginBottom: "15px" }}>
-                  <label className="admin0dashboard-label">
-                    Grade:
-                    <select
-                      name="gradeId"
-                      value={updateFormData.gradeId}
-                      onChange={handleUpdateChange}
-                      required
-                      className="admin0dashboard-input"
-                      style={{
-                        width: "100%",
-                        padding: "8px",
-                        borderRadius: "6px",
-                        border: "1px solid #ccc",
-                        marginTop: "4px",
-                      }}
-                    >
-                      <option value="">-- Select Grade --</option>
-                      {availableGrades.map((grade) => (
-                        <option key={grade._id} value={grade._id}>
-                          {grade.title || grade.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div> */}
-
-                {/* Department */}
-                {/* <div style={{ marginBottom: "15px" }}>
-                  <label className="admin0dashboard-label">
-                    Department:
-                    <select
-                      name="departmentId"
-                      value={updateFormData.departmentId}
-                      onChange={handleUpdateChange}
-                      required
-                      className="admin0dashboard-input"
-                      style={{
-                        width: "100%",
-                        padding: "8px",
-                        borderRadius: "6px",
-                        border: "1px solid #ccc",
-                        marginTop: "4px",
-                      }}
-                    >
-                      <option value="">-- Select Department --</option>
-                      {availableDepartments.map((dept) => (
-                        <option key={dept._id} value={dept._id}>
-                          {dept.title || dept.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div> */}
-
-                {/* Teacher */}
-                <div style={{ marginBottom: "15px" }}>
-                  <label className="admin0dashboard-label">
-                    Teacher:
+                  {/* Teacher */}
+                  <div className="relative">
                     <select
                       name="teacherId"
                       value={updateFormData.teacherId}
                       onChange={handleUpdateChange}
                       required
-                      className="admin0dashboard-input"
-                      style={{
-                        width: "100%",
-                        padding: "8px",
-                        borderRadius: "6px",
-                        border: "1px solid #ccc",
-                        marginTop: "4px",
-                      }}
+                      className="peer w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 appearance-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                     >
                       <option value="">-- Select Teacher --</option>
-                      {availableTeachers.map((teacher) => (
-                        <option key={teacher._id} value={teacher._id}>
-                          {teacher?.name}
+                      {availableTeachers.map((t) => (
+                        <option key={t._id} value={t._id}>
+                          {t.firstName} {t.lastName} {t.name && `(${t.name})`}
                         </option>
                       ))}
                     </select>
-                  </label>
-                </div>
+                    <label className="absolute left-4 -top-2.5 bg-white px-2 text-xs font-medium text-emerald-600 transition-all">
+                      Teacher
+                    </label>
+                  </div>
 
-                {/* Date & Time */}
-                <div
-                  style={{
-                    marginBottom: "15px",
-                    display: "flex",
-                    gap: "10px",
-                  }}
-                >
-                  <label className="admin0dashboard-label" style={{ flex: 1 }}>
-                    Date:
-                    <input
-                      type="date"
-                      name="date"
-                      value={updateFormData.date}
-                      onChange={handleUpdateChange}
-                      required
-                      className="admin0dashboard-input"
-                      style={{
-                        width: "100%",
-                        padding: "8px",
-                        borderRadius: "6px",
-                        border: "1px solid #ccc",
-                        marginTop: "4px",
-                      }}
-                    />
-                  </label>
-                  <label className="admin0dashboard-label" style={{ flex: 1 }}>
-                    Time:
-                    <input
-                      type="time"
-                      name="time"
-                      value={updateFormData.time}
-                      onChange={handleUpdateChange}
-                      required
-                      className="admin0dashboard-input"
-                      style={{
-                        width: "100%",
-                        padding: "8px",
-                        borderRadius: "6px",
-                        border: "1px solid #ccc",
-                        marginTop: "4px",
-                      }}
-                    />
-                  </label>
-                </div>
+                  {/* Date & Time */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="relative">
+                      <input
+                        type="date"
+                        name="date"
+                        value={updateFormData.date}
+                        onChange={handleUpdateChange}
+                        required
+                        className="peer w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                      />
+                      <label className="absolute left-4 -top-2.5 bg-white px-2 text-xs font-medium text-emerald-600 transition-all">
+                        Date
+                      </label>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="time"
+                        name="time"
+                        value={updateFormData.time}
+                        onChange={handleUpdateChange}
+                        required
+                        className="peer w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                      />
+                      <label className="absolute left-4 -top-2.5 bg-white px-2 text-xs font-medium text-emerald-600 transition-all">
+                        Time
+                      </label>
+                    </div>
+                  </div>
 
-                {/* Duration */}
-                <div style={{ marginBottom: "20px" }}>
-                  <label className="admin0dashboard-label">
-                    Duration:
+                  {/* Duration */}
+                  <div className="relative">
                     <select
                       name="duration"
                       value={updateFormData.duration}
                       onChange={handleUpdateChange}
                       required
-                      className="admin0dashboard-input"
-                      style={{
-                        width: "100%",
-                        padding: "8px",
-                        borderRadius: "6px",
-                        border: "1px solid #ccc",
-                        marginTop: "4px",
-                      }}
+                      className="peer w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 appearance-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                     >
                       <option value="">-- Select Duration --</option>
-                      {durationOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
+                      {durationOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
                         </option>
                       ))}
                     </select>
-                  </label>
-                </div>
+                    <label className="absolute left-4 -top-2.5 bg-white px-2 text-xs font-medium text-emerald-600 transition-all">
+                      Duration
+                    </label>
+                  </div>
 
-                {/* Buttons */}
-                <div
-                  className="modal-buttons"
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    gap: "10px",
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={handleCloseUpdateModal}
-                    className="cancel-button"
-                    style={{
-                      padding: "10px 16px",
-                      borderRadius: "6px",
-                      border: "1px solid #ccc",
-                      backgroundColor: "#fff",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="save-button"
-                    style={{
-                      padding: "10px 16px",
-                      borderRadius: "6px",
-                      border: "none",
-                      backgroundColor: "#007bff",
-                      color: "#fff",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </ModalDropdown>
-      )}
+                  {/* Buttons */}
+                  <div className="flex justify-end gap-3 mt-8">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      type="button"
+                      onClick={() => setIsUpdateModalOpen(false)}
+                      className="px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition"
+                    >
+                      Cancel
+                    </motion.button>
+                    <motion.button
+                      whileHover={{
+                        scale: 1.05,
+                        boxShadow: "0 0 20px rgba(16, 185, 129, 0.5)",
+                      }}
+                      whileTap={{ scale: 0.95 }}
+                      type="submit"
+                      className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition shadow-lg"
+                    >
+                      Save Changes
+                    </motion.button>
+                  </div>
+                </form>
+              )}
+            </motion.div>
+          </ModalDropdown>
+        )}
+      </AnimatePresence>
 
-      {isDeleteModalOpen && (
-        <ModalDropdown onClose={handleCloseDeleteModal}>
-          <div>
-            <FaExclamationTriangle
-              style={{ color: "#dc2626", fontSize: "64px" }}
-            />
-
-            <div
-              style={{
-                display: "flex",
-
-                gap: "10px",
-                marginBottom: "16px",
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: "20px",
-                  fontWeight: "600",
-                  color: "#111827",
-                  textAlign: "left",
-                }}
+      {/* Delete Modal */}
+      <AnimatePresence>
+        {isDeleteModalOpen && (
+          <ModalDropdown onClose={() => setIsDeleteModalOpen(false)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="relative bg-white/95 backdrop-blur-xl rounded-3xl mx-4 md:mx-auto border border-white/20 pt-8"
               >
-                Confirm Deletion
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-400 to-red-600 rounded-t-3xl" />
+
+              <div className="mb-6">
+                <div className="w-20 h-20 mx-auto bg-red-100 rounded-full flex items-center justify-center">
+                  <FaExclamationTriangle className="w-10 h-10 text-red-600" />
+                </div>
+              </div>
+
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                Delete Class?
               </h2>
-            </div>
+              <p className="text-sm text-gray-600 mb-6">
+                This action{" "}
+                <span className="font-semibold text-red-600">
+                  cannot be undone
+                </span>
+                .
+              </p>
 
-            <p
-              style={{
-                fontSize: "14px",
-                color: "#374151",
-                marginBottom: "24px",
-              }}
-            >
-              Are you sure you want to delete this class? This action cannot be
-              undone.
-            </p>
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+                <p>
+                  You are about to permanently remove this class. This action is
+                  irreversible and all associated records, schedules, or student
+                  assignments linked to this class will be permanently lost.
+                  Please ensure this is intentional before proceeding. If you’re
+                  unsure, click Cancel and review your options. Proceed only if
+                  you are absolutely certain.
+                </p>
+              </div>
 
-            <WarningNotice
-              message={`You are about to permanently remove this class. 
-
-This action is irreversible and all associated records, schedules, or student assignments linked to this class will be permanently lost. 
-
-Please ensure this is intentional before proceeding.
-
-If you’re unsure, click Cancel and review your options. Proceed only if you are absolutely certain.`}
-            />
-            <div
-              style={{
-                display: "flex",
-
-                gap: "12px",
-                flexWrap: "wrap",
-                marginTop: 24,
-              }}
-            >
-              <button
-                onClick={handleCloseDeleteModal}
-                style={{
-                  backgroundColor: "#e5e7eb",
-                  color: "#1f2937",
-                  padding: "10px 18px",
-                  border: "none",
-                  borderRadius: "6px",
-                  fontWeight: "500",
-                  cursor: "pointer",
-                }}
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleDelete}
-                style={{
-                  backgroundColor: "#dc2626",
-                  color: "#ffffff",
-                  padding: "10px 18px",
-                  border: "none",
-                  borderRadius: "6px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
-              >
-                <FaTrashAlt />
-                Delete
-              </button>
-            </div>
-          </div>
-        </ModalDropdown>
-      )}
+              <div className="flex justify-center gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  className="px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  whileHover={{
+                    scale: 1.05,
+                    boxShadow: "0 0 20px rgba(220, 38, 38, 0.5)",
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleDelete}
+                  className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-red-500 to-red-600 rounded-xl hover:from-red-600 hover:to-red-700 transition shadow-lg flex items-center gap-2"
+                >
+                  <FaTrashAlt className="w-4 h-4" />
+                  Delete Class
+                </motion.button>
+              </div>
+            </motion.div>
+          </ModalDropdown>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

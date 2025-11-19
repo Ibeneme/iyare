@@ -1,38 +1,28 @@
-import React, { useEffect } from "react";
-import { FaEdit } from "react-icons/fa";
+import React from "react";
+import { FaEdit, FaTrash } from "react-icons/fa";
 import { MdMail } from "react-icons/md";
-import { FaUserSlash, FaUserCheck, FaTrash } from "react-icons/fa";
+import { FaUserSlash, FaUserCheck } from "react-icons/fa6";
 import useUserRole from "../../../../../../Hooks/useUserRole";
+
+// Define proper user type
+interface User {
+  id: string | number;
+  email?: string;
+  isSuspended?: boolean;
+  // Add other fields as needed
+}
 
 interface UserActionButtonsProps {
   userType: string;
-  userData: any;
+  userData: User;
   showRemoveButton?: boolean;
   showSuspendButton?: boolean;
   showSendMailButton?: boolean;
-  showEditGeneralButton?: boolean;
-  showEditStudentGradesButton?: boolean;
   showEditGeneralButtonNew?: boolean;
-  handleRemoveAdminClick?: (user: any) => void;
-  handleToggleStatusClick?: (user: any) => void;
-  handleOpenEditGradeModal?: () => void;
-  handleOpenEditStudentGradeModal?: () => void;
+  handleRemoveAdminClick?: (user: User) => void;
+  handleToggleStatusClick?: (user: User) => void;
   handleOpenEditGeneralUserModal?: () => void;
 }
-
-const iconButtonStyle: React.CSSProperties = {
-  backgroundColor: "#66666621",
-  color: "#666",
-  border: "none",
-  borderRadius: "32px",
-  padding: "16px",
-  width: "fit-content",
-  height: "fit-content",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  cursor: "pointer",
-};
 
 const UserActionButtons: React.FC<UserActionButtonsProps> = ({
   userType,
@@ -41,105 +31,79 @@ const UserActionButtons: React.FC<UserActionButtonsProps> = ({
   showSuspendButton = false,
   showSendMailButton = false,
   showEditGeneralButtonNew = false,
-  //   showEditStudentGradesButton = false,
   handleRemoveAdminClick,
   handleToggleStatusClick,
-  //   handleOpenEditGradeModal,
-  //   handleOpenEditStudentGradeModal,
   handleOpenEditGeneralUserModal,
-  //   showEditGeneralButton,
 }) => {
-  if (!userData) return null;
-
   const { userRole, isSuperadmin } = useUserRole();
 
-  useEffect(() => {
-    if (userRole) {
-      console.log("User role is:", userRole);
-    }
-  }, [userRole]);
+  if (!userData) return null;
+
+  // Common Tailwind classes
+  const buttonClass =
+    "bg-gray-200 bg-opacity-50 text-gray-600 hover:bg-gray-300 hover:text-gray-800 p-4 rounded-full flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400";
 
   return (
-    <div
-      className="action-button-wrapper"
-      style={{
-        marginBottom: "15px",
-        display: "flex",
-        gap: "12px",
-        flexWrap: "wrap",
-        marginTop: 48,
-      }}
-    >
+    <div className="flex flex-wrap gap-3 mt-12 mb-4">
+      {/* Admin & Superadmin Actions */}
       {userRole === "admin" && isSuperadmin && (
         <>
           {showRemoveButton && (
             <button
               onClick={() => handleRemoveAdminClick?.(userData)}
-              style={iconButtonStyle}
+              className={buttonClass}
               title="Remove User"
+              aria-label="Remove user"
             >
-              <FaTrash />
+              <FaTrash className="w-5 h-5" />
             </button>
           )}
 
           {showSuspendButton && (
             <button
               onClick={() => handleToggleStatusClick?.(userData)}
-              style={iconButtonStyle}
-              title={userData.isSuspended ? "Unsuspend" : "Suspend"}
+              className={buttonClass}
+              title={userData.isSuspended ? "Unsuspend User" : "Suspend User"}
+              aria-label={
+                userData.isSuspended ? "Unsuspend user" : "Suspend user"
+              }
             >
-              {userData.isSuspended ? <FaUserCheck /> : <FaUserSlash />}
+              {userData.isSuspended ? (
+                <FaUserCheck className="w-5 h-5 text-green-600" />
+              ) : (
+                <FaUserSlash className="w-5 h-5 text-red-600" />
+              )}
             </button>
           )}
 
-          {showSendMailButton && userData?.email && (
+          {showSendMailButton && userData.email && (
             <a
               href={`mailto:${userData.email}`}
-              style={{
-                ...iconButtonStyle,
-                textDecoration: "none",
-              }}
-              title="Send Mail"
+              className={`${buttonClass} hover:text-blue-600`}
+              title="Send Email"
+              aria-label="Send email"
               onClick={(e) => e.stopPropagation()}
             >
-              <MdMail />
+              <MdMail className="w-5 h-5" />
             </a>
           )}
         </>
       )}
 
+      {/* Edit Button (Conditional Logic) */}
       {showEditGeneralButtonNew &&
         (userType === "course"
           ? isSuperadmin
           : userRole === "parent" || isSuperadmin) && (
           <button
             onClick={handleOpenEditGeneralUserModal}
-            style={iconButtonStyle}
+            className={buttonClass}
             title={`Edit ${userType}`}
+            aria-label={`Edit ${userType}`}
           >
-            <FaEdit />
+            <FaEdit className="w-5 h-5" />
           </button>
         )}
-      {/* 
-      {showEditGeneralButton && (
-        <button
-          onClick={handleOpenEditGradeModal}
-          style={iconButtonStyle}
-          title={`Edit ${userType} Details`}
-        >
-          <FaEdit />
-        </button>
-      )}
-
-      {showEditStudentGradesButton && (
-        <button
-          onClick={handleOpenEditStudentGradeModal}
-          style={iconButtonStyle}
-          title="Edit Student Grades"
-        >
-          <FaEdit />
-        </button>
-      )} */}
     </div>
   );
 };

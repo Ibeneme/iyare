@@ -1,10 +1,10 @@
+// src/pages/PaymentStatusPage.tsx
 import React, { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom"; // Import useNavigate
+import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../Redux/baseurl";
-import "./PaymentStatusPage.css"; // Import the CSS file
+import { Loader2, CheckCircle, XCircle, ArrowRight } from "lucide-react";
 
-// Interface for the payment details received from the backend
 interface VerifiedPayment {
   _id: string;
   amount: number;
@@ -15,19 +15,17 @@ interface VerifiedPayment {
     paymentMethod: string;
     timestamp: string;
   };
-  // Add other relevant details you want to display
 }
 
-// Interface for the payment verification response from the backend
 interface VerificationResponse {
   success: boolean;
   message: string;
-  payment?: VerifiedPayment; // Use the VerifiedPayment interface
+  payment?: VerifiedPayment;
 }
 
 const PaymentStatusPage: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
   const [status, setStatus] = useState<"verifying" | "success" | "failed">(
     "verifying"
   );
@@ -50,12 +48,8 @@ const PaymentStatusPage: React.FC = () => {
       try {
         const response = await axios.get<VerificationResponse>(
           `${BASE_URL}/api/payment/yare/pay/verify-lesson-fee/${paymentId}`,
-          {
-            params: { paymentId, trxref, reference },
-          }
+          { params: { paymentId, trxref, reference } }
         );
-
-        console.log(response, "response");
 
         if (response.data.success && response.data.payment?.paid.isPaid) {
           setStatus("success");
@@ -63,10 +57,7 @@ const PaymentStatusPage: React.FC = () => {
           setVerifiedPayment(response.data.payment);
         } else {
           setStatus("failed");
-          setMessage(
-            response.data.message ||
-              "Payment verification failed. Please try again."
-          );
+          setMessage(response.data.message || "Payment verification failed.");
         }
       } catch (error: any) {
         console.error("Payment verification failed:", error);
@@ -79,65 +70,92 @@ const PaymentStatusPage: React.FC = () => {
     };
 
     verifyPayment();
-  }, [searchParams]); // Added navigate to dependency array
+  }, [searchParams]);
 
   const renderStatusContent = () => {
     switch (status) {
       case "verifying":
         return (
-          <>
-            <div className="status-icon loading-spinner"></div>
-            <h2 className="status-title">Verifying your payment...</h2>
-            <p className="status-message">
-              Please do not close or refresh this page.
+          <div className="text-center space-y-6">
+            <Loader2 className="w-16 h-16 mx-auto text-[#ffd000] animate-spin" />
+            <h2 className="text-3xl font-black text-[#023009]">
+              Verifying Payment...
+            </h2>
+            <p className="text-lg text-gray-600 max-w-md mx-auto">
+              Please do not close or refresh this page. We’re confirming your
+              payment.
             </p>
-          </>
+          </div>
         );
+
       case "success":
         if (!verifiedPayment) return null;
         return (
-          <>
-            <div className="status-icon success-icon">✔</div>
-            <h2 className="status-title">Payment Successful!</h2>
-            <p className="status-message">
-              Thank you for your subscription. Your payment of{" "}
-              <strong>
-                {verifiedPayment.amount.toFixed(2)} {verifiedPayment.currency}
+          <div className="text-center space-y-6">
+            <CheckCircle className="w-20 h-20 mx-auto text-emerald-600" />
+            <h2 className="text-3xl font-black text-[#023009]">
+              Payment Successful!
+            </h2>
+            <p className="text-lg text-gray-700 max-w-xl mx-auto">
+              Thank you! Your payment of{" "}
+              <strong className="text-[#023009] font-bold">
+                {verifiedPayment.currency === "NGN" ? "₦" : "$"}
+                {verifiedPayment.amount.toFixed(2)}
               </strong>{" "}
-              for a <strong>{verifiedPayment.duration}</strong> plan has been
-              confirmed.
+              for a{" "}
+              <strong className="text-[#023009] font-bold">
+                {verifiedPayment.duration}
+              </strong>{" "}
+              plan has been confirmed.
             </p>
-            <p className="transaction-reference">
-              Reference: <strong>{searchParams.get("reference")}</strong>
+            <p className="text-sm text-gray-500">
+              Reference:{" "}
+              <strong className="text-[#023009]">
+                {searchParams.get("reference")}
+              </strong>
             </p>
-            {/* New button for navigation */}
+
             <button
-              className="navigate-button"
               onClick={() => navigate("/subscriptions-history")}
+              className="inline-flex items-center gap-2 bg-[#023009] text-white font-bold py-3 px-6 rounded-full hover:bg-[#023009]/90 transition-all shadow-lg hover:shadow-xl"
             >
               Go to Subscription History
+              <ArrowRight className="w-5 h-5" />
             </button>
-          </>
+          </div>
         );
+
       case "failed":
         return (
-          <>
-            <div className="status-icon failed-icon">✖</div>
-            <h2 className="status-title">Payment Failed</h2>
-            <p className="status-message">
+          <div className="text-center space-y-6">
+            <XCircle className="w-20 h-20 mx-auto text-red-600" />
+            <h2 className="text-3xl font-black text-[#023009]">
+              Payment Failed
+            </h2>
+            <p className="text-lg text-gray-700 max-w-xl mx-auto">
               {message ||
                 "There was an issue processing your payment. Please try again or contact support."}
             </p>
-          </>
+            <button
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-2 bg-[#ffd000] text-[#023009] font-bold py-3 px-6 rounded-full hover:bg-[#ffd000]/90 transition-all shadow-lg hover:shadow-xl"
+            >
+              Try Again
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
         );
+
       default:
         return null;
     }
   };
 
   return (
-    <div className="payment-status-container">
-      <div className="status-card">{renderStatusContent()}</div>
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#f5fdf5] to-[#e6f7e6] flex items-center justify-center p-6">
+      <div className="bg-white rounded-3xl  shadow-2xl p-10 max-w-2xl w-full text-center">
+        {renderStatusContent()}
+      </div>
     </div>
   );
 };

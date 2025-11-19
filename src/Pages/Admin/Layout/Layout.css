@@ -19,19 +19,18 @@
   /* Fixed sidebar on web */
   left: 0;
   top: 0px;
-  
+
 }
 
 /* Content style */
 .layout-content {
   flex: 1;
-  padding: 16px;
   background-color: #f9f9f9;
-  margin-left: 300px;
+  margin-left: 285px;
   /* This ensures content starts after the sidebar */
   overflow-y: auto;
-  padding-top: 48px
-  
+
+
 }
 
 /* On mobile, hide sidebar and make content full width */
@@ -52,6 +51,6 @@
     /* Space for bottom navigation */
     margin-left: 0;
     /* Full width content */
-    padding-top: 48px
+    padding-top: 0px
   }
 }

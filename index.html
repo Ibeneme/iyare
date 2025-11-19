@@ -1,52 +1,104 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.yarelearninghub.com/" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/vite.png" />
+    <link rel="icon" type="image/png" href="/vite.png" />
 
-    <!-- Responsive Design -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Title -->
+    <title>Yare Learning Hub | Learn. Grow. Excel.</title>
 
-    <!-- Primary Meta Tags -->
-    <title>yare Learning Hub | Learn. Grow. Excel.</title>
+    <!-- SEO Meta Tags -->
     <meta name="title" content="Yare Learning Hub | Learn. Grow. Excel." />
-    <meta name="description" content="yare Learning Hub provides quality digital education and training to help you grow your skills, build your career, and succeed in today’s digital world." />
+    <meta
+      name="description"
+      content="Yare Learning Hub provides quality digital education and training to help you grow your skills, build your career, and succeed in today’s digital world."
+    />
+    <meta
+      name="keywords"
+      content="Yare Learning Hub, Digital Skills, Online Learning, Tech Training, Web Development, Data Analysis, UI/UX Design, Career Growth"
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Yare Learning Hub" />
 
-    <!-- Open Graph / Facebook -->
+    <!-- Open Graph (Facebook / LinkedIn) -->
+    <meta property="og:site_name" content="Yare Learning Hub" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.yarelearninghub.com/" />
-    <meta property="og:title" content="Yare Learning Hub | Learn. Grow. Excel." />
-    <meta property="og:description" content="Learn digital skills, grow your career, and unlock your full potential at yare Learning Hub." />
+    <meta
+      property="og:title"
+      content="Yare Learning Hub | Learn. Grow. Excel."
+    />
+    <meta
+      property="og:description"
+      content="Learn digital skills, grow your career, and unlock your full potential with Yare Learning Hub."
+    />
     <meta property="og:image" content="/seo-image.png" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="https://www.yarelearninghub.com/" />
-    <meta property="twitter:title" content="Yare Learning Hub | Learn. Grow. Excel." />
-    <meta property="twitter:description" content="Learn digital skills, grow your career, and unlock your full potential at yare Learning Hub." />
+    <meta
+      property="twitter:title"
+      content="Yare Learning Hub | Learn. Grow. Excel."
+    />
+    <meta
+      property="twitter:description"
+      content="Learn digital skills, grow your career, and unlock your full potential with Yare Learning Hub."
+    />
     <meta property="twitter:image" content="/seo-image.png" />
 
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://www.yarelearninghub.com/" />
-
+    <!-- JSON-LD Schema -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "Organization",
-        "name": "Yare learning hub",
-        "url": "www.yarelearninghub.com",
-        "logo": "www.yarelearninghub.com/vite.png"
+        "name": "Yare Learning Hub",
+        "url": "https://www.yarelearninghub.com",
+        "logo": "https://www.yarelearninghub.com/vite.png",
+        "sameAs": [
+          "https://twitter.com/yarelearninghub",
+          "https://linkedin.com/company/yarelearninghub",
+          "https://facebook.com/yarelearninghub"
+        ]
       }
     </script>
 
+    <!-- Tailwind CSS & Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rethink+Sans:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Optional: Tailwind config -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Rethink Sans"', "ui-sans-serif", "system-ui"],
+            },
+            colors: {
+              primary: "#1D4ED8",
+              secondary: "#9333EA",
+            },
+          },
+        },
+      };
+    </script>
   </head>
-  <body>
+
+  <body class="font-sans bg-white text-gray-900 antialiased">
     <div id="root"></div>
+
     <script type="module" src="/src/main.tsx"></script>
-
   </body>
-
 </html>

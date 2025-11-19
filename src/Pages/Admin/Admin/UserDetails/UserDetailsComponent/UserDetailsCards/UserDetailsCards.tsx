@@ -1,61 +1,96 @@
+import React, { useState } from "react";
 import {
   FaEdit,
   FaArrowLeft,
   FaChevronRight,
-  //FaCheckCircle,
+  FaPaperPlane,
 } from "react-icons/fa";
-import UserTypeImages from "../../../../../../Components/Images/ImageAssets";
-import "./UserDetailSections.css";
-import { FaPaperPlane, FaPhoneAlt } from "react-icons/fa";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { HiCheckBadge } from "react-icons/hi2";
-import "./Accordion.css";
-import { UserDetailsDuo } from "../../UserDetailsTypes/userDetailsTypes";
-// Helper function to format text
+import { useNavigate } from "react-router-dom";
+import UserTypeImages from "../../../../../../Components/Images/ImageAssets";
+
+// === Types ===
+type Entry = [string, string | boolean];
+type Teacher = {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  certifications?: string[];
+  classes?: Array<{
+    _id: string;
+    title: string;
+    date: string;
+  }>;
+};
+
+type Course = {
+  _id: string;
+  title?: string;
+  name?: string;
+  description?: string;
+};
+
+type Child = {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phoneNumber?: string;
+};
+
+type Grade = {
+  _id: string;
+  subject: string;
+  score: string | number;
+  comments?: string;
+  dateAwarded?: string;
+};
+
+// === Utility Functions ===
 const formatText = (text: string) =>
   text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
 
-// Helper function to get styles based on type
 const getStyle = (type?: string) => {
-  switch ((type || "").toLowerCase()) {
+  const t = (type || "").toLowerCase();
+  switch (t) {
     case "student":
       return {
-        backgroundColor: "#6EC5FF17",
-        border: "1px solid #6EC5FF", // Commented out as in your provided code
-        color: "#6EC5FF",
+        bg: "bg-blue-50",
+        border: "border-blue-400",
+        text: "text-blue-600",
       };
     case "parent":
       return {
-        backgroundColor: "#e7f6ea",
-        // border: "4px solid #228B22", // Commented out as in your provided code
-        color: "#228B22",
+        bg: "bg-green-50",
+        border: "border-green-500",
+        text: "text-green-700",
       };
     case "admin":
     case "teacher":
       return {
-        backgroundColor: "#fff1e6",
-        // border: "4px solid #ff6600", // Commented out as in your provided code
-        color: "#ff6600",
+        bg: "bg-orange-50",
+        border: "border-orange-400",
+        text: "text-orange-600",
       };
     case "course":
     case "department":
     case "grade":
       return {
-        backgroundColor: "#f3e6ff",
-        // border: "4px solid #830CFA", // Commented out as in your provided code
-        color: "#830CFA",
+        bg: "bg-purple-50",
+        border: "border-purple-500",
+        text: "text-purple-700",
       };
     default:
       return {
-        backgroundColor: "#f0f0f0",
-        // border: "4px solid #555", // Commented out as in your provided code
-        color: "#555",
+        bg: "bg-gray-100",
+        border: "border-gray-400",
+        text: "text-gray-600",
       };
   }
 };
 
-// Helper function to render avatar initials with dynamic styling
+// === Avatar Component ===
 const renderAvatar = (
   firstName?: string,
   lastName?: string,
@@ -64,80 +99,43 @@ const renderAvatar = (
   title?: string
 ) => {
   let initials = "?";
-  const type = userType?.toLowerCase();
-
-  if (firstName && lastName) {
+  if (firstName && lastName)
     initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
-  } else if (firstName) {
-    initials = `${firstName.slice(0, 4)}`.toUpperCase();
-  } else {
-    const fallback = title || name || "";
-    initials = fallback.slice(0, 2).toUpperCase();
-  }
+  else if (firstName) initials = firstName.slice(0, 2).toUpperCase();
+  else initials = (title || name || "").slice(0, 2).toUpperCase() || "?";
 
-  const style = getStyle(type);
+  const { bg, border, text } = getStyle(userType);
 
   return (
     <div
-      className="initials-avatar-reused"
-      style={{
-        ...style,
-        width: "100%",
-        height: 150,
-        fontSize: "28px",
-        borderRadius: "12px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontWeight: "bold",
-        textTransform: "uppercase",
-
-        // background:
-        //   userType === "student"
-        //     ? "linear-gradient(to bottom right, #6b21a8, #ec4899)"
-        //     : "",
-
-        // border: userType === "student" ? "none" : "",
-      }}
+      className={`w-full h-36 ${bg} ${border} border-4 ${text} rounded-xl flex items-center justify-center text-3xl font-bold uppercase`}
     >
       {initials}
     </div>
   );
 };
 
-// Back button component
-export const BackButton = ({
-  onClick,
-  isHovered,
-  setHovered,
-  bg = "#fff",
-  color = "#666",
-}: {
-  onClick: () => void;
-  isHovered: boolean;
-  setHovered: (value: boolean) => void;
-  bg?: any;
-  color?: any;
-}) => (
-  <div className="back-button-wrapper">
+// === Back Button ===
+export const BackButton = ({ onClick }: { onClick: () => void }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  return (
     <button
       onClick={onClick}
-      className={`back-button ${isHovered ? "back-button-hover" : ""}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="absolute top-4 left-4 p-3 bg-white rounded-full shadow-md hover:shadow-lg transition-all duration-200 group"
       aria-label="Go back"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        backgroundColor: bg,
-        border: "none",
-        color: color,
-        width: "fit-content",
-      }}
     >
-      <FaArrowLeft />
+      <FaArrowLeft
+        className={`w-5 h-5 text-gray-700 transition-transform ${
+          isHovered ? "translate-x-[-2px]" : ""
+        }`}
+      />
     </button>
-  </div>
-);
+  );
+};
 
+// === Main User Details Card ===
 export const UserDetailsEntries = ({
   userType,
   entries,
@@ -150,27 +148,18 @@ export const UserDetailsEntries = ({
   teacherDetails,
 }: {
   userType?: string;
-  entries: [string, string | boolean][];
+  entries: Entry[];
   firstName?: string;
   lastName?: string;
   name?: string;
   title?: string;
-  email?: any;
+  email?: string;
   children?: React.ReactNode;
-  teacherDetails?: {
-    _id: string;
-    name: string;
-    email: string | null;
-    phoneNumber: string | null;
-    userType: "teacher";
-    isSuspended: boolean;
-    firstName?: string;
-    lastName?: string;
-  }[];
+  teacherDetails?: Teacher[];
 }) => {
-  const typeKey = userType?.toLowerCase();
-  const [isBackHovered, setIsBackHovered] = useState(false);
   const navigate = useNavigate();
+  const typeKey = userType?.toLowerCase();
+  const { bg, text } = getStyle(userType);
 
   const bannerKey = ["course", "department", "grade"].includes(typeKey || "")
     ? "bgCourses"
@@ -186,440 +175,257 @@ export const UserDetailsEntries = ({
     ? UserTypeImages[bannerKey as keyof typeof UserTypeImages]
     : null;
 
-  let initials = "";
-  let primaryDisplay = "";
-
+  let initials = "",
+    primaryDisplay = "";
   if (firstName && lastName) {
-    initials = firstName[0].toUpperCase() + lastName[0].toUpperCase();
-    primaryDisplay = `${formatText(firstName)} ${formatText(lastName)}`; // Applied formatText
+    initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
+    primaryDisplay = `${formatText(firstName)} ${formatText(lastName)}`;
   } else if (name) {
     initials = name[0].toUpperCase();
-    primaryDisplay = formatText(name); // Applied formatText
+    primaryDisplay = formatText(name);
   } else if (title) {
     initials = title[0].toUpperCase();
-    primaryDisplay = formatText(title); // Applied formatText
+    primaryDisplay = formatText(title);
   } else {
-    initials = userType ? userType[0].toUpperCase() : "?";
-    primaryDisplay = userType
-      ? `${formatText(userType)} User` // Applied formatText
-      : "User";
+    initials = userType?.[0].toUpperCase() || "?";
+    primaryDisplay = userType ? `${formatText(userType)} User` : "User";
   }
 
-  const getAvatarClass = (type?: string) => {
-    switch ((type || "").toLowerCase()) {
-      case "student":
-        return "avatar-student";
-      case "parent":
-        return "avatar-parent";
-      case "admin":
-      case "teacher":
-        return "avatar-admin-teacher";
-      case "course":
-      case "department":
-      case "grade":
-        return "avatar-course-department-grade";
-      default:
-        return "avatar-default";
-    }
-  };
-
-  const getAvatarStyle = (type?: string) => {
-    switch ((type || "").toLowerCase()) {
-      case "student":
-        return {
-          backgroundColor: "#e6f0ff",
-          border: "4px solid #6EC5FF",
-          color: "#6EC5FF",
-        };
-      case "parent":
-        return {
-          backgroundColor: "#e7f6ea",
-          border: "4px solid #228B22",
-          color: "#228B22",
-        };
-      case "admin":
-      case "teacher":
-        return {
-          backgroundColor: "#fff1e6",
-          border: "4px solid #ff6600",
-          color: "#ff6600",
-        };
-      case "course":
-      case "department":
-      case "grade":
-        return {
-          backgroundColor: "#f3e6ff",
-          border: "4px solid #830CFA",
-          color: "#830CFA",
-        };
-      default:
-        return {
-          backgroundColor: "#f0f0f0",
-          border: "4px solid #555",
-          color: "#555",
-        };
-    }
-  };
-
-  const avatarStyle = getAvatarStyle(typeKey);
-  const avatarClass = getAvatarClass(typeKey);
-
-  const lowerCaseEntries = Object.fromEntries(
-    entries.map(([key, value]) => [key.toLowerCase(), value])
+  // === FIX: Only string values in lowerEntries ===
+  const lowerEntries: Record<string, string> = Object.fromEntries(
+    entries
+      .filter(
+        (entry): entry is [string, string] => typeof entry[1] === "string"
+      )
+      .map(([k, v]) => [k.toLowerCase(), v.trim()])
   );
 
-  const skills =
-    typeof lowerCaseEntries["skills"] === "string"
-      ? lowerCaseEntries["skills"]
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean)
-      : [];
+  // === FIX: Explicit typing for map parameters ===
+  const skills: string[] = (lowerEntries["skills"] || "")
+    .split(",")
+    .map((skill: string) => skill.trim())
+    .filter(Boolean);
 
-  const languages =
-    typeof lowerCaseEntries["languages"] === "string"
-      ? lowerCaseEntries["languages"]
-          .split(",")
-          .map((l) => l.trim())
-          .filter(Boolean)
-      : [];
-
-  // Accordion component to handle expanding/collapsing sections
-  const Accordion = ({ title, children, isOpen, onClick }: any) => {
-    return (
-      <div className="accordion-container">
-        <div className="accordion-header" onClick={onClick}>
-          <h3 className="accordion-title">{title}</h3>
-          <span className={`accordion-icon ${isOpen ? "open" : ""}`}>
-            &#9660;
-          </span>
-        </div>
-        <div className={`accordion-content ${isOpen ? "open" : ""}`}>
-          {children}
-        </div>
-      </div>
-    );
-  };
-
-  const TeacherCard = ({ teacher }: any) => {
-    const [isOpen, setIsOpen] = useState(false);
-
-    const handleToggle = () => {
-      setIsOpen(!isOpen);
-    };
-
-    const handleJoinClass = (classId: any) => {
-      // This is where your API call or enrollment logic goes
-      console.log(`Joining class with ID: ${classId}`);
-      navigate(`/class-details/${classId}`);
-    
-    };
-
-    return (
-      <div className="teacher-card">
-        <div className="teacher-header" onClick={handleToggle}>
-          <h3 className="teacher-name">
-            {teacher.firstName} {teacher.lastName}
-          </h3>
-          <span className="toggle-icon">{isOpen ? "−" : "+"}</span>
-        </div>
-
-        {/* Conditionally render the content based on the isOpen state */}
-        {isOpen && (
-          <div className="teacher-content">
-            <p>
-              <strong>Email:</strong> {teacher.email}
-            </p>
-            <p>
-              <strong>Certifications:</strong>{" "}
-              {teacher.certifications.join(", ")}
-            </p>
-
-            {/* Displaying classes if they exist */}
-            {teacher.classes && teacher.classes.length > 0 ? (
-              <div className="class-list">
-                <h4 className="classes-heading">Classes:</h4>
-                {teacher.classes.map((classData: any) => {
-                  // Format the date here
-                  const formattedDate = new Date(
-                    classData.date
-                  ).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  });
-
-                  return (
-                    <div key={classData._id} className="class-item">
-                      <p>
-                        <strong>Name:</strong> {classData.title}
-                      </p>
-                      <p>
-                        <strong>Date:</strong> {formattedDate}
-                      </p>
-                      <button
-                        onClick={() => handleJoinClass(classData._id)}
-                        className="join-button"
-                      >
-                        Join Class
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="no-classes">No classes listed for this teacher.</p>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Component to display classes inside an accordion
-  const ClassesAccordion = ({ classes }: any) => {
-    const [isOpen, setIsOpen] = useState(false);
-
-    if (!classes || classes.length === 0) {
-      return null;
-    }
-
-    const handleToggle = () => {
-      setIsOpen(!isOpen);
-    };
-
-    return (
-      <Accordion
-        title={`Classes (${classes.length})`}
-        isOpen={isOpen}
-        onClick={handleToggle}
-      >
-        <div className="classes-container">
-          {classes.map((course: any) => (
-            <div key={course._id} className="class-item">
-              <div className="class-details">
-                <h4>{course.title}</h4>
-                <p>{course.description}</p>
-              </div>
-              <a href={`/join/${course._id}`} className="join-button">
-                Join Now
-              </a>
-            </div>
-          ))}
-        </div>
-      </Accordion>
-    );
-  };
+  const languages: string[] = (lowerEntries["languages"] || "")
+    .split(",")
+    .map((lang: string) => lang.trim())
+    .filter(Boolean);
 
   return (
-    <div className="user-details-wrapper">
-      <div className="user-details-wrapper-padded">
-        {bannerImage && (
-          <div className="user-banner-wrapper">
-            <img
-              src={bannerImage}
-              alt={`${userType} banner`}
-              className="user-banner-image"
-            />
-            <div className="back-button-container">
-              <BackButton
-                onClick={() => navigate(-1)}
-                isHovered={isBackHovered}
-                setHovered={setIsBackHovered}
-                bg={avatarStyle.backgroundColor}
-                color={avatarStyle.color}
-              />
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+      {/* Banner + Avatar */}
+      {bannerImage && (
+        <div
+          className="relative h-48 bg-cover bg-center"
+          style={{ backgroundImage: `url(${bannerImage})` }}
+        >
+          <BackButton onClick={() => navigate(-1)} />
+          <div className="absolute bottom-0 left-6 translate-y-1/2 w-36">
+            {renderAvatar(firstName, lastName, userType, name, title)}
+          </div>
+        </div>
+      )}
+
+      <div className={`${bannerImage ? "pt-20" : "p-6"} px-6 pb-6`}>
+        {/* Name & Title */}
+        <div className="flex items-center gap-2 mb-2">
+          <h1 className="text-2xl font-bold text-gray-900">{primaryDisplay}</h1>
+          {["admin", "course", "department", "grade"].includes(
+            typeKey || ""
+          ) && <HiCheckBadge className="w-6 h-6 text-green-500" />}
+        </div>
+        <p className="text-sm text-gray-500 capitalize mb-4">{typeKey}</p>
+
+        {/* Email & Extra Info */}
+        {email ? (
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <p className="font-medium text-gray-900">{email}</p>
+              {(lowerEntries["gradetitle"] ||
+                lowerEntries["certifications"] ||
+                lowerEntries["schoolattended"] ||
+                lowerEntries["status"]) && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {lowerEntries["gradetitle"] &&
+                    `Grade: ${formatText(lowerEntries["gradetitle"])} • `}
+                  {lowerEntries["certifications"] &&
+                    `Cert: ${formatText(lowerEntries["certifications"])} • `}
+                  {lowerEntries["schoolattended"] &&
+                    `School: ${formatText(lowerEntries["schoolattended"])} • `}
+                  {lowerEntries["status"] &&
+                    `Status: ${formatText(lowerEntries["status"])}`}
+                </p>
+              )}
             </div>
-            <div
-              className={`initials-avatar ${avatarClass}`}
-              style={avatarStyle}
+            <a
+              href={`mailto:${email}`}
+              className={`inline-flex items-center gap-2 px-4 py-2 ${bg} ${text} rounded-lg font-medium text-sm hover:opacity-90 transition`}
             >
-              {initials}
-            </div>
+              <FaPaperPlane className="w-4 h-4" />
+              Send Mail
+            </a>
+          </div>
+        ) : (
+          <p className="text-gray-400 italic mb-4">No email provided</p>
+        )}
+
+        {/* Skills & Languages */}
+        {(skills.length > 0 || languages.length > 0) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {languages.length > 0 && (
+              <div>
+                <h4 className="font-semibold text-gray-700 mb-2">Languages</h4>
+                <div className="flex flex-wrap gap-2">
+                  {languages.map((lang, i) => (
+                    <span
+                      key={i}
+                      className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                    >
+                      {formatText(lang)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {skills.length > 0 && (
+              <div>
+                <h4 className="font-semibold text-gray-700 mb-2">Skills</h4>
+                <div className="flex flex-wrap gap-2">
+                  {skills.map((skill, i) => (
+                    <span
+                      key={i}
+                      className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                    >
+                      {formatText(skill)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        <div className="user-details-wrapper-padded-spread">
-          <div>
-            <h1 className="user-details-title user-details-title-margin">
-              {["admin", "course", "department", "grade"].includes(
-                userType?.toLowerCase() || ""
-              ) ? (
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "2px",
-                  }}
-                >
-                  <span>
-                    {primaryDisplay} -{" "}
-                    {(userType?.charAt(0).toUpperCase() as any) +
-                      userType?.slice(1)}
-                  </span>
-                  <HiCheckBadge style={{ color: "#4CAF50", fontSize: 22 }} />
-                </span>
-              ) : (
-                primaryDisplay
-              )}
-            </h1>
-            {email && email.trim() !== "" ? (
-              <div className="email-contact-container">
-                <div>
-                  <p className="email-text">{email}</p>
-                  {(lowerCaseEntries["certifications"] ||
-                    lowerCaseEntries["schoolattended"] ||
-                    lowerCaseEntries["status"] ||
-                    lowerCaseEntries["gradetitle"]) && (
-                    <p className="email-extra-text">
-                      {lowerCaseEntries["gradetitle"] &&
-                        `Grade Title: ${formatText(
-                          String(lowerCaseEntries["gradetitle"])
-                        )} || `}
-                      {lowerCaseEntries["certifications"] &&
-                        `Certifications: ${formatText(
-                          String(lowerCaseEntries["certifications"])
-                        )} || `}
-                      {lowerCaseEntries["schoolattended"] &&
-                        `School Attended: ${formatText(
-                          String(lowerCaseEntries["schoolattended"])
-                        )} || `}
-                      {lowerCaseEntries["status"] &&
-                        `Status: ${formatText(
-                          String(lowerCaseEntries["status"])
-                        )}`}
-                    </p>
-                  )}
-                </div>
-                <a
-                  href={`mailto:${email}`}
-                  className="mail-button"
-                  style={{
-                    backgroundColor: avatarStyle.color,
-                    color: avatarStyle.backgroundColor,
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <span
-                    className="mail-icon-wrapper"
-                    style={{
-                      backgroundColor: "#ffffff",
-                      color: avatarStyle.color,
-                    }}
-                  >
-                    <FaPaperPlane className="mail-icon" />
-                  </span>{" "}
-                  Send a Mail
-                </a>
-              </div>
-            ) : (
-              <p className="email-placeholder">No email provided</p>
-            )}
-          </div>
-
-          <div>
-            {userType === "admin" ||
-            userType === "course" ||
-            userType === "grade" ||
-            userType === "department" ? (
-              ""
-            ) : (
-              <>
-                <div className="languages-section">
-                  <h4 className="languages-skills-heading">Languages</h4>
-                  {languages.length > 0 ? (
-                    <div className="languages-skills-container">
-                      {languages.map((lang, i) => (
-                        <span key={i} className="language-skill-tag">
-                          {formatText(lang)}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="languages-skills-placeholder">
-                      No languages added.
-                    </p>
-                  )}
-                </div>
-
-                <div className="skills-section">
-                  <h4 className="languages-skills-heading">Skills</h4>
-                  {skills.length > 0 ? (
-                    <div className="languages-skills-container">
-                      {skills.map((skill, i) => (
-                        <span key={i} className="language-skill-tag">
-                          {formatText(skill)}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="languages-skills-placeholder">
-                      No skills added yet.
-                    </p>
-                  )}
-                </div>
-              </>
-            )}
-
-            {children && (
-              <div className="user-details-children-wrapper">{children}</div>
-            )}
-          </div>
-        </div>
+        {/* Children (Action Buttons) */}
+        {children && <div className="mt-6">{children}</div>}
       </div>
-<br />
+
+      {/* Teacher Cards */}
       {teacherDetails &&
-        teacherDetails.map((teacher: any) => <TeacherCard teacher={teacher} />)}
+        teacherDetails.map((teacher) => (
+          <TeacherCard key={teacher._id} teacher={teacher} />
+        ))}
     </div>
   );
 };
 
-// Courses in Department component
+// === Teacher Accordion Card ===
+const TeacherCard = ({ teacher }: { teacher: Teacher }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleJoinClass = (classId: string) => {
+    navigate(`/class-details/${classId}`);
+  };
+
+  return (
+    <div className="border-t border-gray-200 mt-4">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition"
+      >
+        <h3 className="font-semibold text-gray-900">
+          {teacher.firstName} {teacher.lastName}
+        </h3>
+        <span className="text-xl font-bold text-gray-500">
+          {isOpen ? "−" : "+"}
+        </span>
+      </button>
+
+      {isOpen && (
+        <div className="px-6 pb-6 space-y-3">
+          <p>
+            <strong>Email:</strong> {teacher.email || "N/A"}
+          </p>
+          {teacher.certifications?.length ? (
+            <p>
+              <strong>Certifications:</strong>{" "}
+              {teacher.certifications.join(", ")}
+            </p>
+          ) : null}
+          {teacher.classes?.length ? (
+            <div>
+              <h4 className="font-medium text-gray-700 mb-2">Classes:</h4>
+              {teacher.classes.map((cls) => (
+                <div
+                  key={cls._id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-2"
+                >
+                  <div>
+                    <p className="font-medium">{cls.title}</p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(cls.date).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleJoinClass(cls._id)}
+                    className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition"
+                  >
+                    Join
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 italic">No classes listed.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// === Courses in Department ===
 export const CoursesInDepartment = ({
   courses = [],
   onViewDetails,
-  userType,
-}: any) => {
-  // const buttonStyle = getStyle(userType);
-
+}: {
+  courses?: Course[];
+  onViewDetails: (id: string) => void;
+}) => {
   return (
-    <div className="department-courses">
-      <h2 className="section-heading">
-        Courses <span className="course-count">({courses.length})</span>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-4">
+        Courses <span className="text-gray-500">({courses.length})</span>
       </h2>
-
       {courses.length === 0 ? (
-        <p className="empty-message">
-          No courses available for this {userType}.
-        </p>
+        <p className="text-gray-500 italic">No courses available.</p>
       ) : (
-        <div className="courses-grid">
-          {courses.map((course: any) => (
-            <div className="course-card" key={course._id}>
-              <div className="course-card-body">
-                <h3 className="course-title">
-                  {formatText(course.title || course.name || "Untitled Course")}
-                </h3>
-
-                <p className="course-description">
-                  {course.description
-                    ? course.description.length > 50
-                      ? `${formatText(course.description.slice(0, 50))}...`
-                      : formatText(course.description)
-                    : "No description available"}
-                </p>
-
-                <button
-                  className="view-details-button"
-                  onClick={() => onViewDetails(course._id)}
-                  style={{ backgroundColor: "#66666616", color: "#666" }}
-                >
-                  View Details
-                  <span>
-                    <FaChevronRight className="view-details-icon" />
-                  </span>
-                </button>
-              </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {courses.map((course) => (
+            <div
+              key={course._id}
+              className="p-4 border border-gray-200 rounded-xl hover:shadow-md transition"
+            >
+              <h3 className="font-semibold text-gray-900 mb-1">
+                {formatText(course.title || course.name || "Untitled")}
+              </h3>
+              <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                {course.description
+                  ? course.description.length > 50
+                    ? `${course.description.slice(0, 50)}...`
+                    : course.description
+                  : "No description"}
+              </p>
+              <button
+                onClick={() => onViewDetails(course._id)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium"
+              >
+                View Details <FaChevronRight className="w-4 h-4" />
+              </button>
             </div>
           ))}
         </div>
@@ -628,129 +434,46 @@ export const CoursesInDepartment = ({
   );
 };
 
-// Parent Details Card component
-export const ParentDetailsCard = ({
-  parent,
-  onNavigate,
-  onViewDetails,
-  userType,
-}: any) => {
-  const buttonStyle = getStyle(userType);
-
-  return (
-    <div className="parent-details" onClick={() => onNavigate(parent._id)}>
-      <h2 className="section-heading">Parent or Guardian Details</h2>
-      <div className="parent-card">
-        {renderAvatar(parent.firstName, parent.lastName, userType)}
-        <h3>
-          {formatText(parent.firstName)} {formatText(parent.lastName)}{" "}
-          {/* Applied formatText */}
-        </h3>
-        <p className="parent-email">{parent.email}</p>
-        {parent.phoneNumber && (
-          <p className="parent-phone">{parent.phoneNumber}</p>
-        )}
-        <p className="parent-status">
-          {parent.isSuspended ? "Suspended" : "Active"}
-        </p>
-        <div className="parent-actions">
-          <button
-            className="view-details-button"
-            onClick={() => onViewDetails(parent._id)}
-            style={{
-              backgroundColor: buttonStyle.backgroundColor,
-              color: buttonStyle.color,
-            }}
-          >
-            View Details
-            <span>
-              <FaChevronRight className="view-details-icon" />
-            </span>
-          </button>
-
-          {parent.email && (
-            <a
-              href={`mailto:${parent.email}`}
-              className="parent-action-button"
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                backgroundColor: buttonStyle.backgroundColor,
-                color: buttonStyle.color,
-              }}
-            >
-              <FaPaperPlane className="parent-action-icon" />
-            </a>
-          )}
-
-          {parent.phoneNumber && (
-            <a
-              href={`tel:${parent.phoneNumber}`}
-              className="parent-action-button"
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                backgroundColor: buttonStyle.backgroundColor,
-                color: buttonStyle.color,
-              }}
-            >
-              <FaPhoneAlt className="parent-action-icon" />
-            </a>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Children List component
+// === Children List ===
 export const ChildrenList = ({
   children,
   onNavigate,
-  //onViewDetails,
-  userType,
-}: any) => {
-  const buttonStyle = getStyle(userType); // Assuming children are always 'student' type
+}: {
+  children: Child[];
+  onNavigate: (id: string) => void;
+}) => {
+  const { bg, text } = getStyle("student");
 
   return (
-    <div className="children-list">
-      <h2 className="section-heading">Children ({children.length})</h2>
-      <div className="children-flex-grid">
-        {children.map((child: any) => (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-4">
+        Children <span className="text-gray-500">({children.length})</span>
+      </h2>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {children.map((child) => (
           <div
-            className="child-card"
             key={child._id}
             onClick={() => onNavigate(child._id)}
-            style={{
-              borderRadius: 24,
-            }}
+            className="p-4 border border-gray-200 rounded-2xl hover:shadow-md transition cursor-pointer"
           >
-            {renderAvatar(child.firstName, child.lastName, userType)}
-            <h3 style={{ paddingTop: 8, fontSize: 15 }}>
+            {renderAvatar(child.firstName, child.lastName, "student")}
+            <h3 className="mt-3 font-semibold text-gray-900">
               {formatText(child.firstName)} {formatText(child.lastName)}
             </h3>
-            <p style={{ fontSize: 12 }} className="child-email">
-              {child.email}
-            </p>
+            <p className="text-sm text-gray-600">{child.email}</p>
             {child.phoneNumber && (
-              <p className="child-phone">
-                <strong>Phone:</strong> {child.phoneNumber}
+              <p className="text-xs text-gray-500 mt-1">
+                Phone: {child.phoneNumber}
               </p>
             )}
             <button
-              className="view-details-button-child"
               onClick={(e) => {
-                e.stopPropagation(); // prevents triggering the parent card click
+                e.stopPropagation();
                 onNavigate(child._id);
               }}
-              style={{
-                backgroundColor: buttonStyle.backgroundColor,
-                color: buttonStyle.color,
-                marginTop: 24,
-              }}
+              className={`mt-4 w-full py-2 ${bg} ${text} rounded-lg font-medium text-sm hover:opacity-90 transition`}
             >
-              View Child or Ward
-              <span>
-                <FaChevronRight className="view-details-icon" />
-              </span>
+              View Child <FaChevronRight className="inline ml-1" />
             </button>
           </div>
         ))}
@@ -759,57 +482,42 @@ export const ChildrenList = ({
   );
 };
 
-interface StudentsInGradeProps {
-  students: any[];
-  onNavigate: (id: string) => void;
-  userType: string;
-}
-
+// === Students in Grade ===
 export const StudentsInGrade = ({
   students,
   onNavigate,
-  userType,
-}: StudentsInGradeProps) => {
-  const buttonStyle = getStyle(userType);
+}: {
+  students: Child[];
+  onNavigate: (id: string) => void;
+}) => {
+  const { bg, text } = getStyle("student");
 
   return (
-    <div className="students-in-grade">
-      <h2 className="section-heading">
-        Students in this Grade ({students.length})
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-4">
+        Students in Grade{" "}
+        <span className="text-gray-500">({students.length})</span>
       </h2>
-
-      <div className="children-flex-grid">
-        {students.map((child: any) => (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {students.map((student) => (
           <div
-            className="child-card"
-            key={child._id}
-            onClick={() => onNavigate(child._id)}
+            key={student._id}
+            onClick={() => onNavigate(student._id)}
+            className="p-4 border border-gray-200 rounded-2xl hover:shadow-md transition cursor-pointer"
           >
-            {renderAvatar(child.firstName, child.lastName, userType)}
-            <h3>
-              {formatText(child.firstName)} {formatText(child.lastName)}
+            {renderAvatar(student.firstName, student.lastName, "student")}
+            <h3 className="mt-3 font-semibold text-gray-900">
+              {formatText(student.firstName)} {formatText(student.lastName)}
             </h3>
-            <p className="child-email">{child.email}</p>
-            {child.phoneNumber && (
-              <p className="child-phone">
-                <strong>Phone:</strong> {child.phoneNumber}
-              </p>
-            )}
+            <p className="text-sm text-gray-600">{student.email}</p>
             <button
-              className="view-details-button-child"
               onClick={(e) => {
-                e.stopPropagation(); // prevents triggering the parent card click
-                onNavigate(child._id);
+                e.stopPropagation();
+                onNavigate(student._id);
               }}
-              style={{
-                backgroundColor: buttonStyle.backgroundColor,
-                color: buttonStyle.color,
-              }}
+              className={`mt-4 w-full py-2 ${bg} ${text} rounded-lg font-medium text-sm hover:opacity-90 transition`}
             >
-              View Child or Ward
-              <span>
-                <FaChevronRight className="view-details-icon" />
-              </span>
+              View Student <FaChevronRight className="inline ml-1" />
             </button>
           </div>
         ))}
@@ -818,39 +526,50 @@ export const StudentsInGrade = ({
   );
 };
 
-// Student Grades List component
-export const StudentGradesList = ({ grades, onEditGrade, showEdit }: any) => (
-  <div className="student-grades">
-    <h2 className="section-heading">
-      Grades for this Student ({grades.length})
+// === Student Grades List ===
+export const StudentGradesList = ({
+  grades,
+  onEditGrade,
+  showEdit,
+}: {
+  grades: Grade[];
+  onEditGrade: (grade: Grade) => void;
+  showEdit: boolean;
+}) => (
+  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+    <h2 className="text-xl font-bold text-gray-900 mb-4">
+      Grades <span className="text-gray-500">({grades.length})</span>
     </h2>
-
-    <div className="grades-list">
-      {grades.map((grade: any) => (
-        <div className="grade-item" key={grade._id}>
+    <div className="space-y-4">
+      {grades.map((grade) => (
+        <div
+          key={grade._id}
+          className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
+        >
           <div>
-            <h3 className="grade-subject">{formatText(grade.subject)}</h3>{" "}
-            {/* Applied formatText */}
-            <p className="grade-score">
+            <h3 className="font-semibold text-gray-900">
+              {formatText(grade.subject)}
+            </h3>
+            <p className="text-sm text-gray-600">
               Score: <strong>{grade.score}</strong>
             </p>
             {grade.comments && (
-              <p className="grade-comments">
+              <p className="text-xs text-gray-500 mt-1">
                 Comments: {formatText(grade.comments)}
-              </p> // Applied formatText
+              </p>
             )}
             {grade.dateAwarded && (
-              <p className="grade-date">
-                Date Awarded: {new Date(grade.dateAwarded).toLocaleDateString()}
+              <p className="text-xs text-gray-400">
+                {new Date(grade.dateAwarded).toLocaleDateString()}
               </p>
             )}
           </div>
           {showEdit && (
             <button
               onClick={() => onEditGrade(grade)}
-              className="edit-grade-btn"
+              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition"
             >
-              <FaEdit /> Edit
+              <FaEdit className="w-5 h-5" />
             </button>
           )}
         </div>
@@ -859,10 +578,10 @@ export const StudentGradesList = ({ grades, onEditGrade, showEdit }: any) => (
   </div>
 );
 
-// Default export
+// === Export Default ===
 export default {
+  UserDetailsEntries,
   CoursesInDepartment,
-  ParentDetailsCard,
   ChildrenList,
   StudentsInGrade,
   StudentGradesList,

@@ -28,10 +28,11 @@
 
 .modal-content {
     background: var(--white);
-    padding: 24px;
+    /* padding: 24px; */
     border-radius: 12px;
     width: 100%;
-    max-width: 600px;
+    min-width: 350px;
+    max-width: 700px;
     position: relative;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
     display: flex;
@@ -40,7 +41,7 @@
     max-height: 80vh;
     /* Set max height */
     overflow-y: auto;
-    min-width: 500px;
+    /* min-width: 500px; */
     /* Enable scrolling if content exceeds max height */
 }
 

@@ -7,7 +7,7 @@ import {
   deleteDiscount,
   fetchDiscounts,
   updateDiscount,
-} from "../../../Redux/Settings/SettingsSlice";
+} from "../../../Redux/Slices/SettingsSlice";
 import ModalDropdown from "../../../Components/Modal/ModalDropdown";
 
 // Define an interface for the discount object to improve type safety

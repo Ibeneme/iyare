@@ -5,7 +5,7 @@ import "./SettingCustomPriceInternational.css";
 import {
   setInternationalPrice,
   fetchInternationalPrice,
-} from "../../../../../Redux/Settings/SettingsSlice";
+} from "../../../../../Redux/Slices/SettingsSlice";
 import { useToast } from "../../../../../Context/ToastProvider";
 import { AppDispatch } from "../../../../../Redux/store";
 

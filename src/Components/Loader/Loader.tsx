@@ -1,57 +1,14 @@
-import React from "react";
-
-const Loader: React.FC = () => {
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
-        backdropFilter: "blur(6px)",
-        backgroundColor: "rgba(0, 0, 0, 0.2)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 2147483647,
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: "#fff",
-          padding: "2rem",
-          borderRadius: "12px",
-          minWidth: 250,
-          minHeight: 150,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <div
-          style={{
-            border: "6px solid #FFD00024", // translucent yellow
-            borderTop: "6px solid #FFD000", // solid yellow top
-            borderRadius: "50%",
-            width: "48px",
-            height: "48px",
-            animation: "spin 0.8s linear infinite",
-          }}
-        />
-
-        <style>
-          {`
-            @keyframes spin {
-              to {
-                transform: rotate(360deg);
-              }
-            }
-          `}
-        </style>
+const Loader = () => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-sm">
+    <div className="flex flex-col items-center space-y-4">
+      <div className="relative">
+        <div className="w-16 h-16 border-4 border-gray-200 rounded-full"></div>
+        <div className="absolute top-0 left-0 w-16 h-16 border-4 border-green-700 rounded-full border-t-transparent animate-spin"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-green-700 rounded-full"></div>
       </div>
+      <p className="text-sm font-medium text-gray-700">Loading...</p>
     </div>
-  );
-};
+  </div>
+);
 
 export default Loader;

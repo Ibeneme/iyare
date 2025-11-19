@@ -15,7 +15,6 @@ import {
 import Loader from "../../../Components/Loader/Loader";
 import bgAwards from "../../../assets/images/admin/awards/bgAwards.png";
 
-// Define a type for a student in the enrolledStudents array
 interface EnrolledStudent {
   _id: string;
   name: string;
@@ -68,8 +67,6 @@ const AwardsList: React.FC = () => {
     name: string;
   } | null>(null);
 
-  // Helper function to fetch awards. Using useCallback to prevent re-creation
-  // on every render and avoid an infinite loop in useEffect.
   const fetchAwards = useCallback(() => {
     setLoading(true);
     dispatch(getAwards())
@@ -86,19 +83,14 @@ const AwardsList: React.FC = () => {
       });
   }, [dispatch]);
 
-  // Fetch awards on initial component mount and whenever fetchAwards is called
   useEffect(() => {
     fetchAwards();
   }, [fetchAwards]);
 
-  // Fetch teacher's classes and get teacher ID and name
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem("user");
-      if (!storedUser) {
-        console.warn("⚠️ No user found in localStorage.");
-        return;
-      }
+      if (!storedUser) return;
       const parsedUser = JSON.parse(storedUser);
 
       if (parsedUser?.userType === "teacher") {
@@ -106,29 +98,18 @@ const AwardsList: React.FC = () => {
         setIsAdmin(false);
         const { _id, name, email } = parsedUser;
         setTeacherData({ _id, name, email });
-        if (!_id) {
-          console.warn("⚠️ No teacherId found in stored user.");
-          return;
+        if (_id) {
+          dispatch(fetchTeacherClasses(_id))
+            .unwrap()
+            .then(setTeacherClasses)
+            .catch(console.error);
         }
-        dispatch(fetchTeacherClasses(_id))
-          .unwrap()
-          .then((payload) => {
-            setTeacherClasses(payload);
-          })
-          .catch((err) => {
-            console.error("❌ Error fetching teacher classes:", err);
-          });
       } else if (parsedUser?.userType === "admin") {
         setIsAdmin(true);
         setIsTeacher(false);
-      } else {
-        setIsTeacher(false);
-        setIsAdmin(false);
       }
     } catch (err) {
-      console.error("💥 Failed to parse user from localStorage:", err);
-      setIsTeacher(false);
-      setIsAdmin(false);
+      console.error("Failed to parse user:", err);
     }
   }, [dispatch]);
 
@@ -138,7 +119,6 @@ const AwardsList: React.FC = () => {
     >
   ) => {
     const { name, value } = e.target;
-    // Truncate description to 1000 characters
     if (name === "description" && value.length > 1000) {
       setNewAward((prev) => ({ ...prev, [name]: value.substring(0, 1000) }));
     } else {
@@ -146,9 +126,7 @@ const AwardsList: React.FC = () => {
     }
 
     if (name === "courseId") {
-      const selectedCourse = uniqueCourses.find(
-        (course) => course._id === value
-      );
+      const selectedCourse = uniqueCourses.find((c) => c._id === value);
       if (selectedCourse) {
         setCourseData({ _id: selectedCourse._id, title: selectedCourse.title });
         const classesForCourse = teacherClasses.filter(
@@ -166,11 +144,11 @@ const AwardsList: React.FC = () => {
           });
         });
         setStudentsForSelectedCourse(Array.from(uniqueStudents.values()));
-        setStudentData(null); // Reset student selection
+        setStudentData(null);
       }
     } else if (name === "studentId") {
       const selectedStudent = studentsForSelectedCourse.find(
-        (student) => student._id === value
+        (s) => s._id === value
       );
       if (selectedStudent) {
         setStudentData({
@@ -186,20 +164,14 @@ const AwardsList: React.FC = () => {
     isEdit = false
   ) => {
     const { name, value } = e.target;
-    // Truncate description to 1000 characters
-    if (name === "description" && value.length > 1000) {
-      const truncatedValue = value.substring(0, 1000);
-      if (isEdit) {
-        setEditAward({ ...editAward, [name]: truncatedValue });
-      } else {
-        setNewAward({ ...newAward, [name]: truncatedValue });
-      }
+    const truncated =
+      name === "description" && value.length > 1000
+        ? value.substring(0, 1000)
+        : value;
+    if (isEdit) {
+      setEditAward((prev) => ({ ...prev, [name]: truncated }));
     } else {
-      if (isEdit) {
-        setEditAward({ ...editAward, [name]: value });
-      } else {
-        setNewAward({ ...newAward, [name]: value });
-      }
+      setNewAward((prev) => ({ ...prev, [name]: truncated }));
     }
   };
 
@@ -211,7 +183,7 @@ const AwardsList: React.FC = () => {
       !studentData ||
       !teacherData
     ) {
-      console.error("Title, month, course, and student are required!");
+      setError("All fields are required.");
       return;
     }
 
@@ -230,13 +202,12 @@ const AwardsList: React.FC = () => {
       .then(() => {
         setNewAward({});
         setMonth("");
-        setIsCreateModalOpen(false);
         setCourseData(null);
         setStudentData(null);
-        fetchAwards(); // Reload awards on successful creation
+        setIsCreateModalOpen(false);
+        fetchAwards();
       })
-      .catch((err: any) => {
-        console.error("Failed to create award:", err.message);
+      .catch((err) => {
         setError(err.message || "Failed to create award.");
       })
       .finally(() => {
@@ -251,18 +222,15 @@ const AwardsList: React.FC = () => {
 
   const handleUpdate = () => {
     if (!editingId) return;
-
     setLoading(true);
-    const updatedData = { id: editingId, data: editAward };
-
-    dispatch(updateAward(updatedData as any))
+    dispatch(updateAward({ id: editingId, data: editAward } as any))
       .unwrap()
       .then(() => {
         setEditingId(null);
         setEditAward({});
-        fetchAwards(); // Reload awards on successful update
+        fetchAwards();
       })
-      .catch((err: any) => {
+      .catch((err) => {
         setError(err.message || "Failed to update award.");
       })
       .finally(() => {
@@ -277,26 +245,22 @@ const AwardsList: React.FC = () => {
 
   const handleDelete = () => {
     if (!awardToDelete) return;
-
     setLoading(true);
     dispatch(deleteAward(awardToDelete))
       .unwrap()
       .then(() => {
         setIsDeleteModalOpen(false);
         setAwardToDelete(null);
-        fetchAwards(); // Reload awards on successful deletion
+        fetchAwards();
       })
-      .catch((err: any) => {
+      .catch((err) => {
         setError(err.message || "Failed to delete award.");
       })
       .finally(() => {
         setLoading(false);
-        setIsDeleteModalOpen(false);
-        setAwardToDelete(null);
       });
   };
 
-  // Get unique courses from the fetched teacher classes
   const uniqueCourses = Array.from(
     new Map(
       teacherClasses.map((cls) => [cls.courseId?._id, cls.courseId])
@@ -304,453 +268,293 @@ const AwardsList: React.FC = () => {
   ).filter(Boolean);
 
   return (
-    <div
-      style={{  background: "transparent", minHeight: "100vh" }}
-    >
-      <h2 style={{ color: "#004d00", marginBottom: "2px", fontWeight: 900 }}>
-        Student Awards
-      </h2>
-      <p
-        style={{
-          color: "#333",
-          marginBottom: "24px",
-          fontSize: "12px",
-          lineHeight: "1.6",
-          maxWidth: 600,
-        }}
-      >
-        Recognize and celebrate student achievements by creating and managing
-        awards for outstanding performance, improvement, and contributions.
-      </p>
-
-      {isTeacher && (
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          style={{
-            marginBottom: "20px",
-            padding: "10px 18px",
-            background: "#ffd000",
-            color: "#004d00",
-            border: "0.6px solid #004d00",
-            borderRadius: "6px",
-            fontWeight: "bold",
-            cursor: "pointer",
-          }}
-        >
-          Create Award
-        </button>
-      )}
-
-      {loading && <Loader />}
-      {error && <p style={{ color: "red" }}>Error: {error}</p>}
-
-      {/* Create Award Modal */}
-      {isCreateModalOpen && (
-        <div
-          style={{
-            position: "fixed",
-            zIndex: 999999,
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px",
-          }}
-        >
-          <div
-            style={{
-              background: "#fff",
-              padding: "24px",
-              borderRadius: "10px",
-              width: "420px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-              maxHeight: 500,
-              overflowY: "auto",
-            }}
-          >
-            <h3 style={{ marginBottom: "16px", color: "#004d00" }}>
-              Create New Award
-            </h3>
-
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-                fontSize: "13px",
-              }}
-            >
-              <label>
-                Title
-                <input
-                  type="text"
-                  name="title"
-                  placeholder="e.g. Best Student"
-                  value={newAward.title || ""}
-                  onChange={handleCreateFormChange}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    padding: "10px",
-                    marginTop: "4px",
-                    border: "1px solid #ccc",
-                    borderRadius: "6px",
-                    fontSize: "13px",
-                  }}
-                />
-              </label>
-
-              <label>
-                Description ({newAward.description?.length || 0}/1000)
-                <textarea
-                  name="description"
-                  placeholder="Award Description"
-                  value={newAward.description || ""}
-                  onChange={handleCreateFormChange}
-                  maxLength={1000}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    padding: "10px",
-                    marginTop: "4px",
-                    border: "1px solid #ccc",
-                    borderRadius: "6px",
-                    fontSize: "13px",
-                    minHeight: "80px",
-                  }}
-                />
-              </label>
-
-              <label>
-                Course
-                <select
-                  name="courseId"
-                  value={courseData?._id || ""}
-                  onChange={handleCreateFormChange}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    padding: "10px",
-                    marginTop: "4px",
-                    border: "1px solid #ccc",
-                    borderRadius: "6px",
-                    fontSize: "13px",
-                  }}
-                >
-                  <option value="">Select Course</option>
-                  {uniqueCourses.map((course) => (
-                    <option key={course._id} value={course._id}>
-                      {course.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Student
-                <select
-                  name="studentId"
-                  value={studentData?._id || ""}
-                  onChange={handleCreateFormChange}
-                  disabled={
-                    !courseData || studentsForSelectedCourse.length === 0
-                  }
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    padding: "10px",
-                    marginTop: "4px",
-                    border: "1px solid #ccc",
-                    borderRadius: "6px",
-                    fontSize: "13px",
-                  }}
-                >
-                  <option value="">Select Student</option>
-                  {studentsForSelectedCourse.map((student) => (
-                    <option key={student._id} value={student._id}>
-                      {student.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Month
-                <select
-                  value={month}
-                  onChange={(e) => setMonth(e.target.value)}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    padding: "10px",
-                    marginTop: "4px",
-                    border: "1px solid #ccc",
-                    borderRadius: "6px",
-                    fontSize: "13px",
-                  }}
-                >
-                  <option value="">Select Month</option>
-                  {months.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: "10px",
-                marginTop: "20px",
-              }}
-            >
-              <button
-                onClick={() => setIsCreateModalOpen(false)}
-                style={{
-                  padding: "8px 14px",
-                  background: "transparent",
-                  border: "0.6px solid #004d00",
-                  color: "#004d00",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontSize: "13px",
-                }}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-green-900 flex items-center gap-3">
+            <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center">
+              <svg
+                className="w-6 h-6 text-green-900"
+                fill="currentColor"
+                viewBox="0 0 20 20"
               >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreate}
-                style={{
-                  padding: "8px 14px",
-                  background: "#004d00",
-                  border: "0.6px solid #004d00",
-                  color: "#fff",
-                  borderRadius: "6px",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                  fontSize: "13px",
-                }}
-              >
-                Create
-              </button>
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
             </div>
-          </div>
+            Student Awards
+          </h2>
+          <p className="mt-2 text-gray-600 max-w-2xl">
+            Recognize and celebrate student achievements by creating and
+            managing awards for outstanding performance, improvement, and
+            contributions.
+          </p>
         </div>
-      )}
 
-      {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && (
-        <div
-          style={{
-            position: "fixed",
-            zIndex: 999999,
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px",
-          }}
-        >
-          <div
-            style={{
-              background: "#fff",
-              padding: "24px",
-              borderRadius: "10px",
-              width: "400px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-              textAlign: "center",
-            }}
+        {/* Create Button */}
+        {isTeacher && (
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="mb-6 inline-flex items-center gap-2 bg-yellow-400 text-green-900 px-5 py-3 rounded-lg font-bold hover:bg-yellow-500 transition-colors shadow-sm"
           >
-            <h3 style={{ color: "#aa0000", marginBottom: "4px" }}>
-              Confirm Delete
-            </h3>
-            <p style={{ fontSize: "13px", marginBottom: "20px" }}>
-              Are you sure you want to delete this award? This action cannot be
-              undone.
+            Create Award
+          </button>
+        )}
+
+        {/* Error */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+
+        {/* Awards Grid */}
+        {loading ? (
+          <Loader />
+        ) : awards.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
+            <p className="text-gray-500">
+              No awards yet. 
             </p>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: "10px",
-              }}
-            >
-              <button
-                onClick={() => {
-                  setIsDeleteModalOpen(false);
-                  setAwardToDelete(null);
-                }}
-                style={{
-                  padding: "13px 14px",
-                  background: "transparent",
-                  border: "0.6px solid #004d00",
-                  color: "#004d00",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  width: "48%",
-                  fontSize: 13,
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                style={{
-                  padding: "13px 14px",
-                  background: "#ff4444",
-                  border: "0.6px solid #aa0000",
-                  color: "#fff",
-                  borderRadius: "6px",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                  width: "48%",
-                  fontSize: 13,
-                }}
-              >
-                Delete
-              </button>
-            </div>
           </div>
-        </div>
-      )}
-
-      {/* Awards List */}
-      <div>
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {awards?.map((award) => (
-            <li
-              key={award._id}
-              style={{
-                marginBottom: "16px",
-                //padding: "16px",
-                border: "1px solid #ddd",
-                borderRadius: "16px",
-                backgroundColor: "#fff",
-              }}
-            >
-              {editingId === award._id ? (
-                <>
-                  <input
-                    type="text"
-                    name="title"
-                    value={editAward.title || ""}
-                    onChange={(e) => handleChange(e, true)}
-                    style={{
-                      display: "block",
-                      margin: "6px 0",
-                      padding: "10px",
-                      border: "1px solid #ccc",
-                      borderRadius: "6px",
-                    }}
-                  />
-                  <textarea
-                    name="description"
-                    value={editAward.description || ""}
-                    onChange={(e) => handleChange(e, true)}
-                    maxLength={1000}
-                    style={{
-                      display: "block",
-                      margin: "6px 0",
-                      padding: "10px",
-                      border: "1px solid #ccc",
-                      borderRadius: "6px",
-                    }}
-                  />
-                  <button
-                    onClick={handleUpdate}
-                    style={{
-                      marginTop: "8px",
-                      padding: "6px 12px",
-                      background: "#004d00",
-                      border: "0px solid #004d00",
-                      color: "#fff",
-                      borderRadius: "32px",
-                      cursor: "pointer",
-                      fontSize: 14,
-                    }}
-                  >
-                    Save
-                  </button>
-                </>
-              ) : (
-                <div style={{ display: "flex", gap: 0 }}>
-                  <div>
-                    <img
-                      src={bgAwards}
-                      alt="Student Awards"
-                      style={{
-                        width: 48,
-                        height: "100%",
-                        objectFit: "cover", // This is the key property
-                        borderRadius:`16px 0px 16px 0px`
-                      }}
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {awards.map((award) => (
+              <div
+                key={award._id}
+                className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+              >
+                {editingId === award._id ? (
+                  <div className="p-5 space-y-3">
+                    <input
+                      type="text"
+                      name="title"
+                      value={editAward.title || ""}
+                      onChange={(e) => handleChange(e, true)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700 focus:border-transparent"
+                      placeholder="Award Title"
                     />
-                  </div>
-                  <div style={{ padding: 16 }}>
-                    <h3 style={{ margin: "0 0 8px", color: "#004d00" }}>
-                      {award.title}
-                    </h3>
-                    <p style={{ margin: "0 0 4px", fontSize: 13 }}>
-                      {award.description}
-                    </p>
-                    <small style={{ fontSize: 13 }}>
-                      {`Course: ${award.course?.title} | Student: ${award.student?.name} | Teacher: ${award.teacher?.name}`}
-                    </small>
-                    <br />
-                    <div
-                      style={{ marginTop: "8px", display: "flex", gap: "10px" }}
+                    <textarea
+                      name="description"
+                      value={editAward.description || ""}
+                      onChange={(e) => handleChange(e, true)}
+                      maxLength={1000}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg h-24 resize-none focus:ring-2 focus:ring-green-700"
+                      placeholder="Description"
+                    />
+                    <button
+                      onClick={handleUpdate}
+                      className="w-full py-2 bg-green-700 text-white rounded-lg font-medium hover:bg-green-800 transition-colors"
                     >
-                      {(isTeacher || isAdmin) && (
-                        <button
-                          onClick={() => startEditing(award)}
-                          style={{
-                            padding: "6px 12px",
-                            background: "#004d0014",
-                            border: "0px solid #004d00",
-                            color: "#004d00",
-                            borderRadius: "32px",
-                            cursor: "pointer",
-                            fontSize: 14,
-                          }}
-                        >
-                          Edit
-                        </button>
-                      )}
-
-                      {isAdmin && (
-                        <button
-                          onClick={() => confirmDelete(award._id)}
-                          style={{
-                            padding: "6px 12px",
-                            background: "#ffdddd",
-                            border: "0px solid #aa0000",
-                            color: "#aa0000",
-                            borderRadius: "32px",
-                            cursor: "pointer",
-                            fontSize: 14,
-                          }}
-                        >
-                          Delete
-                        </button>
-                      )}
+                      Save Changes
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex">
+                    <div className="w-16 h-full">
+                      <img
+                        src={bgAwards}
+                        alt="Award"
+                        className="w-full h-full object-cover rounded-l-2xl"
+                      />
+                    </div>
+                    <div className="flex-1 p-5">
+                      <h3 className="font-bold text-green-900 mb-1">
+                        {award.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                        {award.description}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {award.course?.title} • {award.student?.name}
+                      </p>
+                      <div className="flex gap-2 mt-3">
+                        {(isTeacher || isAdmin) && (
+                          <button
+                            onClick={() => startEditing(award)}
+                            className="flex-1 py-1.5 bg-green-100 text-green-700 text-xs font-medium rounded-full hover:bg-green-200 transition-colors"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {isAdmin && (
+                          <button
+                            onClick={() => confirmDelete(award._id)}
+                            className="flex-1 py-1.5 bg-red-100 text-red-700 text-xs font-medium rounded-full hover:bg-red-200 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Create Modal */}
+        {isCreateModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-screen overflow-y-auto">
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-green-900 mb-4">
+                  Create New Award
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Title
+                    </label>
+                    <input
+                      type="text"
+                      name="title"
+                      value={newAward.title || ""}
+                      onChange={handleCreateFormChange}
+                      placeholder="e.g. Best Student"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Description ({newAward.description?.length || 0}/1000)
+                    </label>
+                    <textarea
+                      name="description"
+                      value={newAward.description || ""}
+                      onChange={handleCreateFormChange}
+                      maxLength={1000}
+                      placeholder="Award Description"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg h-24 resize-none focus:ring-2 focus:ring-green-700"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Course
+                    </label>
+                    <select
+                      name="courseId"
+                      value={courseData?._id || ""}
+                      onChange={handleCreateFormChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700"
+                    >
+                      <option value="">Select Course</option>
+                      {uniqueCourses.map((course) => (
+                        <option key={course._id} value={course._id}>
+                          {course.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Student
+                    </label>
+                    <select
+                      name="studentId"
+                      value={studentData?._id || ""}
+                      onChange={handleCreateFormChange}
+                      disabled={
+                        !courseData || studentsForSelectedCourse.length === 0
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700 disabled:bg-gray-100"
+                    >
+                      <option value="">Select Student</option>
+                      {studentsForSelectedCourse.map((student) => (
+                        <option key={student._id} value={student._id}>
+                          {student.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Month
+                    </label>
+                    <select
+                      value={month}
+                      onChange={(e) => setMonth(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700"
+                    >
+                      <option value="">Select Month</option>
+                      {months.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              )}
-            </li>
-          ))}
-        </ul>
+
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={() => setIsCreateModalOpen(false)}
+                    className="flex-1 py-2.5 border border-green-700 text-green-700 rounded-lg font-medium hover:bg-green-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreate}
+                    className="flex-1 py-2.5 bg-green-700 text-white rounded-lg font-medium hover:bg-green-800 transition-colors"
+                  >
+                    Create
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Modal */}
+        {isDeleteModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-8 h-8 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Delete Award?
+              </h3>
+              <p className="text-gray-600 mb-6">
+                This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setIsDeleteModalOpen(false);
+                    setAwardToDelete(null);
+                  }}
+                  className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="flex-1 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

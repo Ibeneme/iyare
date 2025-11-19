@@ -10,13 +10,22 @@ interface User {
     email: string;
     firstName: string;
     lastName: string;
+    subjects: [];
+    userType?:string;
+    children?:[];
+    parentId?:string;
+    isSubscribed?: string;
+    class?:string
     // Add other user properties here as they exist in your models
 }
+
 
 interface ApiResponse<T> {
     success: boolean;
     message: string;
     data?: T;
+    token?: any;
+    resetToken?: any
 }
 
 interface AllUsersPayload {

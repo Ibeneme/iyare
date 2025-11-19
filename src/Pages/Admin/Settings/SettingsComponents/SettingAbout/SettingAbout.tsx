@@ -6,7 +6,7 @@ const SettingAbout: React.FC = () => {
     <div className="about-container">
       <h2>Who We Are</h2>
       <p>
-        Iyare Learning Hub is more than just a platform; we are a vibrant,
+        Yare Learning Hub is more than just a platform; we are a vibrant,
         community-driven education initiative dedicated to empowering learners
         of all ages. Our commitment extends far beyond the classroom, focusing
         on unlocking opportunities for individuals across Nigeria and beyond. We
@@ -49,7 +49,7 @@ const SettingAbout: React.FC = () => {
         everyone.
       </p>
       <p>
-        At Iyare Learning Hub, we see a future of empowered communities, led by
+        At Yare Learning Hub, we see a future of empowered communities, led by
         educated, inspired, and culturally grounded individuals. These
         individuals will not only contribute meaningfully to their local
         societies but will also drive innovation on a global scale. Our

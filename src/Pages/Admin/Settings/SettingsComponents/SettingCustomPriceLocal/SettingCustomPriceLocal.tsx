@@ -5,7 +5,7 @@ import "./SettingCustomPriceLocal.css";
 import {
   setLocalPrice,
   fetchLocalPrice,
-} from "../../../../../Redux/Settings/SettingsSlice";
+} from "../../../../../Redux/Slices/SettingsSlice";
 import { AppDispatch } from "../../../../../Redux/store";
 import { useToast } from "../../../../../Context/ToastProvider";
 
@@ -54,7 +54,7 @@ const SettingCustomPriceLocal: React.FC = () => {
         })
         .catch((err) => {
           console.error("❌ Error saving price:", err);
-          addToast("error", "Price must be a valid number.");
+          addToast("error", err?.message);
           setSaveError(err);
           setIsSaving(false);
         });

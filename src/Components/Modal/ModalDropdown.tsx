@@ -21,7 +21,7 @@ const ModalDropdown: React.FC<ModalDropdownProps> = ({
           alignItems: "center",
           display: "flex",
           flexDirection: "column",
-          maxWidth: 600,
+          maxWidth: 700,
           gap: 16,
         }}
       >

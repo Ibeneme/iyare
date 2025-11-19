@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { FiUser, FiEdit3, FiTrash2 } from "react-icons/fi";
-import "./SettingProfile.css";
-import ModalDropdown from "../../../../../Components/Modal/ModalDropdown";
+import {
+ // FiUser,
+  FiEdit3,
+  FiTrash2,
+  FiMail,
+  FiShield,
+  FiX,
+} from "react-icons/fi";
 import { useUserActions } from "../../../../../Hooks/useUsers";
 import { useToast } from "../../../../../Context/ToastProvider";
 import { fetchUserById } from "../../../../../Redux/Admin/adminUsers";
@@ -10,10 +15,9 @@ import { AppDispatch } from "../../../../../Redux/store";
 import Loader from "../../../../../Components/Loader/Loader";
 
 interface Props {
-  // We're removing userData from props as the component will fetch it.
   adminRole: string;
-  currentUserId: any;
-  userType: any;
+  currentUserId: string;
+  userType: string;
 }
 
 const SettingProfile: React.FC<Props> = ({
@@ -23,9 +27,9 @@ const SettingProfile: React.FC<Props> = ({
 }) => {
   const { editUser } = useUserActions();
   const { addToast } = useToast();
+  const dispatch = useDispatch<AppDispatch>();
 
-  // State for user data, loading, and errors
-  const [userData, setUserData] = useState<any | null>(null);
+  const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,236 +37,269 @@ const SettingProfile: React.FC<Props> = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editedFirstName, setEditedFirstName] = useState("");
   const [editedLastName, setEditedLastName] = useState("");
-  const dispatch = useDispatch<AppDispatch>();
 
-  // Function to fetch the user data
+  /* ========================================
+     FETCH USER PROFILE
+  ======================================== */
   const fetchUserProfile = async () => {
     setLoading(true);
     setError(null);
     try {
-      const resultAction = await dispatch(
-        fetchUserById({ id: currentUserId, userType: userType })
-      );
+      const result = await dispatch(
+        fetchUserById({ id: currentUserId, userType })
+      ).unwrap();
 
-      if (fetchUserById.fulfilled.match(resultAction)) {
-        const fetchedUser = resultAction.payload;
-
-        console.log(fetchedUser, "fetchedUser");
-        setUserData(fetchedUser);
-        setEditedFirstName(fetchedUser.firstName || "");
-        setEditedLastName(fetchedUser.lastName || "");
-      } else {
-        setError("Failed to load user profile.");
-        console.error("❌ Fetch failed:", resultAction);
-      }
-    } catch (err) {
-      console.error("❌ Fetch error:", err);
-      setError("An error occurred while fetching user data.");
+      setUserData(result);
+      setEditedFirstName(result.firstName || "");
+      setEditedLastName(result.lastName || "");
+    } catch (err: any) {
+      setError(err.message || "Failed to load profile.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch user data when the component mounts
   useEffect(() => {
     fetchUserProfile();
-  }, []);
+  }, [currentUserId, userType]);
 
-  const handleEditProfile = () => {
-    setShowEditModal(true);
-  };
-
-  const handleDeleteAccount = () => {
-    setShowDeleteModal(true);
-  };
-
+  /* ========================================
+     EDIT SUBMIT
+  ======================================== */
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const formData = {
+      const response = await editUser(adminRole, currentUserId, {
         firstName: editedFirstName,
         lastName: editedLastName,
-      };
-
-      if (!userData?._id) {
-        addToast("error", "User ID not found.");
-        return;
-      }
-
-      const response = await editUser(adminRole, userData._id, formData);
+      });
 
       if (response.success) {
-        const fullName = `${editedFirstName} ${editedLastName}`;
-        addToast("success", `${fullName} updated successfully`);
+        addToast("success", "Profile updated successfully!");
         setShowEditModal(false);
-        // Re-fetch the user profile to refresh the UI with the latest data
         fetchUserProfile();
       } else {
         addToast("error", response.error || "Update failed");
       }
-    } catch (err) {
-      addToast("error", "An unexpected error occurred.");
+    } catch {
+      addToast("error", "An error occurred.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteConfirm = () => {
-    console.log("Account deletion confirmed for user:", userData?.email);
-    // Add your account deletion logic here
+    addToast("error", "Account deletion is not yet implemented.");
     setShowDeleteModal(false);
   };
 
-  // --- Render UI based on state ---
+  /* ========================================
+     RENDER STATES
+  ======================================== */
   if (loading) {
-    return <div className="settings-profile-container"><Loader /></div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader />
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="settings-profile-container error-message">{error}</div>
+      <div className="p-6 text-center text-gray-800 bg-gray-100 rounded-xl">
+        {error}
+      </div>
     );
   }
 
   if (!userData) {
     return (
-      <div className="settings-profile-container">No user data available.</div>
+      <div className="p-6 text-center text-gray-600">
+        No profile data found.
+      </div>
     );
   }
 
   return (
-    <div className="settings-profile-container">
-      <h2>Your Profile</h2>
-      <div className="settings-profile-card">
-        <FiUser size={50} />
-        <div className="settings-profile-details">
-          <h3>
-            {userData.firstName} {userData.lastName}
-          </h3>
-          <p>
-            <strong>Email:</strong> {userData.email}
-          </p>
-          <p>
-            <strong>Role:</strong> {userData.role || adminRole}
-          </p>
+    <>
+      <div className="max-w-4xl mx-auto p-6 space-y-8 bg-white">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-black">Your Profile</h1>
+          <span className="px-4 py-1 text-sm font-medium text-gray-800 bg-gray-200 rounded-full">
+            {adminRole || "Member"}
+          </span>
+        </div>
+
+        {/* Profile Card */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            {/* Avatar */}
+            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center text-3xl font-bold text-gray-800">
+              {userData.firstName[0]}
+              {userData.lastName[0]}
+            </div>
+
+            <div className="flex-1 text-center sm:text-left">
+              <h2 className="text-2xl font-bold text-black">
+                {userData.firstName} {userData.lastName}
+              </h2>
+              <div className="mt-3 space-y-2 text-gray-700">
+                <p className="flex items-center justify-center sm:justify-start gap-2">
+                  <FiMail className="w-5 h-5" />
+                  {userData.email}
+                </p>
+                <p className="flex items-center justify-center sm:justify-start gap-2">
+                  <FiShield className="w-5 h-5" />
+                  {userData.role || adminRole}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 mt-8">
+            <button
+              onClick={() => setShowEditModal(true)}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition"
+            >
+              <FiEdit3 />
+              Edit Profile
+            </button>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition"
+            >
+              <FiTrash2 />
+              Delete Account
+            </button>
+          </div>
         </div>
       </div>
-      {/* ... (rest of the component remains the same) ... */}
-      <div className="settings-profile-actions">
-        <button className="settings-profile-btn" onClick={handleEditProfile}>
-          <FiEdit3 /> Edit Profile
-        </button>
-        <button
-          className="settings-profile-btn delete"
-          onClick={handleDeleteAccount}
-        >
-          <FiTrash2 /> Delete Account
-        </button>
-      </div>
 
+      {/* ========================================
+         EDIT MODAL — WITH BLUR
+      ======================================== */}
       {showEditModal && (
-        <ModalDropdown onClose={() => setShowEditModal(false)}>
-          <div>
-            <div>
-              <h2 style={{ fontSize: "20px", margin: 0 }}>Edit Profile</h2>
-              <p style={{ fontSize: "14px", marginTop: "4px" }}>
-                Update your personal details, such as name, email, or profile
-                picture.
-              </p>
-            </div>{" "}
-            <br />
-            <form onSubmit={handleEditSubmit}>
-              <div className="form-group">
-                <label htmlFor="firstName">First Name</label>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto"
+          onClick={(e) =>
+            e.target === e.currentTarget && setShowEditModal(false)
+          }
+        >
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6 relative max-h-screen overflow-y-auto">
+            <button
+              onClick={() => setShowEditModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10"
+            >
+              <FiX className="w-6 h-6" />
+            </button>
+
+            <h2 className="text-2xl font-bold text-black mb-2 pr-10">
+              Edit Profile
+            </h2>
+            <p className="text-sm text-gray-600 mb-6">
+              Update your personal information below.
+            </p>
+
+            <form onSubmit={handleEditSubmit} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-800 mb-2">
+                  First Name
+                </label>
                 <input
-                  id="firstName"
                   type="text"
                   value={editedFirstName}
                   onChange={(e) => setEditedFirstName(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 transition bg-white text-black"
+                  required
                 />
               </div>
-              <div className="form-group">
-                <label htmlFor="lastName">Last Name</label>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-800 mb-2">
+                  Last Name
+                </label>
                 <input
-                  id="lastName"
                   type="text"
                   value={editedLastName}
                   onChange={(e) => setEditedLastName(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 transition bg-white text-black"
+                  required
                 />
               </div>
-              <br />
-              <div className="modal-actions">
+
+              <div className="flex gap-3 pt-4">
                 <button
-                  style={{
-                    padding: 12,
-                    fontSize: 14,
-                  }}
                   type="button"
-                  className="cancel-btn"
                   onClick={() => setShowEditModal(false)}
+                  className="flex-1 px-5 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition"
                 >
                   Cancel
                 </button>
                 <button
-                  style={{
-                    marginLeft: 12,
-                    padding: 12,
-                    fontSize: 14,
-                  }}
                   type="submit"
-                  className="save-btn"
                   disabled={loading}
+                  className="flex-1 px-5 py-3 bg-gray-300 hover:bg-gray-400 disabled:opacity-50 text-gray-800 font-medium rounded-lg transition"
                 >
                   {loading ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </form>
           </div>
-        </ModalDropdown>
+        </div>
       )}
 
+      {/* ========================================
+         DELETE MODAL — WITH BLUR
+      ======================================== */}
       {showDeleteModal && (
-        <ModalDropdown onClose={() => setShowDeleteModal(false)}>
-          <div>
-            <div>
-              <h2 style={{ margin: 0, fontSize: 20 }}>Delete Account</h2>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto"
+          onClick={(e) =>
+            e.target === e.currentTarget && setShowDeleteModal(false)
+          }
+        >
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6 text-center relative max-h-screen overflow-y-auto">
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10"
+            >
+              <FiX className="w-6 h-6" />
+            </button>
+
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
+              <FiTrash2 className="w-8 h-8 text-gray-800" />
             </div>
-            <p style={{ fontSize: "14px" }}>
-              Are you sure you want to permanently delete your account? This
-              action cannot be undone.
+
+            <h2 className="text-2xl font-bold text-black mb-3">
+              Delete Account?
+            </h2>
+            <p className="text-gray-600 mb-6">
+              This action <strong>cannot be undone</strong>. All your data will
+              be permanently removed.
             </p>
-            <br />
-            <div className="modal-actions" style={{ gap: 12 }}>
+
+            <div className="flex gap-3">
               <button
-                type="button"
-                className="cancel-btn"
-                style={{
-                  padding: 12,
-                  fontSize: 14,
-                }}
                 onClick={() => setShowDeleteModal(false)}
+                className="flex-1 px-5 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition"
               >
                 Cancel
               </button>
               <button
-                type="button"
-                className="confirm-btn"
-                style={{
-                  marginLeft: 12,
-                  padding: 12,
-                  fontSize: 14,
-                }}
                 onClick={handleDeleteConfirm}
+                className="flex-1 px-5 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg transition"
               >
-                Delete
+                Delete Account
               </button>
             </div>
           </div>
-        </ModalDropdown>
+        </div>
       )}
-    </div>
+    </>
   );
 };
 

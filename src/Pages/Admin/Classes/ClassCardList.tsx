@@ -3,6 +3,7 @@ import { ClassData } from "../../../Redux/Admin/adminClasses";
 import Loader from "../../../Components/Loader/Loader";
 import { FaChevronRight } from "react-icons/fa";
 import ErrorDisplay from "../../../Components/Loader/ErrorDisplay";
+import { motion } from "framer-motion";
 
 interface ClassCardListProps {
   classes: ClassData[] | string;
@@ -24,17 +25,13 @@ const ClassCardList: React.FC<ClassCardListProps> = ({
   allClassesCount,
   navigateToClassDetails,
 }) => {
-  if (loading) {
-    return <Loader />;
-  }
+  if (loading) return <Loader />;
 
-  if (error) {
-    return <ErrorDisplay errorMessage={error} />;
-  }
+  if (error) return <ErrorDisplay errorMessage={error} />;
 
   if (!Array.isArray(classes)) {
     return (
-      <p style={{ textAlign: "center", color: "red", padding: "16px 0" }}>
+      <p className="text-center text-red-600 py-4">
         Invalid data format for classes.
       </p>
     );
@@ -42,7 +39,7 @@ const ClassCardList: React.FC<ClassCardListProps> = ({
 
   if (classes.length === 0) {
     return (
-      <p style={{ textAlign: "left", padding: "16px 0", color: "#999" }}>
+      <p className="text-left text-gray-500 py-4">
         No classes found.{" "}
         {allClassesCount === 0 && "Click 'Add a Class' to get started!"}
       </p>
@@ -50,28 +47,35 @@ const ClassCardList: React.FC<ClassCardListProps> = ({
   }
 
   return (
-    <div className="classes-grid">
-      {classes?.map((classData: any) => (
-        <div
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      {classes.map((classData: any) => (
+        <motion.div
           key={classData._id}
-          className="class-item clickable"
+          whileHover={{ y: -4, scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => navigateToClassDetails(classData._id)}
+          className="bg-white rounded-xl overflow-hidden border border-gray-200 cursor-pointer transition-all duration-200"
         >
+          {/* Image Placeholder */}
           <div
-            className="class-image-placeholder"
+            className="h-32 flex items-center justify-center p-4 text-center"
             style={{ backgroundColor: getRandomBgColor() }}
           >
-            <h3>{classData?.title}</h3>
+            <h3 className="text-lg font-bold text-gray-800 line-clamp-2">
+              {classData?.title}
+            </h3>
           </div>
-          <div className="class-info">
-            <p style={{ fontSize: 16, fontWeight: 700, color: "#121212" }}>
+
+          {/* Info */}
+          <div className="p-4 space-y-3">
+            <p className="text-base font-bold text-gray-900">
               Course:{" "}
               {typeof classData.course === "object"
                 ? classData.course.title || classData.course.name
                 : classData.title}
             </p>
 
-            <p className="class-date">
+            <p className="text-sm text-gray-600">
               {`${classData.time} ${new Date(
                 classData.date || ""
               ).toLocaleDateString("en-US", {
@@ -81,34 +85,22 @@ const ClassCardList: React.FC<ClassCardListProps> = ({
                 year: "numeric",
               })}`}
             </p>
-            <button
+
+            {/* View Details Button */}
+            <motion.button
+              whileHover={{ x: 4 }}
+              whileTap={{ scale: 0.95 }}
               onClick={(e) => {
                 e.stopPropagation();
                 navigateToClassDetails(classData._id);
               }}
-              style={{ padding: 16, borderRadius: 48, fontSize: 14 }}
+              className="flex items-center gap-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-full transition-colors"
             >
               View Detail
-              <span>
-                <FaChevronRight className="view-details-icon" />
-              </span>
-            </button>
-
-            {/* <button
-            className="view-details-button"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigateToClassDetails(classData._id);
-            }}
-            style={{ backgroundColor: "#66666616", color: "#666" }}
-          >
-            View Details
-            <span>
-              <FaChevronRight className="view-details-icon" />
-            </span>
-          </button> */}
+              <FaChevronRight className="w-4 h-4" />
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );

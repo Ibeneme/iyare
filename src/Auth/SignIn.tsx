@@ -1,290 +1,348 @@
+// src/pages/SignIn/SignIn.tsx
 import React, { useEffect, useState } from "react";
-import "./SignIn.css";
-import logo from "../assets/images/logo.jpg";
-import backgroundImage from "../assets/images/library.jpg";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowLeft,
+  BookOpen,
+  Users,
+  Loader2,
+} from "lucide-react";
 import { AppDispatch } from "../Redux/store";
 import { signInUser } from "../Redux/Admin/adminUsers";
 
 const SignIn: React.FC = () => {
-  // Local state for form inputs
+  useEffect(() => {
+    localStorage.clear();
+    console.log("All localStorage items cleared on component mount");
+  }, []); // Empty dependency array ensures it runs only once
+
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [studentId, setStudentId] = useState("");
   const [password, setPassword] = useState("");
-
-  // Local state for UI feedback
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Redux and React Router hooks
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [userType, setUserType] = useState<"student" | "parent">("student");
+
+  // ───── Current Time & Country ─────
+  // const currentTime = new Date().toLocaleString("en-NG", {
+  //   timeZone: "Africa/Lagos",
+  //   year: "numeric",
+  //   month: "long",
+  //   day: "numeric",
+  //   hour: "2-digit",
+  //   minute: "2-digit",
+  //   hour12: true,
+  //   timeZoneName: "short",
+  // });
+
   useEffect(() => {
     const query = new URLSearchParams(location.search);
     const type = query.get("type");
-    if (type === "parent") {
-      setUserType("parent");
-    } else {
-      setUserType("student");
-    }
+    if (type === "parent") setUserType("parent");
+    else setUserType("student");
   }, [location.search]);
-
-  const [userType, setUserType] = useState<"student" | "parent">("student");
-
-  // useEffect is no longer needed to watch Redux state for navigation
-
-  const handleForgotPassword = () => {
-    navigate("/forgot-password", { state: { userType } });
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setLoading(true);
     setError(null);
-    setSuccessMessage(null);
 
-    let loginData;
-    if (userType === "student") {
-      loginData = {
-        userType: "student",
-        email: studentId, // Using studentId as email for the API call
-        password,
-      };
-    } else {
-      loginData = {
-        userType: "parent",
-        email,
-        password,
-      };
-    }
+    const loginData =
+      userType === "student"
+        ? { userType: "student", email: studentId, password }
+        : { userType: "parent", email, password };
 
     try {
-      const resultAction = await dispatch(signInUser(loginData));
-      const payload = resultAction.payload as any; // Cast to 'any' for direct property access
+      const result = await dispatch(signInUser(loginData)).unwrap();
+      const user = result.data;
+      const token = result.token;
 
-      if (payload.success) {
-        setSuccessMessage(payload.message);
-        // Store user data and navigate on success
+      console.log("========================================");
+      console.log(" SIGN IN SUCCESS ");
+      console.log("========================================");
+      console.log("Timestamp (WAT):", new Date().toLocaleString("en-NG"));
+      console.log("Country: NG");
+      console.log("User Type:", userType);
+      console.log("Email:", userType === "student" ? studentId : email);
+      console.log("Name:", `${user?.firstName} ${user?.lastName}`);
+      console.log("Token: [HIDDEN]");
+      console.log(
+        userType === "student" ? "Subjects Count:" : "Children Count:",
+        userType === "student"
+          ? user?.subjects?.length || 0
+          : user?.children?.length || 0
+      );
+      console.log("isSubscribed:", user?.isSubscribed);
+      console.log("========================================");
 
-        console.log(payload);
-        localStorage.setItem("user", JSON.stringify(payload.data));
-        localStorage.setItem("userType", userType);
-        localStorage.setItem("token", payload.token);
-        setTimeout(() => {
-          navigate(`/classes/dashboard/all`);
-        }, 100);
-      } else {
-        setError(payload.message || "An unknown error occurred.");
+      localStorage.setItem("userEmail", result.data?.email || "");
+      localStorage.setItem("userId", result.data?._id || "");
+      // ───── CASE 1: No subjects/children → go to setup ─────
+      if (
+        (userType === "student" &&
+          (!user?.subjects || user?.subjects.length === 0)) ||
+        (userType === "parent" &&
+          (!user?.children || user?.children.length === 0))
+      ) {
+        console.log("No subjects/children → Redirecting to /user-setup");
+        navigate("/user-setup", {
+          state: { user, token, userType },
+        });
+        return;
       }
+      // Define the subscription status for a user (either Parent or Student)
+      const isUserSubscribed = (user: any, userType: string): boolean => {
+        // 1. Check if the user itself is subscribed
+        if (user?.isSubscribed) {
+          return true;
+        }
+
+        // 2. If the user is a parent, check if any child is subscribed
+        if (userType === "parent" && user?.children?.length) {
+          // Check if at least one child document has isSubscribed set to true
+          return user.children.some((child: any) => child?.isSubscribed);
+        }
+
+        // 3. Otherwise, the user is not subscribed
+        return false;
+      };
+      const subscribed = isUserSubscribed(user, userType);
+      // ───── CASE 2: Not subscribed → go to pricing ─────
+      if (!subscribed) {
+        console.log("Not subscribed → Redirecting to /pricing-page");
+
+        const studentDetails =
+          userType === "parent" && user?.children?.length
+            ? user.children.map((child: any) => ({
+                _id: child._id,
+                firstName: child.firstName,
+                lastName: child.lastName,
+                class: child.class || "",
+                subjects: child.subjects || [],
+              }))
+            : [
+                {
+                  _id: user?._id,
+                  firstName: user?.firstName,
+                  lastName: user?.lastName,
+                  class: user?.class || "",
+                  subjects: user?.subjects || [],
+                },
+              ];
+
+        navigate("/pricing-page", {
+          state: {
+            parentId: user?.parentId || null,
+            studentDetails,
+          },
+        });
+        return;
+      }
+
+      // ───── CASE 3: Fully set up → go to dashboard ─────
+      console.log("Fully set up → Redirecting to dashboard");
+      localStorage.setItem("user", JSON.stringify(result.data));
+      localStorage.setItem("token", result.token);
+      localStorage.setItem("userType", userType);
+      navigate("/subject-manager");
     } catch (err: any) {
-      setError(err.message || "An unknown error occurred.");
+      console.error("Sign in failed:", err);
+      setError(err.message || "Invalid credentials. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleForgotPassword = () => {
+    navigate("/forgot-password", { state: { userType } });
+  };
+
   return (
-    <div
-      className="signin-page"
-      style={{
-        background: `url(${backgroundImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        objectFit: "contain",
-      }}
-    >
-      <div className="signin-container">
-        <div className="logo-wrapper">
-          <img src={logo} alt="Oyare Learning Hub" className="signin-logo" />
-        </div>
-
-        <h2 className="signin-title">Sign In</h2>
-
-        {/* User type toggle */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: "8px",
-            marginBottom: "24px",
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setUserType("student")}
-            style={{
-              padding: "10px 20px",
-              borderRadius: "6px",
-              border: "1px solid #ccc",
-              backgroundColor: userType === "student" ? "#023009" : "white",
-              color: userType === "student" ? "white" : "#023009",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            Student
-          </button>
-          <button
-            type="button"
-            onClick={() => setUserType("parent")}
-            style={{
-              padding: "10px 20px",
-              borderRadius: "6px",
-              border: "1px solid #ccc",
-              backgroundColor: userType === "parent" ? "#023009" : "white",
-              color: userType === "parent" ? "white" : "#023009",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            Parent
-          </button>
-        </div>
-
-        <form className="signin-form" onSubmit={handleSubmit}>
-          {/* Student fields */}
-          {userType === "student" && (
-            <>
-              <div className="form-group">
-                <label htmlFor="student-id">Email Address</label>
-                <input
-                  type="text"
-                  id="student-id"
-                  placeholder="Enter your Email Address"
-                  required
-                  value={studentId}
-                  onChange={(e) => setStudentId(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="student-password">Password</label>
-                <div className="password-wrapper">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    id="student-password"
-                    placeholder="Enter your password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-
-                <div
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "flex-end",
-                  }}
-                >
-                  <button
-                    type="button"
-                    style={{
-                      padding: 8,
-                      fontSize: 12,
-                    }}
-                    onClick={() => setShowPassword((prev) => !prev)}
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Parent fields */}
-          {userType === "parent" && (
-            <>
-              <div className="form-group">
-                <label htmlFor="parent-email">Email Address</label>
-                <input
-                  type="email"
-                  id="parent-email"
-                  placeholder="Enter your email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="parent-password">Password</label>
-                <div className="password-wrapper">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    id="parent-password"
-                    placeholder="Enter your password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <div
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "flex-end",
-                  }}
-                >
-                  <button
-                    type="button"
-                    style={{
-                      padding: 8,
-                      fontSize: 12,
-                    }}
-                    onClick={() => setShowPassword((prev) => !prev)}
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-
-          <div className="forgot-password">
-            <button
-              type="button"
-              onClick={handleForgotPassword}
-              style={{
-                backgroundColor: "white",
-                border: "none",
-                color: "gray",
-              }}
-            >
-              Forgot Password?
-            </button>
-          </div>
-
-          <button type="submit" className="signin-button" disabled={loading}>
-            {loading ? "Signing In..." : "Sign In"}
-          </button>
-
-          {(error || successMessage) && (
-            <div
-              style={{
-                marginTop: "10px",
-                color: error ? "red" : "green",
-                textAlign: "center",
-                fontSize: "14px",
-              }}
-            >
-              {error || successMessage}
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#f5fdf5] to-[#e6f7e6] flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md"
+      >
+        <div className="bg-white rounded-3xl border-4 border-[#ffd000] p-8 shadow-xl">
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-[#ffd000] rounded-full flex items-center justify-center mx-auto mb-4">
+              <BookOpen className="w-12 h-12 text-[#023009]" />
             </div>
-          )}
-
-          <div className="go-back-link">
-            <a href="/">← Go Back</a>
+            <h1 className="text-3xl font-black text-[#023009]">Welcome Back</h1>
+            <p className="text-[#023009]/70 mt-1">
+              Sign in to continue learning
+            </p>
           </div>
-        </form>
-      </div>
+
+          <div className="flex gap-2 p-1 bg-[#023009]/5 rounded-full mb-6">
+            {[
+              {
+                type: "student" as const,
+                label: "Student",
+                icon: <Users className="w-4 h-4" />,
+              },
+              {
+                type: "parent" as const,
+                label: "Parent",
+                icon: <Users className="w-4 h-4" />,
+              },
+            ].map(({ type, label, icon }) => (
+              <button
+                key={type}
+                onClick={() => setUserType(type)}
+                className={`flex-1 py-3 px-4 rounded-full font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
+                  userType === type
+                    ? "bg-[#023009] text-white shadow-lg"
+                    : "text-[#023009]/70 hover:text-[#023009]"
+                }`}
+              >
+                {icon} {label}
+              </button>
+            ))}
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <AnimatePresence mode="wait">
+              {userType === "student" ? (
+                <motion.div
+                  key="student"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <label className="block text-sm font-bold text-[#023009] mb-1">
+                    Student Email / ID
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-[38%] -translate-y-[38%] w-5 h-5 text-[#023009]/50" />
+                    <input
+                      type="text"
+                      placeholder="e.g. john.doe@yare.ng"
+                      value={studentId}
+                      onChange={(e) => setStudentId(e.target.value)}
+                      required
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-[#ffd000]/50 focus:border-[#023009] focus:outline-none transition-colors"
+                    />
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="parent"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <label className="block text-sm font-bold text-[#023009] mb-1">
+                    Parent Email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-[38%] -translate-y-[38%] w-5 h-5 text-[#023009]/50" />
+                    <input
+                      type="email"
+                      placeholder="e.g. parent@yare.ng"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-[#ffd000]/50 focus:border-[#023009] focus:outline-none transition-colors"
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div>
+              <label className="block text-sm font-bold text-[#023009] mb-1">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-[38%] -translate-y-[38%] w-5 h-5 text-[#023009]/50" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-12 py-3 rounded-xl border-2 border-[#ffd000]/50 focus:border-[#023009] focus:outline-none transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-[38%] -translate-y-[38%] text-[#023009]/50 hover:text-[#023009]"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className="text-sm text-[#023009]/70 hover:text-[#023009] font-medium underline-offset-2 hover:underline"
+              >
+                Forgot Password?
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#023009] text-white py-4 rounded-xl font-black text-lg hover:bg-[#023009]/90 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Signing In...
+                </>
+              ) : (
+                "Sign In"
+              )}
+            </button>
+
+            <AnimatePresence>
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="text-red-600 text-sm text-center font-medium"
+                >
+                  {error}
+                </motion.p>
+              )}
+            </AnimatePresence>
+
+            <div className="text-center mt-6">
+              <a
+                href="/"
+                className="inline-flex items-center gap-2 text-[#023009]/70 hover:text-[#023009] text-sm font-medium"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Home
+              </a>
+            </div>
+          </form>
+        </div>
+      </motion.div>
     </div>
   );
 };

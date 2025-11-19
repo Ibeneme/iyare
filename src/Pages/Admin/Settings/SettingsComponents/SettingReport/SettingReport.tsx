@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./SettingReport.css";
 import { useDispatch } from "react-redux";
-import { submitReport } from "../../../../../Redux/Settings/settingsSlice";
+import { submitReport } from "../../../../../Redux/Slices/SettingsSlice";
 import Loader from "../../../../../Components/Loader/Loader";
 import { useToast } from "../../../../../Context/ToastProvider";
 

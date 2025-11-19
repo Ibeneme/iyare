@@ -1,69 +1,73 @@
-import React, { useState, useEffect } from "react";
+// src/pages/ForgotPassword/ForgotPassword.tsx
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import "./SignIn.css"; // Assuming this CSS file contains necessary styles
-import logo from "../assets/images/logo.jpg";
-import backgroundImage from "../assets/images/library.jpg"; // For student
 import { useDispatch } from "react-redux";
+import { AppDispatch } from "../Redux/store";
 import {
   forgotPassword,
   verifyForgotPassword,
   resetPassword,
   resendOtp,
-} from "../Redux/Admin/adminUsers"; // Ensure this path is correct
-import { AppDispatch } from "../Redux/store";
+} from "../Redux/Admin/adminUsers";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowLeft,
+  Check,
+  RefreshCw,
+  Loader2,
+  Shield,
+} from "lucide-react";
 
 const ForgotPassword: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
-  // State to manage the user type selected from the dropdown
-  const [userType, setUserType] = useState(
-    location.state?.userType ?? "student"
-  );
-
-  // Component state for managing the flow and UI feedback
-  const [step, setStep] = useState<1 | 2 | 3>(1); // 1: Email, 2: OTP, 3: New Password
+  const [userType, setUserType] = useState<
+    "student" | "parent" | "teacher" | "admin"
+  >((location.state?.userType as any) ?? "student");
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [resetToken, setResetToken] = useState<string | null>(null); // To store the token for password reset
-  const [showNewPassword, setShowNewPassword] = useState(false); // State for new password visibility
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State for confirm password visibility
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [resetToken, setResetToken] = useState<string | null>(null);
 
-  // Effect to clear messages when step changes
   useEffect(() => {
     setError(null);
-    setSuccessMessage(null);
+    setSuccess(null);
   }, [step]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     setError(null);
-    setSuccessMessage(null);
+    setSuccess(null);
 
-    const isValidEmail = /\S+@\S+\.\S+/.test(email);
-    if (!isValidEmail) {
-      return setError("Please enter a valid email address.");
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setError("Enter a valid email.");
+      setLoading(false);
+      return;
     }
 
-    setLoading(true);
     try {
-      const resultAction = await dispatch(forgotPassword({ userType, email }));
-      const payload = resultAction.payload as any;
-
-      if (payload.success) {
-        setSuccessMessage(payload.message || "OTP sent to your email.");
-        setStep(2);
-      } else {
-        setError(payload.message || "Failed to send OTP. Please try again.");
-      }
+      const result = await dispatch(
+        forgotPassword({ userType, email })
+      ).unwrap();
+      console.log(result)
+      setSuccess("OTP sent! Check your email.");
+      setStep(2);
     } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+      setError(err.message || "Failed to send OTP.");
     } finally {
       setLoading(false);
     }
@@ -71,32 +75,25 @@ const ForgotPassword: React.FC = () => {
 
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     setError(null);
-    setSuccessMessage(null);
+    setSuccess(null);
 
     if (otp.length !== 6) {
-      return setError("Please enter the 6-digit OTP sent to your email.");
+      setError("Enter 6-digit OTP.");
+      setLoading(false);
+      return;
     }
 
-    setLoading(true);
     try {
-      const resultAction = await dispatch(verifyForgotPassword({ email, otp }));
-      const payload = resultAction.payload as any;
-
-      console.log(payload, "payload");
-      if (payload.success && payload.resetToken) {
-        setSuccessMessage(payload.message || "OTP verified successfully.");
-        setResetToken(payload.resetToken);
-        setStep(3);
-      } else {
-        setError(
-          payload.message || "OTP verification failed. Please try again."
-        );
-      }
+      const result = await dispatch(
+        verifyForgotPassword({ email, otp })
+      ).unwrap();
+      setResetToken(result.resetToken);
+      setSuccess("OTP verified!");
+      setStep(3);
     } catch (err: any) {
-      setError(
-        err.message || "An unexpected error occurred during OTP verification."
-      );
+      setError(err.message || "Invalid OTP.");
     } finally {
       setLoading(false);
     }
@@ -104,291 +101,313 @@ const ForgotPassword: React.FC = () => {
 
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     setError(null);
-    setSuccessMessage(null);
+    setSuccess(null);
 
     if (password !== confirmPassword) {
-      return setError("Passwords do not match.");
+      setError("Passwords don’t match.");
+      setLoading(false);
+      return;
     }
     if (password.length < 6) {
-      return setError("Password must be at least 6 characters long.");
-    }
-    if (!resetToken) {
-      return setError(
-        "Session expired. Please restart the password reset process."
-      );
+      setError("Password too short.");
+      setLoading(false);
+      return;
     }
 
-    setLoading(true);
     try {
-      const resultAction = await dispatch(
-        resetPassword({ userType, email, password, token: resetToken })
-      );
-      const payload = resultAction.payload as any;
-
-      if (payload.success) {
-        setSuccessMessage(payload.message || "Password reset successfully!");
-        setResetToken(null);
-        setTimeout(() => {
-          navigate(
-            userType === "admin" || userType === "teacher"
-              ? `/admin-sign-in?type=${userType}`
-              : `/auth-sign-in?type=${userType}`
-          );
-        }, 1500);
-      } else {
-        setError(payload.message || "Password reset failed. Please try again.");
-      }
+      await dispatch(
+        resetPassword({ userType, email, password, token: resetToken! })
+      ).unwrap();
+      setSuccess("Password reset! Redirecting...");
+      setTimeout(() => {
+        navigate(
+          userType === "admin" || userType === "teacher"
+            ? `/admin-sign-in?type=${userType}`
+            : `/auth-sign-in?type=${userType}`
+        );
+      }, 1500);
     } catch (err: any) {
-      setError(
-        err.message || "An unexpected error occurred during password reset."
-      );
+      setError(err.message || "Reset failed.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResendOtp = async () => {
+  const handleResend = async () => {
     setLoading(true);
     setError(null);
-    setSuccessMessage(null);
-
+    setSuccess(null);
     try {
-      const resultAction = await dispatch(resendOtp({ userType, email }));
-      const payload = resultAction.payload as any;
-
-      if (payload.success) {
-        setSuccessMessage(payload.message || "OTP resent successfully!");
-      } else {
-        setError(payload.message || "Failed to resend OTP.");
-      }
+      await dispatch(resendOtp({ userType, email })).unwrap();
+      setSuccess("OTP resent!");
     } catch (err: any) {
-      setError(
-        err.message || "An unexpected error occurred while resending OTP."
-      );
+      setError(err.message || "Failed to resend.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoBack = () => {
-    setError(null);
-    setSuccessMessage(null);
-
-    if (step === 3) {
-      setStep(2);
-    } else if (step === 2) {
-      setStep(1);
-    } else {
-      navigate(location.state?.from || -1);
-    }
+  const goBack = () => {
+    if (step > 1) setStep((prev) => (prev - 1) as any);
+    else navigate(-1);
   };
 
   return (
-    <div
-      className="signin-page"
-      style={{
-        background: `url(${backgroundImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <div className="signin-container">
-        <div className="logo-wrapper">
-          <img src={logo} alt="Oyare Learning Hub" className="signin-logo" />
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#f5fdf5] to-[#e6f7e6] flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md"
+      >
+        <div className="bg-white rounded-3xl border-4 border-[#ffd000] p-8 shadow-xl">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-[#ffd000] rounded-full flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-12 h-12 text-[#023009]" />
+            </div>
+            <h1 className="text-3xl font-black text-[#023009]">
+              Reset Password
+            </h1>
+            <p className="text-[#023009]/70 mt-1">Step {step} of 3</p>
+          </div>
+
+          {/* Progress */}
+          <div className="flex justify-center gap-2 mb-6">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className={`w-10 h-2 rounded-full transition-all ${
+                  i <= step ? "bg-[#023009]" : "bg-[#ffd000]/30"
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* Step 1: Email */}
+          <AnimatePresence mode="wait">
+            {step === 1 && (
+              <motion.form
+                key="email"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 30 }}
+                onSubmit={handleEmailSubmit}
+                className="space-y-5"
+              >
+                <div>
+                  <label className="block text-sm font-bold text-[#023009] mb-1">
+                    Account Type
+                  </label>
+                  <select
+                    value={userType}
+                    onChange={(e) => setUserType(e.target.value as any)}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-[#ffd000]/50 focus:border-[#023009] focus:outline-none"
+                  >
+                    <option value="student">Student</option>
+                    <option value="parent">Parent</option>
+                    <option value="teacher">Teacher</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-[#023009] mb-1">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-[39%] -translate-y-[39%] w-5 h-5 text-[#023009]/50" />
+                    <input
+                      type="email"
+                      placeholder="you@yare.ng"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-[#ffd000]/50 focus:border-[#023009] focus:outline-none"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-[#023009] text-white py-4 rounded-xl font-black flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    "Send OTP"
+                  )}
+                </button>
+              </motion.form>
+            )}
+
+            {/* Step 2: OTP */}
+            {step === 2 && (
+              <motion.form
+                key="otp"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 30 }}
+                onSubmit={handleOtpSubmit}
+                className="space-y-5"
+              >
+                <div>
+                  <label className="block text-sm font-bold text-[#023009] mb-1">
+                    6-Digit OTP
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    placeholder="000000"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                    required
+                    className="w-full text-center text-2xl font-bold tracking-widest py-3 rounded-xl border-2 border-[#ffd000]/50 focus:border-[#023009] focus:outline-none"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-[#023009] text-white py-4 rounded-xl font-black flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    "Verify OTP"
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={loading}
+                  className="w-full bg-[#ffd000] text-[#023009] py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-white transition-all"
+                >
+                  <RefreshCw className="w-5 h-5" /> Resend OTP
+                </button>
+              </motion.form>
+            )}
+
+            {/* Step 3: New Password */}
+            {step === 3 && (
+              <motion.form
+                key="password"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 30 }}
+                onSubmit={handlePasswordReset}
+                className="space-y-5"
+              >
+                <div>
+                  <label className="block text-sm font-bold text-[#023009] mb-1">
+                    New Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-[39%] -translate-y-[39%] w-5 h-5 text-[#023009]/50" />
+                    <input
+                      type={showNew ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="w-full pl-10 pr-12 py-3 rounded-xl border-2 border-[#ffd000]/50 focus:border-[#023009] focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNew(!showNew)}
+                      className="absolute right-3 top-[39%] -translate-y-[39%] text-[#023009]/50 hover:text-[#023009]"
+                    >
+                      {showNew ? (
+                        <EyeOff className="w-5 h-5" />
+                      ) : (
+                        <Eye className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-[#023009] mb-1">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-[39%] -translate-y-[39%] w-5 h-5 text-[#023009]/50" />
+                    <input
+                      type={showConfirm ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      className="w-full pl-10 pr-12 py-3 rounded-xl border-2 border-[#ffd000]/50 focus:border-[#023009] focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirm(!showConfirm)}
+                      className="absolute right-3 top-[39%] -translate-y-[39%] text-[#023009]/50 hover:text-[#023009]"
+                    >
+                      {showConfirm ? (
+                        <EyeOff className="w-5 h-5" />
+                      ) : (
+                        <Eye className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-[#023009] text-white py-4 rounded-xl font-black flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    "Reset Password"
+                  )}
+                </button>
+              </motion.form>
+            )}
+          </AnimatePresence>
+
+          {/* Feedback */}
+          <AnimatePresence>
+            {error && (
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="text-red-600 text-sm text-center font-medium mt-4"
+              >
+                {error}
+              </motion.p>
+            )}
+            {success && (
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="text-green-600 text-sm text-center font-medium mt-4 flex items-center justify-center gap-2"
+              >
+                <Check className="w-5 h-5" /> {success}
+              </motion.p>
+            )}
+          </AnimatePresence>
+
+          {/* Back */}
+          <div className="text-center mt-6">
+            <button
+              onClick={goBack}
+              disabled={loading}
+              className="inline-flex items-center gap-2 text-[#023009]/70 hover:text-[#023009] text-sm font-medium"
+            >
+              <ArrowLeft className="w-4 h-4" /> Go Back
+            </button>
+          </div>
         </div>
 
-        <h2 className="signin-title">Forgot Password</h2>
-
-        {error && (
-          <p
-            className="error-message"
-            style={{
-              backgroundColor: "#ff000021",
-              color: "#ff0000",
-              padding: 12,
-              marginBottom: 24,
-              borderRadius: "8px",
-            }}
-          >
-            {error}
-          </p>
-        )}
-        {successMessage && (
-          <p
-            className="success-message"
-            style={{
-              backgroundColor: "#DEFFCF",
-              color: "#1A4806",
-              padding: 12,
-              marginBottom: 24,
-              borderRadius: "8px",
-            }}
-          >
-            {successMessage}
-          </p>
-        )}
-
-        {step === 1 && (
-          <form onSubmit={handleEmailSubmit} className="signin-form">
-            <div className="form-group">
-              <label htmlFor="user-type">Account Type</label>
-              <select
-                id="user-type"
-                value={userType}
-                onChange={(e) => setUserType(e.target.value)}
-                disabled={loading}
-              >
-                <option value="student">Student</option>
-                <option value="teacher">Teacher</option>
-                <option value="parent">Parent</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label htmlFor="email">Enter your email</label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-                disabled={loading}
-              />
-            </div>
-            <button type="submit" className="signin-button" disabled={loading}>
-              {loading ? "Sending OTP..." : "Send OTP"}
-            </button>
-          </form>
-        )}
-
-        {step === 2 && (
-          <form onSubmit={handleOtpSubmit} className="signin-form">
-            <div className="form-group">
-              <label htmlFor="otp">
-                Enter the 6-digit OTP sent to your email
-              </label>
-              <input
-                type="text"
-                id="otp"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                placeholder="Enter OTP"
-                maxLength={6}
-                required
-                disabled={loading}
-              />
-            </div>
-            <button type="submit" className="signin-button" disabled={loading}>
-              {loading ? "Verifying OTP..." : "Verify OTP"}
-            </button>
-            <button
-              type="button"
-              className="resend-otp-button"
-              onClick={handleResendOtp}
-              disabled={loading}
-              style={{
-                marginTop: "1rem",
-                backgroundColor: "#eee",
-                color: "#333",
-                padding: "0.5rem 1rem",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              {loading ? "Resending..." : "Resend OTP"}
-            </button>
-          </form>
-        )}
-
-        {step === 3 && (
-          <form onSubmit={handlePasswordReset} className="signin-form">
-            <div className="form-group">
-              <label htmlFor="password">New Password</label>
-              <input
-                type={showNewPassword ? "text" : "password"}
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter new password"
-                required
-                disabled={loading}
-              />
-              <div
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  justifyContent: "flex-end",
-                }}
-              >
-                <button
-                  type="button"
-                  style={{
-                    padding: 8,
-                    fontSize: 12,
-                  }}
-                  onClick={() => setShowNewPassword((prev) => !prev)}
-                >
-                  {showNewPassword ? "Hide" : "Show"}
-                </button>
-              </div>
-            </div>
-            <div className="form-group">
-              <label htmlFor="confirmPassword">Confirm New Password</label>
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                id="confirmPassword"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm password"
-                required
-                disabled={loading}
-              />
-              <div
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  justifyContent: "flex-end",
-                }}
-              >
-                <button
-                  type="button"
-                  style={{
-                    padding: 8,
-                    fontSize: 12,
-                  }}
-                  onClick={() => setShowConfirmPassword((prev) => !prev)}
-                >
-                  {showConfirmPassword ? "Hide" : "Show"}
-                </button>
-              </div>
-            </div>
-            <button type="submit" className="signin-button" disabled={loading}>
-              {loading ? "Resetting Password..." : "Reset Password"}
-            </button>
-          </form>
-        )}
-
-        <button
-          onClick={handleGoBack}
-          disabled={loading}
-          style={{
-            backgroundColor: "white",
-            border: "none",
-            color: "gray",
-            marginTop: "1rem",
-            cursor: "pointer",
-          }}
-        >
-          ← Go Back
-        </button>
-      </div>
+        <p className="text-center mt-6 text-[#023009]/60 text-xs font-mono tracking-widest">
+          <strong className="text-[#023009]">
+            Secure Reset • End-to-End Encrypted
+          </strong>
+        </p>
+      </motion.div>
     </div>
   );
 };

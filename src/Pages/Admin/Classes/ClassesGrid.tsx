@@ -8,7 +8,6 @@ import {
   ClassData as ReduxClassData,
   ClassFormInput,
 } from "../../../Redux/Admin/adminClasses";
-import "./ClassesGrid.css";
 import { useUserActions } from "../../../Hooks/useUsers";
 import { useToast } from "../../../Context/ToastProvider";
 import Loader from "../../../Components/Loader/Loader";
@@ -16,6 +15,7 @@ import ModalDropdown from "../../../Components/Modal/ModalDropdown";
 import ClassCardList from "./ClassCardList";
 import ErrorDisplay from "../../../Components/Loader/ErrorDisplay";
 import useUserRole from "../../../Hooks/useUserRole";
+import { motion, AnimatePresence } from "framer-motion";
 
 type ClassData = ReduxClassData;
 
@@ -52,12 +52,10 @@ const generateExactDurationOptions = (): { value: string; label: string }[] => {
     if (minutes === 240) label = "4hrs";
     if (minutes === 300) label = "5hrs";
 
-    return {
-      value: String(minutes),
-      label: label,
-    };
+    return { value: String(minutes), label };
   });
 };
+
 const durationOptions = generateExactDurationOptions();
 
 const ClassesGrid: React.FC = () => {
@@ -66,7 +64,7 @@ const ClassesGrid: React.FC = () => {
   const { getAllUsersByType } = useUserActions();
   const dispatch = useDispatch<AppDispatch>();
 
-  const [activeTab, setActiveTab] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState("all");
   const [isAddClassModalOpen, setIsAddClassModalOpen] = useState(false);
   const [isLoadingDropdowns, setIsLoadingDropdowns] = useState(false);
   const [availableTeachers, setAvailableTeachers] = useState<DropdownOption[]>(
@@ -85,7 +83,7 @@ const ClassesGrid: React.FC = () => {
     duration: 0,
   });
 
-  const [selectedCourseId, setSelectedCourseId] = useState<string>("all");
+  const [selectedCourseId, setSelectedCourseId] = useState("all");
 
   const fetchDropdownData = async () => {
     setIsLoadingDropdowns(true);
@@ -95,22 +93,13 @@ const ClassesGrid: React.FC = () => {
         getAllUsersByType("course"),
       ]);
 
-      if (teachersRes.success) {
-        setAvailableTeachers(teachersRes.data || []);
-      } else {
-        addToast("error", "Failed to load teachers for class creation.");
-      }
+      if (teachersRes.success) setAvailableTeachers(teachersRes.data || []);
+      else addToast("error", "Failed to load teachers.");
 
-      if (coursesRes.success) {
-        setAvailableCourses(coursesRes.data || []);
-      } else {
-        addToast("error", "Failed to load courses for class creation.");
-      }
-    } catch (error) {
-      addToast(
-        "error",
-        "An unexpected error occurred loading class creation options."
-      );
+      if (coursesRes.success) setAvailableCourses(coursesRes.data || []);
+      else addToast("error", "Failed to load courses.");
+    } catch {
+      addToast("error", "Failed to load dropdown options.");
     } finally {
       setIsLoadingDropdowns(false);
     }
@@ -134,38 +123,19 @@ const ClassesGrid: React.FC = () => {
     dispatch(fetchClasses())
       .then((result) => {
         if (fetchClasses.fulfilled.match(result)) {
-          setAllClasses(
-            result.payload && Array.isArray(result.payload)
-              ? result.payload
-              : []
-          );
-          setError(null);
-        } else if (fetchClasses.rejected.match(result)) {
-          const errorPayload = result.payload as {
-            message?: string;
-            error?: string;
-          };
-          const errorMessage =
-            result.error?.message === "Failed to fetch"
-              ? "Failed to fetch classes. Please check your internet connection."
-              : errorPayload?.message ||
-                errorPayload?.error ||
-                "Failed to load classes due to a server error.";
-          addToast("error", errorMessage);
-          setError(errorMessage);
+          setAllClasses(Array.isArray(result.payload) ? result.payload : []);
+        } else {
+          const msg = "Failed to load classes.";
+          addToast("error", msg);
+          setError(msg);
         }
       })
-      .catch((err) => {
-        const errorMessage =
-          err.message === "Failed to fetch"
-            ? "Network error: Could not connect to the server."
-            : "An unexpected error occurred while loading classes.";
-        setError(errorMessage);
-        addToast("error", errorMessage);
+      .catch(() => {
+        const msg = "Network error.";
+        addToast("error", msg);
+        setError(msg);
       })
-      .finally(() => {
-        setLoading(false);
-      });
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -175,27 +145,15 @@ const ClassesGrid: React.FC = () => {
   const uniqueCourses = Array.from(
     new Set(allClasses.map((c) => c.courseId?._id))
   )
-    .map((courseId) => {
-      const course = allClasses.find((c) => c.courseId?._id === courseId);
-      return course?.courseId;
-    })
+    .map((id) => allClasses.find((c) => c.courseId?._id === id)?.courseId)
     .filter(Boolean) as DropdownOption[];
 
-    const filteredClasses = allClasses
-    .filter((classData) => {
-      // Filter by status first
-      if (activeTab === "all") {
-        return true;
-      }
-      return classData.status === activeTab;
-    })
-    .filter((classData) => {
-      // Then filter by course
-      if (selectedCourseId === "all") {
-        return true;
-      }
-      return classData.courseId?._id === selectedCourseId;
-    });
+  const filteredClasses = allClasses
+    .filter((c) => activeTab === "all" || c.status === activeTab)
+    .filter(
+      (c) => selectedCourseId === "all" || c.courseId?._id === selectedCourseId
+    );
+
   const tabs = ["all", "ongoing", "upcoming", "finished", "canceled"];
   const courseFilters = [
     { _id: "all", title: "All Courses" },
@@ -217,16 +175,14 @@ const ClassesGrid: React.FC = () => {
     });
   };
 
-  const handleCloseAddClassModal = () => {
-    setIsAddClassModalOpen(false);
-  };
+  const handleCloseAddClassModal = () => setIsAddClassModalOpen(false);
 
   const handleAddClassChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setNewClassFormData((prevData: any) => ({
-      ...prevData,
+    setNewClassFormData((prev) => ({
+      ...prev,
       [name]: name === "duration" ? Number(value) : value,
     }));
   };
@@ -240,356 +196,297 @@ const ClassesGrid: React.FC = () => {
       !newClassFormData.time ||
       !newClassFormData.duration
     ) {
-      addToast("error", "Please fill all required fields.");
+      addToast("error", "Please fill all fields.");
       return;
     }
 
     const selectedCourse = availableCourses.find(
       (c) => c._id === newClassFormData.courseId
     );
-
     if (!selectedCourse) {
-      addToast(
-        "error",
-        "Selected course is invalid. Please choose from the list."
-      );
+      addToast("error", "Invalid course selected.");
       return;
     }
 
-    const formDataWithCourseName = {
-      ...newClassFormData,
-      course: selectedCourse.title || selectedCourse.name || "",
-    };
+    const result = await dispatch(
+      createClass({
+        ...newClassFormData,
+        course: selectedCourse.title || selectedCourse.name || "",
+      })
+    );
 
-    const resultAction = await dispatch(createClass(formDataWithCourseName));
-
-    if (createClass.fulfilled.match(resultAction)) {
-      addToast("success", "Class added successfully!");
+    if (createClass.fulfilled.match(result)) {
+      addToast("success", "Class added!");
       setIsAddClassModalOpen(false);
       loadClasses();
     } else {
-      const errorMessage =
-        (resultAction.payload as { message?: string })?.message ||
-        "Failed to add class due to an unknown error.";
-      addToast("error", errorMessage);
+      addToast("error", result.payload || "Failed to add class.");
     }
   };
 
   const { userRole, isSuperadmin, user } = useUserRole();
 
   return (
-    <div style={{ marginTop: 24 }}>
-      <h1 className="classes-title" style={{ fontSize: 20 }}>
+    <div className="mt-8 p-4 md:p-8">
+      {/* Header */}
+      <motion.h1
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-xl font-semibold text-gray-800"
+      >
         Dear
         {user?.firstName && ` ${user.firstName}`}
         {user?.lastName && ` ${user.lastName}`}, Here's All Classes
-      </h1>
-      <span
-        style={{
-          backgroundColor: `var(--yellow)`,
-          color: `var(--dark-green)`,
-          padding: `4px 12px`,
-          borderRadius: 24,
-          marginTop: 4,
-          fontSize: 12,
-          border: `1px var(--dark-green) solid`,
-          fontWeight: 600,
-        }}
-      >
+      </motion.h1>
+
+      <span className="inline-block mt-1 px-3 py-1 text-xs font-semibold text-emerald-900 bg-yellow-300 rounded-full border border-emerald-900">
         {userRole && userRole.charAt(0).toUpperCase() + userRole.slice(1)}
       </span>
-      <p
-        style={{
-          fontSize: "13px",
-          color: "#555",
-          maxWidth: "500px",
-          marginTop: "8px",
-          marginBottom: "16px",
-        }}
-      >
+
+      <p className="mt-2 text-sm text-gray-600 max-w-lg">
         Below is a list of all scheduled classes. You can view, edit, or remove
-        existing sessions, or add a new one by clicking the button below.
+        existing sessions, or add a new one.
       </p>
 
+      {/* Add Class Button */}
       {userRole === "admin" && isSuperadmin && (
-        <button
-          className="add-class-button"
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={handleOpenAddClassModal}
-          style={{ fontSize: 14, marginTop: 0 }}
+          className="mt-4 px-5 py-2 text-sm font-medium text-white bg-[#000] rounded-lg hover:bg-emerald-800 transition-colors"
         >
           Add a Class
-        </button>
+        </motion.button>
       )}
 
-      <br />
-      <br />
-      <div className="tabss-container">
-        <p className="filter-label">Filter by Status:</p>
-        <div className="tabss">
+      {/* Tabs: Status Filter */}
+      <div className="mt-6">
+        <p className="text-sm font-medium text-gray-700 mb-2">
+          Filter by Status:
+        </p>
+        <div className="flex flex-wrap gap-2">
           {tabs.map((tab) => (
-            <button
+            <motion.button
               key={tab}
-              onClick={() => {
-                setActiveTab(tab);
-              }}
-              className={`tab-button ${activeTab === tab ? "active" : ""} ${
-                tab === "all" ? "all-tab-special" : ""
-              }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                activeTab === tab
+                  ? "bg-[#FFD000] text-[#023009]"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              } ${tab === "all" ? "font-semibold" : ""}`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>
-      <div className="tabss-container" style={{ marginTop: "16px" }}>
-        <p className="filter-label">Filter by Course:</p>
-        <div className="tabss">
+
+      {/* Course Filter */}
+      <div className="mt-4">
+        <p className="text-sm font-medium text-gray-700 mb-2">
+          Filter by Course:
+        </p>
+        <div className="flex flex-wrap gap-2">
           {courseFilters.map((course) => (
-            <button
+            <motion.button
               key={course._id}
-              onClick={() => {
-                setSelectedCourseId(course._id);
-              }}
-              className={`tab-button ${
-                selectedCourseId === course._id ||
-                (selectedCourseId === "" && course._id === "all")
-                  ? "active"
-                  : ""
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setSelectedCourseId(course._id)}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                selectedCourseId === course._id
+                  ? "bg-[#FFD000] text-[#023009]"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
               {course.title}
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>
 
-      {loading ? (
-        <Loader />
-      ) : error ? (
-        <ErrorDisplay errorMessage={error} onRetry={loadClasses} />
-      ) : (
-        <ClassCardList
-          classes={filteredClasses}
-          loading={loading}
-          error={null}
-          allClassesCount={allClasses.length}
-          navigateToClassDetails={navigateToClassDetails}
-        />
-      )}
+      {/* Content */}
+      <div className="mt-6">
+        {loading ? (
+          <Loader />
+        ) : error ? (
+          <ErrorDisplay errorMessage={error} onRetry={loadClasses} />
+        ) : (
+          <ClassCardList
+            classes={filteredClasses}
+            loading={loading}
+            error={null}
+            allClassesCount={allClasses.length}
+            navigateToClassDetails={navigateToClassDetails}
+          />
+        )}
+      </div>
 
-      {isAddClassModalOpen && (
-        <ModalDropdown onClose={handleCloseAddClassModal}>
-          <div
-            className="add-class-modal-content"
-            style={{ padding: "0px", margin: "auto", maxWidth: 450 }}
-          >
-            <h2 style={{ marginBottom: "12px", fontSize: "1.2rem" }}>
-              Add New Class
-            </h2>
-            <p
-              style={{
-                fontSize: "13px",
-                padding: "12px",
-                borderRadius: "12px",
-                backgroundColor: "#66666621",
-                marginBottom: "20px",
-                color: "#555",
-              }}
+      {/* Add Class Modal */}
+      <AnimatePresence>
+        {isAddClassModalOpen && (
+          <ModalDropdown onClose={handleCloseAddClassModal}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white rounded-2xl p-6 max-w-md w-full mx-auto"
             >
-              Please fill in the details below to schedule a new class session.
-              Ensure that all fields are completed correctly before submitting.
-            </p>
-            {isLoadingDropdowns ? (
-              <Loader />
-            ) : (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSaveNewClass();
-                }}
-              >
-                <div style={{ marginBottom: "15px" }}>
-                  <label className="admin0dashboard-label">
-                    Class Title:
+              <h2 className="text-lg font-semibold text-gray-800 mb-3">
+                Add New Class
+              </h2>
+              <p className="text-sm text-gray-600 bg-gray-100 p-3 rounded-lg mb-5">
+                Fill in the details to schedule a new class session.
+              </p>
+
+              {isLoadingDropdowns ? (
+                <Loader />
+              ) : (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSaveNewClass();
+                  }}
+                  className="space-y-4"
+                >
+                  {/* Title */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Class Title
+                    </label>
                     <input
                       type="text"
                       name="title"
                       value={newClassFormData.title}
                       onChange={handleAddClassChange}
                       required
-                      className="admin0dashboard-input"
-                      style={{
-                        width: "100%",
-                        padding: "8px",
-                        borderRadius: "4px",
-                        border: "1px solid #ccc",
-                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
                     />
-                  </label>
-                </div>
+                  </div>
 
-                <div style={{ marginBottom: "15px" }}>
-                  <label className="admin0dashboard-label">
-                    Course:
+                  {/* Course */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Course
+                    </label>
                     <select
                       name="courseId"
                       value={newClassFormData.courseId}
                       onChange={handleAddClassChange}
                       required
-                      className="admin0dashboard-input"
-                      style={{
-                        width: "100%",
-                        padding: "8px",
-                        borderRadius: "4px",
-                        border: "1px solid #ccc",
-                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
                     >
                       <option value="">-- Select Course --</option>
                       {availableCourses.map((course) => (
                         <option key={course._id} value={course._id}>
-                          {course.title || course.name || "Untitled Course"}
+                          {course.title || course.name || "Untitled"}
                         </option>
                       ))}
                     </select>
-                  </label>
-                </div>
+                  </div>
 
-                <div style={{ marginBottom: "15px" }}>
-                  <label className="admin0dashboard-label">
-                    Teacher:
+                  {/* Teacher */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Teacher
+                    </label>
                     <select
                       name="teacherId"
                       value={newClassFormData.teacherId}
                       onChange={handleAddClassChange}
                       required
-                      className="admin0dashboard-input"
-                      style={{
-                        width: "100%",
-                        padding: "8px",
-                        borderRadius: "4px",
-                        border: "1px solid #ccc",
-                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
                     >
-                      <option key="default" value="">
-                        -- Select Teacher --
-                      </option>
+                      <option value="">-- Select Teacher --</option>
                       {availableTeachers.map((teacher) => (
                         <option key={teacher._id} value={teacher._id}>
-                          {teacher.firstName ||
-                            teacher.name ||
-                            "Unnamed Teacher"}{" "}
+                          {teacher.firstName || teacher.name || "Unnamed"}{" "}
                           {teacher.lastName || ""}
                         </option>
                       ))}
                     </select>
-                  </label>
-                </div>
+                  </div>
 
-                <div
-                  style={{ marginBottom: "15px", display: "flex", gap: "10px" }}
-                >
-                  <label className="admin0dashboard-label" style={{ flex: 1 }}>
-                    Date:
-                    <input
-                      type="date"
-                      name="date"
-                      value={newClassFormData.date}
-                      onChange={handleAddClassChange}
-                      required
-                      className="admin0dashboard-input"
-                      style={{
-                        width: "100%",
-                        padding: "8px",
-                        borderRadius: "4px",
-                        border: "1px solid #ccc",
-                      }}
-                    />
-                  </label>
-                  <label className="admin0dashboard-label" style={{ flex: 1 }}>
-                    Time:
-                    <input
-                      type="time"
-                      name="time"
-                      value={newClassFormData.time}
-                      onChange={handleAddClassChange}
-                      required
-                      className="admin0dashboard-input"
-                      style={{
-                        width: "100%",
-                        padding: "8px",
-                        borderRadius: "4px",
-                        border: "1px solid #ccc",
-                      }}
-                    />
-                  </label>
-                </div>
+                  {/* Date & Time */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Date
+                      </label>
+                      <input
+                        type="date"
+                        name="date"
+                        value={newClassFormData.date}
+                        onChange={handleAddClassChange}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Time
+                      </label>
+                      <input
+                        type="time"
+                        name="time"
+                        value={newClassFormData.time}
+                        onChange={handleAddClassChange}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
+                      />
+                    </div>
+                  </div>
 
-                <div style={{ marginBottom: "15px" }}>
-                  <label className="admin0dashboard-label">
-                    Duration:
+                  {/* Duration */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Duration
+                    </label>
                     <select
                       name="duration"
                       value={newClassFormData.duration}
                       onChange={handleAddClassChange}
                       required
-                      className="admin0dashboard-input"
-                      style={{
-                        width: "100%",
-                        padding: "8px",
-                        borderRadius: "4px",
-                        border: "1px solid #ccc",
-                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
                     >
                       <option value="">-- Select Duration --</option>
-                      {durationOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
+                      {durationOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
                         </option>
                       ))}
                     </select>
-                  </label>
-                </div>
+                  </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    gap: "10px",
-                    marginTop: "20px",
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={handleCloseAddClassModal}
-                    style={{
-                      padding: "10px 20px",
-                      borderRadius: "5px",
-                      border: "1px solid #ccc",
-                      background: "none",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    style={{
-                      padding: "10px 20px",
-                      borderRadius: "5px",
-                      border: "none",
-                      background: "#28a745",
-                      color: "#fff",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Add Class
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </ModalDropdown>
-      )}
+                  {/* Buttons */}
+                  <div className="flex justify-end gap-3 mt-6">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="button"
+                      onClick={handleCloseAddClassModal}
+                      className="px-5 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                    >
+                      Cancel
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      className="px-5 py-2 text-sm font-medium text-white bg-[#FFD000] rounded-lg hover:bg-emerald-800 transition"
+                    >
+                      Add Class
+                    </motion.button>
+                  </div>
+                </form>
+              )}
+            </motion.div>
+          </ModalDropdown>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

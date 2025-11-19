@@ -5,12 +5,9 @@ export const isAuthenticated = () => {
         const userString = localStorage.getItem('user');
         // Get the token directly from localStorage as well
         const tokenString = localStorage.getItem('token'); 
-
-        // Check if both the user object and the token exist
         if (userString && tokenString) {
             const user = JSON.parse(userString);
-            // We now have both the user object and the token.
-            // A simple check to ensure the user object exists is enough.
+
             return !!user; // The '!!' converts the object to a boolean (true)
         }
     } catch (error) {

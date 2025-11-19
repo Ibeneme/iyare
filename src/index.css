@@ -1,5 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
-  font-family: 'Mont', sans-serif;
+  font-family: 'Rethink Sans', sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -17,12 +21,16 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* src/index.css or main.css */
+body {
+  font-family: "Rethink Sans", sans-serif;
+}
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Mont', sans-serif;
+  font-family: 'Rethink Sans', sans-serif;
 
   /* font-family: 'Plus Jakarta Sans', sans-serif; */
 }

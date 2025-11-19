@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface JoinClassButtonProps {
-  classId: string;
+  classId?: any;
   classTitle?: any;
 }
 
@@ -18,7 +18,6 @@ const JoinClassButton: React.FC<JoinClassButtonProps> = ({
     setIsLoading(true);
 
     try {
-      // Replace this with your actual API call
       console.log("🔗 Joining class:", classId);
       await new Promise((resolve) => setTimeout(resolve, 2000));
       console.log("✅ Joined class successfully");

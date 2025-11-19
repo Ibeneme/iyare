@@ -18,7 +18,7 @@ import ForgotPassword from "./Auth/ForgotPassword";
 import Layout from "./Pages/Admin/Layout/Layout";
 import DashBoard from "./Pages/Admin/Dashboard/DashBoard";
 import ClassesGrid from "./Pages/Admin/Classes/ClassesGrid";
-import UserDetails from "./Pages/Admin/Admin/UserDetails/UserDetails";
+
 import ClassDetails from "./Pages/Admin/Classes/ClassDetails";
 import WebRTCComponent from "./Pages/Admin/Admin/WebRTCComponent";
 import Settings from "./Pages/Admin/Settings/Settings";
@@ -30,13 +30,30 @@ import NotFound from "./LandingPage/NotFound/NotFound";
 import ProtectedRoute from "./ProtectedRoute";
 import TermsAndConditions from "./LandingPage/PrivacyPolicy/TermsAndConditions";
 import PublicRoute from "./PublicRoute";
-import AssignmentsManager from "./Pages/Admin/AssignmentsManager/AssignmentsManager";
-import { ParentChildrenList } from "./Pages/Admin/Admin/Dashboard/ParentChildrenList";
+import AssignmentsManager from "./Pages/Main/Classes/AssignmentsManager";
 import SubscriptionPage from "./Pages/Admin/SubscriptionPage/SubscriptionPage";
 import PaymentStatusPage from "./Pages/Admin/SubscriptionPage/PaymentStatusPage";
 import SubscriptionsHistoryPage from "./Pages/Admin/SubscriptionPage/SubscriptionsHistoryPage";
 import AwardsList from "./Pages/Admin/Awards/AwardsList";
 import EnrolledCourses from "./Pages/EnrolledCourses/EnrolledCourses";
+import GetStarted from "./Auth/GetStarted";
+import AboutUsPage from "./LandingPage/AboutUs/AboutUs";
+import PricingSection from "./LandingPage/PricingSection/PricingSection";
+import CareersPage from "./LandingPage/CareersPage/CareersPage";
+import UserSetup from "./Auth/UserSetup";
+import PricingPage from "./LandingPage/PricingSection/PricingPage";
+import VerifyPayment from "./LandingPage/PricingSection/VerifyPayments";
+import SubjectsManager from "./Pages/Main/Subject/Subjects";
+import SubjectDetails from "./Pages/Main/Subject/SubjectDetails";
+import ClassesMain from "./Pages/Main/Classes/Classes";
+import LessonFeesMain from "./Pages/Main/LessonFee/LessonFeeMain";
+import UserProfile from "./Pages/Main/Profiles/UserProfile";
+import UserSetupUpdates from "./Auth/UserSetupUpdates";
+import AddStudent from "./Pages/Main/AddStudent/AddStudent";
+import ClassesTimetable from "./Pages/Main/Classes/ClassesTimetable";
+import ParentGuideModal from "./Pages/Main/Guides/ParentGuideModal";
+import UserDetailsPage from "./Pages/Admin/Admin/UserDetails/UserDetails";
+import Grades from "./Pages/Main/Grades/Grades";
 
 function App() {
   return (
@@ -50,6 +67,7 @@ function App() {
             <>
               <Navbar />
               <Index />
+
               <HomeFooter />
             </>
           }
@@ -65,11 +83,31 @@ function App() {
           }
         />
         <Route
+          path="/pricing"
+          element={
+            <>
+              <Navbar />
+              <PricingPage />
+              <HomeFooter />
+            </>
+          }
+        />
+        <Route
           path="/terms"
           element={
             <>
               <Navbar />
               <TermsAndConditions />
+              <HomeFooter />
+            </>
+          }
+        />
+        <Route
+          path="/careers"
+          element={
+            <>
+              <Navbar />
+              <CareersPage />
               <HomeFooter />
             </>
           }
@@ -83,17 +121,76 @@ function App() {
               <HomeFooter />
             </>
           }
+        />{" "}
+        <Route
+          path="/about-us"
+          element={
+            <>
+              <Navbar />
+              <AboutUsPage />
+              <HomeFooter />
+            </>
+          }
         />
-
+        <Route
+          path="/user-setup"
+          element={
+            <>
+              <UserSetup />
+            </>
+          }
+        />
+        <Route
+          path="/pricing-page"
+          element={
+            <>
+              <PricingSection />
+              <HomeFooter />
+            </>
+          }
+        />
+        <Route path="/verify-payments" element={<VerifyPayment />} />
         {/* --- Auth Routes (Accessible ONLY if NOT logged in) --- */}
         <Route element={<PublicRoute />}>
+          <Route path="/register" element={<GetStarted />} />
           <Route path="/auth-sign-in" element={<SignIn />} />
           <Route path="/admin-sign-in" element={<SignInAdmin />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
         </Route>
-
         {/* --- Protected Routes (Accessible ONLY if logged in) --- */}
         <Route element={<ProtectedRoute />}>
+          <Route
+            path="/subject-manager"
+            element={
+              <Layout>
+                <SubjectsManager />
+              </Layout>
+            }
+          />
+          <Route
+            path="/classes-manager"
+            element={
+              <Layout>
+                <ClassesMain />
+              </Layout>
+            }
+          />{" "}
+          <Route
+            path="/lesson-manager"
+            element={
+              <Layout>
+                <LessonFeesMain />
+              </Layout>
+            }
+          />
+          <Route
+            path="/grade-manager"
+            element={
+              <Layout>
+                <Grades />
+              </Layout>
+            }
+          />
           <Route
             path="/settings"
             element={
@@ -102,7 +199,6 @@ function App() {
               </Layout>
             }
           />
-
           <Route
             path="/enrolled-courses"
             element={
@@ -111,7 +207,6 @@ function App() {
               </Layout>
             }
           />
-
           <Route
             path="/awards"
             element={
@@ -120,7 +215,6 @@ function App() {
               </Layout>
             }
           />
-
           <Route
             path="/reports"
             element={
@@ -137,7 +231,6 @@ function App() {
               </Layout>
             }
           />
-
           <Route
             path="/assignments"
             element={
@@ -146,7 +239,14 @@ function App() {
               </Layout>
             }
           />
-
+          <Route
+            path="/profiles"
+            element={
+              <Layout>
+                <UserProfile />
+              </Layout>
+            }
+          />
           <Route
             path="/subscriptions-history"
             element={
@@ -155,8 +255,27 @@ function App() {
               </Layout>
             }
           />
-
+          <Route path="/subjects/:id" element={<SubjectDetails />} />
+          <Route path="/user-updates" element={<UserSetupUpdates />} />
+          <Route path="/add-student" element={<AddStudent />} />
           <Route path="/payment-success" element={<PaymentStatusPage />} />
+          <Route
+            path="/timetable"
+            element={
+              <Layout>
+                <ClassesTimetable />
+              </Layout>
+            }
+          />
+          <Route
+            path="/guide-parents"
+            element={
+              <Layout>
+                <ParentGuideModal />
+              </Layout>
+            }
+          />
+          \
           <Route
             path="/subscriptions/:studentId?"
             element={
@@ -165,15 +284,6 @@ function App() {
               </Layout>
             }
           />
-          <Route
-            path="/parents-kins"
-            element={
-              <Layout>
-                <ParentChildrenList />
-              </Layout>
-            }
-          />
-
           <Route
             path="/classes/dashboard/:filter?"
             element={
@@ -190,7 +300,10 @@ function App() {
               </Layout>
             }
           />
-          <Route path="/user-details/:userType/:id" element={<UserDetails />} />
+          <Route
+            path="/user-details/:userType/:id"
+            element={<UserDetailsPage />}
+          />
           <Route path="/class-details/:id" element={<ClassDetails />} />
           <Route path="webrtc" element={<WebRTCComponent />} />
           <Route
@@ -198,7 +311,6 @@ function App() {
             element={<WebRTCComponent />}
           />
         </Route>
-
         {/* Catch-all for 404 Not Found - This should always be the last route */}
         <Route path="*" element={<NotFound />} />
       </Routes>

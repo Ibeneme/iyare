@@ -1,205 +1,221 @@
 import React, { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import "./Sidebar.css";
-//import { MdDashboard, MdMenuBook } from "react-icons/md";
-
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  FaTachometerAlt, // For Dashboard
-  FaUsers, // General Users/Groups
-  FaUserCog, // Admins (User with a cog for settings/control)
-  FaUserGraduate, // Students
-  FaUserFriends, // Parents
-  FaChalkboardTeacher, // Teachers
-  FaBookOpen, // Courses / All Classes
-  FaCogs, // Settings
-  FaRegFileAlt,
-  FaCalendarTimes, // Missed/Cancelled Classes
-  FaClock, // In-Class / Ongoing
-  FaBan, // Suspended / Cancelled
-  FaCalendarAlt, // General Calendar
-  FaRegListAlt, // All (for lists)
-  FaUserCheck, // Active Users
-  FaUserSlash, // Disabled Users
-  FaUserLock, // Suspended Users
-  FaHandPaper,
-  FaArrowAltCircleUp,
-  FaSyncAlt,
-  FaCheck,
-  FaPaypal,
-} from "react-icons/fa";
-import { BottomNav } from "./BottomNav";
+  LayoutDashboard,
+  Book,
+  GraduationCap,
+  Users,
+  UserCog,
+  UserCheck,
+  UserX,
+  Lock,
+  BookOpen,
+  Trophy,
+  FileText,
+  ClipboardList,
+  CreditCard,
+  Settings,
+  Calendar,
+  Ban,
+  Clock,
+  // ArrowUpCircle,
+  AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  X,
+} from "lucide-react";
+import { FaGuilded } from "react-icons/fa6";
+import { MdGrading } from "react-icons/md";
+
+interface SidebarItem {
+  title: string;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
+  path?: string;
+  type: "link" | "collapsible";
+  allowedRoles: string[];
+  children?: SidebarItem[];
+}
 
 const Sidebar: React.FC = () => {
   const [activeCollapse, setActiveCollapse] = useState<string | null>(null);
-  //const [isMobile, setIsMobile] = useState(window.innerWidth <= 768); // Set initial state correctly
-
   const location = useLocation();
-  //const navigate = useNavigate();
+  const [userRole, setUserRole] = useState<string | null>(null);
 
-  // Handle responsive detection
+  // Get role from localStorage
   useEffect(() => {
-    const handleResize = () => {
-      // const mobile = window.innerWidth <= 768;
-      // setIsMobile((prev) => {
-      //   if (prev !== mobile) return mobile;
-      //   return prev;
-      // });
-    };
-
-    window.addEventListener("resize", handleResize);
-    handleResize(); // Check on initial load
-    return () => window.removeEventListener("resize", handleResize);
+    const role = localStorage.getItem("userType");
+    setUserRole(role || null);
   }, []);
 
-  const toggleCollapse = (option: string) => {
-    setActiveCollapse((prev) => (prev === option ? null : option));
+  const toggleCollapse = (title: string) => {
+    setActiveCollapse((prev) => (prev === title ? null : title));
   };
 
-  // const hideBackArrowRoutes = [
-  //   "/classes/dashboard/all",
-  //   "/classes/dashboard/ongoing",
-  //   "/classes/dashboard/cancelled",
-  //   "/classes/dashboard/finished",
-  //   "/admin/dashboard/all",
-  //   "/admin/dashboard/active",
-  //   "/admin/dashboard/disabled",
-  //   "/reports",
-  //   "/student/dashboard/all",
-  //   "/student/dashboard/active",
-  //   "/student/dashboard/missed3Classes",
-  //   "/student/dashboard/upcomingClass",
-  //   "/student/dashboard/disabled",
-  //   "/student/dashboard/reported",
+  // Dynamic gradient & bg based on role
+  const getRoleStyles = () => {
+    switch (userRole) {
+      case "student":
+        return {
+          //  bg: "bg-[#023009]",
+          bg: "bg-gray-900",
+          border: "border-[#FFD000]",
+          textHover: "hover:text-[#FFD000]",
+          activeText: "text-[#FFD000]",
+          activeShadow: "shadow-[#FFD000]",
+          iconActive: "text-[#FFD000]",
+        };
+      case "teacher":
+        return {
+          // bg: "bg-[#023009]",
+          bg: "bg-gray-900",
+          border: "border-[#FFD000]",
+          textHover: "hover:text-[#FFD000]",
+          activeText: "text-[#FFD000]",
+          activeShadow: "shadow-[#FFD000]",
+          iconActive: "text-[#FFD000]",
+        };
+      case "parent":
+        return {
+          bg: "bg-gray-900",
+          border: "border-[#FFD000]",
+          textHover: "hover:text-[#FFD000]",
+          activeText: "text-[#FFD000]",
+          activeShadow: "shadow-[#FFD000]",
+          iconActive: "text-[#FFD000]",
 
-  //   "/parent/dashboard/all",
-  //   "/parent/dashboard/active",
-  //   "/parent/dashboard/disabled",
-  //   "/parent/dashboard/reported",
+          // bg: "bg-[#350854]",
+          // border: "border-[#FFD000]",
+          // textHover: "hover:text-[#FFD000]",
+          // activeText: "text-[#FFD000]",
+          // activeShadow: "shadow-[#FFD000]",
+          // iconActive: "text-[#FFD000]",
+        };
+      case "admins":
+        return {
+          //  bg: "bg-[#121212]",
+          border: "border-[#FFD000]",
+          textHover: "hover:text-[#FFD000]",
+          activeText: "text-[#FFD000]",
+          activeShadow: "shadow-[#FFD000]",
+          iconActive: "text-[#FFD000]",
+        };
+      default:
+        return {
+          bg: "bg-gray-900",
+          border: "border-[#FFD000]",
+          textHover: "hover:text-[#FFD000]",
+          activeText: "text-[#FFD000]",
+          activeShadow: "shadow-[#FFD000]",
+          iconActive: "text-[#FFD000]",
+        };
+    }
+  };
 
-  //   "/teacher/dashboard/all",
-  //   "/teacher/dashboard/active",
-  //   "/teacher/dashboard/suspended",
-  //   "/teacher/dashboard/inClass",
-  //   "/teacher/dashboard/upcomingClasses",
-  //   "/teacher/dashboard/reported",
-  //   "/teacher/dashboard/disabled",
+  const styles = getRoleStyles();
 
-  //   "/settings",
-
-  //   // "/department/dashboard/all",
-  //   // "/department/dashboard/active",
-  //   // "/department/dashboard/suspended",
-
-  //   "/course/dashboard/all",
-  //   "/course/dashboard/active",
-  //   // "/course/dashboard/suspended",
-  // ];
-
-  //const showBackArrow = !hideBackArrowRoutes.includes(location.pathname);
-  //const showBottomNav = hideBackArrowRoutes.includes(location.pathname);
-
-  const sidebarData = [
+  const sidebarData: SidebarItem[] = [
+    {
+      title: "Subjects",
+      icon: BookOpen,
+      path: "/subject-manager",
+      type: "link",
+      allowedRoles: ["admin", "teacher", "student", "parent"],
+    },
     {
       title: "Classes",
-      icon: FaTachometerAlt,
-      path: "/classes",
-      type: "collapsible",
+      icon: LayoutDashboard,
+      path: "/classes-manager",
+      type: "link",
       allowedRoles: ["admin", "teacher", "student", "parent"],
-      children: [
-        {
-          title: "Your Classes",
-          icon: FaArrowAltCircleUp,
-          path: "/classes/dashboard/all",
-          type: "link",
-          allowedRoles: [, "teacher", "student", "parent"],
-        },
-
-        {
-          title: "All Classes",
-          icon: FaSyncAlt,
-          path: "/classes/dashboard/all",
-          type: "link",
-          allowedRoles: ["admin"],
-        },
-        // {
-        //   title: "Ongoing Classes",
-        //   icon: FaSyncAlt,
-        //   path: "/classes/dashboard/ongoing",
-        //   type: "link",
-        //   allowedRoles: ["admin", "teacher", "student", "parent"],
-        // },
-        // {
-        //   title: "Upcoming Classes",
-        //   icon: FaArrowAltCircleUp,
-        //   path: "/classes/dashboard/upcoming",
-        //   type: "link",
-        //   allowedRoles: ["admin", "teacher", "student", "parent"],
-        // },
-        // {
-        //   title: "Finished Classes",
-        //   icon: FaHourglassEnd,
-        //   path: "/classes/dashboard/finished",
-        //   type: "link",
-        //   allowedRoles: ["admin", "teacher", "student", "parent"],
-        // },
-        // {
-        //   title: "Cancelled Classes",
-        //   icon: FaBan,
-        //   path: "/classes/dashboard/cancelled",
-        //   type: "link",
-        //   allowedRoles: ["admin", "teacher", "student", "parent"],
-        // },
-      ],
     },
     {
-      title: "Updates",
-      icon: FaRegFileAlt,
-      path: "/assignments",
+      title: "Timetable",
+      icon: Calendar,
+      path: "/timetable",
       type: "link",
-      allowedRoles: ["student", "parent", "teacher"],
+      allowedRoles: ["student", "parent", "teacher", "admin"],
     },
-
     {
-      title: "Enrolled",
-      icon: FaUserCheck,
-      path: "/parents-kins",
+      title: "Grades",
+      icon: MdGrading,
+      path: "/grade-manager",
       type: "link",
-      allowedRoles: ["parent", "student"],
+      allowedRoles: ["parent", "student", "admin"],
     },
     {
-      title: "Subscriptions",
-      icon: FaPaypal,
-      path: "/subscriptions-history",
+      title: "Lesson Fees",
+      icon: CreditCard,
+      path: "/lesson-manager",
       type: "link",
       allowedRoles: ["parent", "student", "admin"],
     },
 
-    //subscriptions-history
-    //parents-kins
+    // { grade-manager
+    //   title: "Classes",
+    //   icon: LayoutDashboard,
+    //   path: "/classes",
+    //   type: "collapsible",
+    //   allowedRoles: ["admin", "teacher", "student", "parent"],
+    //   children: [
+    //     {
+    //       title: "Your Classes",
+    //       icon: ArrowUpCircle,
+    //       path: "/classes/dashboard/all",
+    //       type: "link",
+    //       allowedRoles: ["teacher", "student", "parent"],
+    //     },
+    //     {
+    //       title: "All Classes",
+    //       icon: ClipboardList,
+    //       path: "/classes/dashboard/all",
+    //       type: "link",
+    //       allowedRoles: ["admin"],
+    //     },
+    //   ],
+    // },
+
+    //timetable
+
+    {
+      title: "Updates",
+      icon: ClipboardList,
+      path: "/assignments",
+      type: "link",
+      allowedRoles: ["student", "parent", "teacher", "admin"],
+    },
+    {
+      title: "Enrolled",
+      icon: UserCheck,
+      path: "/profiles",
+      type: "link",
+      allowedRoles: ["parent", "student"],
+    },
+
     {
       title: "Admins",
-      icon: FaUserCog,
+      icon: UserCog,
       path: "/admins",
       type: "collapsible",
       allowedRoles: ["admin"],
       children: [
         {
           title: "All Admins",
-          icon: FaUsers,
+          icon: Users,
           path: "/admin/dashboard/all",
           type: "link",
           allowedRoles: ["admin"],
         },
         {
           title: "Active Admins",
-          icon: FaUserCheck,
+          icon: UserCheck,
           path: "/admin/dashboard/active",
           type: "link",
           allowedRoles: ["admin"],
         },
         {
           title: "Disabled Admins",
-          icon: FaUserSlash,
+          icon: UserX,
           path: "/admin/dashboard/disabled",
           type: "link",
           allowedRoles: ["admin"],
@@ -208,36 +224,22 @@ const Sidebar: React.FC = () => {
     },
     {
       title: "Students",
-      icon: FaUserGraduate,
+      icon: GraduationCap,
       path: "/students",
       type: "collapsible",
       allowedRoles: ["admin"],
       children: [
         {
           title: "All Students",
-          icon: FaUsers,
+          icon: Users,
           path: "/student/dashboard/all",
           type: "link",
           allowedRoles: ["admin"],
         },
         {
           title: "Active Students",
-          icon: FaUserCheck,
+          icon: UserCheck,
           path: "/student/dashboard/active",
-          type: "link",
-          allowedRoles: ["admin"],
-        },
-        {
-          title: "Missed 3 Classes",
-          icon: FaCalendarTimes,
-          path: "/student/dashboard/missed-3-classes",
-          type: "link",
-          allowedRoles: ["admin"],
-        },
-        {
-          title: "Upcoming Classes",
-          icon: FaCalendarAlt,
-          path: "/student/dashboard/upcoming-classes",
           type: "link",
           allowedRoles: ["admin"],
         },
@@ -245,28 +247,28 @@ const Sidebar: React.FC = () => {
     },
     {
       title: "Parents",
-      icon: FaUserFriends,
+      icon: Users,
       path: "/parents",
       type: "collapsible",
       allowedRoles: ["admin"],
       children: [
         {
           title: "All Parents",
-          icon: FaUsers,
+          icon: Users,
           path: "/parent/dashboard/all",
           type: "link",
           allowedRoles: ["admin"],
         },
         {
           title: "Active Parents",
-          icon: FaUserCheck,
+          icon: UserCheck,
           path: "/parent/dashboard/active",
           type: "link",
           allowedRoles: ["admin"],
         },
         {
           title: "Disabled Parents",
-          icon: FaUserSlash,
+          icon: UserX,
           path: "/parent/dashboard/disabled",
           type: "link",
           allowedRoles: ["admin"],
@@ -275,283 +277,312 @@ const Sidebar: React.FC = () => {
     },
     {
       title: "Teachers",
-      icon: FaChalkboardTeacher,
+      icon: Book,
       path: "/teachers",
       type: "collapsible",
       allowedRoles: ["admin"],
       children: [
         {
           title: "All Teachers",
-          icon: FaUsers,
+          icon: Users,
           path: "/teacher/dashboard/all",
           type: "link",
           allowedRoles: ["admin"],
         },
         {
           title: "Active Teachers",
-          icon: FaUserCheck,
+          icon: UserCheck,
           path: "/teacher/dashboard/active",
           type: "link",
           allowedRoles: ["admin"],
         },
         {
           title: "Suspended Teachers",
-          icon: FaUserLock,
+          icon: Lock,
           path: "/teacher/dashboard/suspended",
           type: "link",
           allowedRoles: ["admin"],
         },
-        {
-          title: "In-Class Teachers",
-          icon: FaClock,
-          path: "/teacher/dashboard/in-class",
-          type: "link",
-          allowedRoles: ["admin"],
-        },
-        {
-          title: "Upcoming Classes Teachers",
-          icon: FaCalendarAlt,
-          path: "/teacher/dashboard/upcoming-classes",
-          type: "link",
-          allowedRoles: ["admin"],
-        },
-        {
-          title: "Reported Teachers",
-          icon: FaHandPaper,
-          path: "/teacher/dashboard/reported",
-          type: "link",
-          allowedRoles: ["admin"],
-        },
       ],
     },
-
-    {
-      title: "Awards",
-      icon: FaBookOpen,
-      path: "/awards",
-      //type: "collapsible",
-      type: "link",
-      allowedRoles: ["admin", "teacher", "student"],
-      // children: [
-      //   {
-      //     title: "New Awards",
-      //     icon: FaCheck,
-      //     path: "/awards",
-      //     type: "link",
-      //     allowedRoles: ["admin", "teacher", "student"],
-      //   },
-
-      //   {
-      //     title: "All Awards",
-      //     icon: FaRegListAlt,
-      //     path: "/awards/all",
-      //     type: "link",
-      //     allowedRoles: ["admin", "teacher", "student"],
-      //   },
-      //   {
-      //     title: "Your Awards History",
-      //     icon: FaBan,
-      //     path: "/awards/suspended",
-      //     type: "link",
-      //     allowedRoles: ["admin", "teacher", "student"],
-      //   },
-      // ],
-    },
-
-    {
-      title: "Courses",
-      icon: FaBookOpen,
-      path: "/courses",
-      type: "collapsible",
-      allowedRoles: ["admin"],
-      children: [
-        {
-          title: "All Courses",
-          icon: FaRegListAlt,
-          path: "/course/dashboard/all",
-          type: "link",
-         // allowedRoles: ["admin"],
-         allowedRoles: ["admin", "teacher", "parent", "student"],
-        },
-        {
-          title: "Active Courses",
-          icon: FaCheck,
-          path: "/course/dashboard/active",
-          type: "link",
-          allowedRoles: ["admin"],
-        },
-        {
-          title: "Suspended Courses",
-          icon: FaBan,
-          path: "/course/dashboard/suspended",
-          type: "link",
-          allowedRoles: ["admin"],
-        },
-      ],
-    },
+    // {
+    //   title: "Awards",
+    //   icon: Trophy,
+    //   path: "/awards",
+    //   type: "link",
+    //   allowedRoles: ["admin", "teacher", "student"],
+    // },
 
     {
       title: "Reports",
-      icon: FaRegFileAlt,
+      icon: FileText,
       path: "/reports",
       type: "link",
       allowedRoles: ["admin"],
     },
-    {
-      title: "Enrolled Courses",
-      icon: FaRegFileAlt,
-      path: "/enrolled-courses",
-      type: "link",
-      allowedRoles: ["teacher", "student", "parent"],
-    },
-
 
     {
       title: "Settings",
-      icon: FaCogs,
+      icon: Settings,
       path: "/settings",
       type: "link",
-      allowedRoles: ["admin", "teacher", "student", "parent"], // Visible to all
+      allowedRoles: ["admin", "teacher", "student", "parent"],
+    },
+    {
+      title: "Guide",
+      icon: FaGuilded,
+      path: "/guide-parents",
+      type: "link",
+      allowedRoles: ["admin", "teacher", "student", "parent"],
     },
   ];
 
-  const [userRole, setUserRole] = useState<string | null>(null);
-
-  useEffect(() => {
-    const userString = localStorage.getItem("userType");
-    if (userString) {
-      try {
-        setUserRole(userString || null);
-      } catch (error) {
-        console.error("Error parsing user data from localStorage", error);
-        setUserRole(null);
-      }
-    }
-  }, []);
-  // Define a type for a single sidebar item to keep the code clean
-  interface SidebarItem {
-    title: string;
-    icon: React.ComponentType;
-    path?: string | any; // Optional for collapsible items
-    type: "link" | "collapsible" | any;
-    allowedRoles: string[];
-    children?: SidebarItem[];
-  }
   const getFilteredSidebarData = (): SidebarItem[] => {
-    if (!userRole) {
-      return [];
-    }
+    if (!userRole) return [];
 
-    const filteredItems = sidebarData.filter((item) =>
-      item.allowedRoles.includes(userRole)
-    );
-
-    return filteredItems.map((item) => {
-      if (item.type === "collapsible" && item.children) {
-        const filteredChildren = item.children.filter((child) =>
-          child.allowedRoles.includes(userRole)
-        );
-
-        // If no children match, remove the `children` property entirely
-        if (filteredChildren.length === 0) {
-          const { children, ...rest } = item;
-          return rest;
+    return sidebarData
+      .filter((item) => item.allowedRoles.includes(userRole))
+      .map((item) => {
+        if (item.type === "collapsible" && item.children) {
+          const filteredChildren = item.children.filter((child) =>
+            child.allowedRoles.includes(userRole)
+          );
+          return filteredChildren.length > 0
+            ? { ...item, children: filteredChildren }
+            : { ...item, children: undefined, type: "link" as const };
         }
-
-        return { ...item, children: filteredChildren };
-      }
-
-      return item;
-    });
+        return item;
+      });
   };
 
   const filteredSidebarData = getFilteredSidebarData();
 
   return (
-    <div className="sidebar-wrapper">
-      <BottomNav filteredSidebarData={filteredSidebarData} />
-      {/* {showBackArrow && (
-        <div className="mobile-header">
-          <button className="back-btn" onClick={() => navigate(-1)}>
-            <MdArrowBack size={24} />
-          </button>
+    <div className="flex">
+      {/* Desktop Sidebar */}
+      <motion.div
+        initial={{ x: -300 }}
+        animate={{ x: 0 }}
+        className={`hidden md:flex fixed inset-y-0 left-0 w-72 ${styles.bg} backdrop-blur-xl border-r ${styles.border} text-white flex-col gap-2 p-5  z-50`}
+      >
+        <div className="mb-6  z-20">
+          {/* <h1 className="text-[24px] font-bold text-[#FFD000] p-2">
+            Hi,{" "}
+            {userRole
+              ? userRole.charAt(0).toUpperCase() + userRole.slice(1)
+              : ""}
+          </h1> */}
+          <div className="p-3 bg-[#FFD00021] rounded-[64px] flex items-center justify-center gap-2">
+            <BookOpen className="text-[#FFD000] w-4 h-4" />
+            <h1 className="text-[14px] font-bold text-[#FFD000]">
+              Yare Height Learning Hub
+            </h1>
+          </div>
         </div>
-      )} */}
-      <div className="sidebar">
-        {filteredSidebarData.map((item) => {
-          if (item.type === "link") {
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={`sidebar-option ${
-                  location.pathname === item.path ? "active-link" : ""
-                }`}
-              >
-                <item.icon />
-                <span style={{ fontSize: 13 }}>{item.title}</span>
-              </NavLink>
-            );
-          }
 
-          if (item.type === "collapsible") {
-            return (
-              <div key={item.title} className="sidebar-collapsible">
-                <div
-                  className={`sidebar-option ${
-                    location?.pathname?.startsWith(item?.path?.slice(0, -1)) ||
-                    location?.pathname === "/classes/dashboard/active"
-                      ? "active-link"
-                      : ""
-                  }`}
-                  style={{ fontSize: 13 }}
-                  onClick={() => toggleCollapse(item.title)}
-                >
-                  <item.icon />
-                  <span style={{ fontSize: 13 }}>{item.title}</span>
-                </div>
+        <div className="space-y-1 mt-0 overflow-y-auto scrollbar-hide">
+          {filteredSidebarData.map((item) => {
+            const isActiveParent =
+              item.type === "collapsible" &&
+              item.path &&
+              location.pathname.startsWith(item.path);
 
-                {activeCollapse === item.title && item.children && (
-                  <div className="sidebar-suboptions">
-                    {item.children.map((child) => (
-                      <NavLink
-                        key={child.path}
-                        to={child.path}
-                        className={({ isActive }) =>
-                          isActive ? "active-link" : ""
-                        }
+            const isOpen = activeCollapse === item.title;
+
+            return (
+              <div key={item.title}>
+                {item.type === "link" && item.path ? (
+                  <NavLink to={item.path}>
+                    {({ isActive }) => (
+                      <motion.div
+                        whileHover={{ x: 4 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                          isActive ? styles.activeText : "text-gray-300"
+                        } ${styles.textHover}`}
                       >
-                        {({ isActive }) => (
-                          <div
-                            style={{
-                              fontSize: 13,
-                              textDecorationLine: "none",
-                              padding: 16,
-                              borderRadius: 12,
-                              backgroundColor: isActive
-                                ? "#ffffff15"
-                                : "transparent", // Replace with the desired color
-                              color: isActive ? "white" : "white", // Replace with the desired color
-                            }}
-                          >
-                            <span
-                              style={{ color: isActive ? "white" : "white" }}
-                            >
-                              {child.title}
-                            </span>
-                          </div>
+                        <item.icon size={18} />
+                        <span>{item.title}</span>
+                      </motion.div>
+                    )}
+                  </NavLink>
+                ) : (
+                  <div>
+                    <motion.button
+                      whileHover={{ x: 4 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => toggleCollapse(item.title)}
+                      className={`w-full flex items-center justify-between px-4 py-4 rounded-xl text-sm font-medium transition-all ${
+                        isActiveParent ? styles.activeText : "text-gray-300"
+                      } ${styles.textHover}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <item.icon size={18} />
+                        <span>{item.title}</span>
+                      </div>
+                      <motion.div
+                        animate={{ rotate: isOpen ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {isOpen ? (
+                          <ChevronDown size={16} />
+                        ) : (
+                          <ChevronRight size={16} />
                         )}
-                      </NavLink>
-                    ))}
+                      </motion.div>
+                    </motion.button>
+
+                    <AnimatePresence>
+                      {isOpen && item.children && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                          className="ml-8 mt-2 space-y-1 overflow-hidden"
+                        >
+                          {item.children.map((child) => (
+                            <NavLink key={child.path} to={child.path!}>
+                              {({ isActive }) => (
+                                <motion.div
+                                  whileHover={{ x: 4 }}
+                                  whileTap={{ scale: 0.98 }}
+                                  className={`flex items-center gap-3 px-3 py-4 rounded-lg text-sm transition-all ${
+                                    isActive
+                                      ? `${styles.activeText} font-medium`
+                                      : "text-gray-400 hover:text-gray-100"
+                                  }`}
+                                >
+                                  <child.icon size={16} />
+                                  <span>{child.title}</span>
+                                </motion.div>
+                              )}
+                            </NavLink>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 )}
               </div>
             );
-          }
-          return null;
-        })}
-      </div>
+          })}
+        </div>
+      </motion.div>
+
+      {/* Mobile Bottom Nav */}
+      <BottomNav
+        filteredSidebarData={filteredSidebarData}
+        location={location}
+        styles={styles}
+      />
     </div>
+  );
+};
+
+// Mobile Bottom Nav with Role-Based Colors
+export const BottomNav: React.FC<{
+  filteredSidebarData: SidebarItem[];
+  location: ReturnType<typeof useLocation>;
+  styles: any;
+}> = ({ filteredSidebarData, location, styles }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const topLevelItems = filteredSidebarData
+    .map((item): { title: string; icon: any; path: string } | null => {
+      if (
+        item.type === "collapsible" &&
+        item.children &&
+        item.children.length > 0
+      ) {
+        const firstChild = item.children[0];
+        if (firstChild.path) {
+          return {
+            title: firstChild.title,
+            icon: firstChild.icon,
+            path: firstChild.path,
+          };
+        }
+      }
+      if (item.path) {
+        return { title: item.title, icon: item.icon, path: item.path };
+      }
+      return null;
+    })
+    .filter(
+      (item): item is { title: string; icon: any; path: string } =>
+        item !== null
+    );
+
+  return (
+    <>
+      {/* Dashboard Button */}
+      <motion.button
+        whileTap={{ scale: 0.9 }}
+        onClick={() => setIsModalOpen((prev) => !prev)}
+        className={`md:hidden fixed bottom-6 left-[42%] w-16 h-16 ${styles.bg} rounded-full flex items-center justify-center shadow-lg z-[99999999] border ${styles.border}`}
+      >
+        {isModalOpen ? (
+          <X size={32} className={styles.iconActive} />
+        ) : (
+          <LayoutDashboard size={32} className={styles.iconActive} />
+        )}
+      </motion.button>
+
+      {/* Modal */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsModalOpen(false)}
+              className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            />
+
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className={`md:hidden fixed inset-x-4 bottom-24 max-h-[70vh] ${styles.bg} backdrop-blur-2xl rounded-3xl z-50 overflow-hidden  flex flex-col`}
+            >
+              <div className="p-6 flex-1 overflow-y-auto">
+                <div className="grid grid-cols-3 gap-4">
+                  {topLevelItems.map((item) => {
+                    const isActive = location.pathname === item.path;
+                    return (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setIsModalOpen(false)}
+                        className="flex flex-col items-center p-3 rounded-2xl transition-all"
+                      >
+                        <motion.div
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
+                          className={`flex flex-col items-center space-y-2 w-full ${
+                            isActive
+                              ? `${styles.activeText} ${styles.activeShadow}`
+                              : "text-gray-300"
+                          }`}
+                        >
+                          <item.icon size={28} />
+                          <span className="text-xs font-medium text-center leading-tight">
+                            {item.title}
+                          </span>
+                        </motion.div>
+                      </NavLink>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 

@@ -1,14 +1,20 @@
-import AboutUs from "./AboutUs/AboutUs";
+//import AboutUs from "./AboutUs/AboutUs";
 import FAQPage from "./FAQs/FAQPage";
 import Hero from "./Hero/Hero";
-import HomeFooter from "./HomeFooter/HomeFooter";
-
+import HomeLessonsSection from "./Hero/NewSectionA";
+import LessonsDigitalizedSection from "./Hero/NewSectionB";
+import YareOpsSection from "./Hero/YareOpsSection";
+import TestimonialsCarousel from "./Testimonials/Testimonials";
 
 const Index = () => {
   return (
-    <div style={{ backgroundColor: "white" }}>
+    <div style={{ backgroundColor: "white", marginTop: -64 }}>
       <Hero />
-      <AboutUs />
+      <HomeLessonsSection />
+      <YareOpsSection />
+      <LessonsDigitalizedSection />
+      <TestimonialsCarousel />
+      {/* <AboutUs /> */}
       <FAQPage />
       {/* <HomeFooter /> */}
     </div>
