@@ -52,6 +52,7 @@ const SignInAdmin: React.FC = () => {
       localStorage.setItem("user", JSON.stringify(result.data));
       localStorage.setItem("userType", userType);
       localStorage.setItem("token", result.token);
+      localStorage.setItem("loginTimeReadable", new Date().toISOString());
 
       setTimeout(() => navigate("/subject-manager"), 800);
     } catch (err: any) {

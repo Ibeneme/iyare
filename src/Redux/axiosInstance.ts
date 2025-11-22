@@ -9,9 +9,6 @@ const axiosInstance = axios.create({
   },
 });
 
-// =======================
-// 🔐 ADD TOKEN AUTOMATICALLY
-// =======================
 axiosInstance.interceptors.request.use(
   (config) => {
     // Get token from localStorage
@@ -20,15 +17,6 @@ axiosInstance.interceptors.request.use(
     console.log(token, 'token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    if (process.env.NODE_ENV === "development") {
-      console.log(
-        "API Request ->",
-        config.method?.toUpperCase(),
-        config.url,
-        config.data
-      );
     }
 
     return config;
@@ -41,14 +29,7 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
   (response) => {
-    if (process.env.NODE_ENV === "development") {
-      console.log(
-        "API Response <-",
-        response.status,
-        response.config.url,
-        response.data
-      );
-    }
+
     return response;
   },
   (error) => {

@@ -221,7 +221,7 @@ export default function LessonFeesMain() {
               <>
                 {/* Mobile Cards (unchanged) */}
                 <div className="md:hidden space-y-4">
-                  {filtered.map((fee: any) => {
+                  {filtered?.map((fee: any) => {
                     const { name: studentName, deleted } = getStudentDisplay(
                       fee.studentId
                     );

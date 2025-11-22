@@ -13,9 +13,10 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ToastProvider>
       <Provider store={store}>
-        <SocketProvider>
+        {/* <SocketProvider>
           <App />
-        </SocketProvider>
+        </SocketProvider> */}
+            <App />
       </Provider>
     </ToastProvider>
   </StrictMode>

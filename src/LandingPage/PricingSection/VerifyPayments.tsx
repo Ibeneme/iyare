@@ -115,10 +115,9 @@ const VerifyPayment: React.FC = () => {
     console.log("useEffect [success, navigate] triggered");
     if (success) {
       console.log("Success detected → starting 5s redirect timer");
-     const timer = setTimeout(() => {
-       console.log("Timer expired → navigating to /classes/dashboard/all");
-   
-     }, 5000);
+      const timer = setTimeout(() => {
+        console.log("Timer expired → navigating to /classes/dashboard/all");
+      }, 5000);
       return () => {
         console.log("Cleanup: clearing redirect timer");
         clearTimeout(timer);
@@ -191,7 +190,6 @@ const VerifyPayment: React.FC = () => {
           </p>
         </div>
 
-        {/* Success Details */}
         {success && payments.length > 0 && (
           <div className="space-y-6 mb-8">
             <h3 className="text-lg font-bold text-[#023009] text-center">
@@ -265,7 +263,6 @@ const VerifyPayment: React.FC = () => {
           </div>
         )}
 
-        {/* Error Message */}
         {error && (
           <div className="bg-red-50 border-2 border-red-300 rounded-xl p-5 mb-6 text-center">
             <p className="text-red-700 font-medium">{error}</p>
@@ -277,7 +274,6 @@ const VerifyPayment: React.FC = () => {
           </div>
         )}
 
-        {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           {success ? (
             <>
@@ -291,15 +287,13 @@ const VerifyPayment: React.FC = () => {
                 Proceed
                 <ArrowLeft className="w-4 h-4 rotate-180" />
               </button>
-              <p className="text-[#023009]/70 text-sm self-center">
-              </p>
+              <p className="text-[#023009]/70 text-sm self-center"></p>
             </>
           ) : (
             <>
               <button
                 onClick={() => {
                   console.log("User clicked: Try Again");
-                  // Keep search params — just reload the page
                   window.location.reload();
                 }}
                 className="px-6 py-3 bg-[#ffd000] text-[#023009] rounded-xl font-bold hover:bg-[#ffd000]/90 transition"

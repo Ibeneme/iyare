@@ -69,26 +69,9 @@ const SignIn: React.FC = () => {
       const user = result.data;
       const token = result.token;
 
-      console.log("========================================");
-      console.log(" SIGN IN SUCCESS ");
-      console.log("========================================");
-      console.log("Timestamp (WAT):", new Date().toLocaleString("en-NG"));
-      console.log("Country: NG");
-      console.log("User Type:", userType);
-      console.log("Email:", userType === "student" ? studentId : email);
-      console.log("Name:", `${user?.firstName} ${user?.lastName}`);
-      console.log("Token: [HIDDEN]");
-      console.log(
-        userType === "student" ? "Subjects Count:" : "Children Count:",
-        userType === "student"
-          ? user?.subjects?.length || 0
-          : user?.children?.length || 0
-      );
-      console.log("isSubscribed:", user?.isSubscribed);
-      console.log("========================================");
-
       localStorage.setItem("userEmail", result.data?.email || "");
       localStorage.setItem("userId", result.data?._id || "");
+
       // ───── CASE 1: No subjects/children → go to setup ─────
       if (
         (userType === "student" &&
@@ -96,33 +79,27 @@ const SignIn: React.FC = () => {
         (userType === "parent" &&
           (!user?.children || user?.children.length === 0))
       ) {
-        console.log("No subjects/children → Redirecting to /user-setup");
         navigate("/user-setup", {
           state: { user, token, userType },
         });
         return;
       }
-      // Define the subscription status for a user (either Parent or Student)
-      const isUserSubscribed = (user: any, userType: string): boolean => {
-        // 1. Check if the user itself is subscribed
-        if (user?.isSubscribed) {
-          return true;
-        }
 
-        // 2. If the user is a parent, check if any child is subscribed
+      // Subscription checker
+      const isUserSubscribed = (user: any, userType: string): boolean => {
+        if (user?.isSubscribed) return true;
+
         if (userType === "parent" && user?.children?.length) {
-          // Check if at least one child document has isSubscribed set to true
           return user.children.some((child: any) => child?.isSubscribed);
         }
 
-        // 3. Otherwise, the user is not subscribed
         return false;
       };
+
       const subscribed = isUserSubscribed(user, userType);
+
       // ───── CASE 2: Not subscribed → go to pricing ─────
       if (!subscribed) {
-        console.log("Not subscribed → Redirecting to /pricing-page");
-
         const studentDetails =
           userType === "parent" && user?.children?.length
             ? user.children.map((child: any) => ({
@@ -151,14 +128,13 @@ const SignIn: React.FC = () => {
         return;
       }
 
-      // ───── CASE 3: Fully set up → go to dashboard ─────
-      console.log("Fully set up → Redirecting to dashboard");
+      // ───── CASE 3: Fully set up → dashboard ─────
       localStorage.setItem("user", JSON.stringify(result.data));
       localStorage.setItem("token", result.token);
+      localStorage.setItem("loginTimeReadable", new Date().toISOString());
       localStorage.setItem("userType", userType);
       navigate("/subject-manager");
     } catch (err: any) {
-      console.error("Sign in failed:", err);
       setError(err.message || "Invalid credentials. Please try again.");
     } finally {
       setLoading(false);

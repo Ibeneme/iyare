@@ -271,14 +271,6 @@ const UserSetup: React.FC = () => {
     setError("");
 
     try {
-      console.log("========================================");
-      console.log(" PARENT SETUP SUBMIT - SENDING IDs ONLY ");
-      console.log("========================================");
-      console.log("Timestamp (WAT):", currentTime);
-      console.log("Country: NG");
-      console.log("Parent ID:", user?._id);
-      console.log("Child Setups (IDs):", childSetups);
-
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const updatePromises = Object.entries(childSetups).map(
         async ([childId, setup]) => {
