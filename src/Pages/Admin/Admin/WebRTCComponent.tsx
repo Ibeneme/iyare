@@ -9,14 +9,17 @@ import {
   ThumbsUp,
   Heart,
   Laugh,
+  User,
 } from "lucide-react";
+import ControlBar from "./ControlBar";
+import ChatModal from "./ChatModal";
 
 interface User {
   id: string;
   username: string;
   screensharingid?: string;
   screenshared?: boolean;
-
+  roomId?: string;
 }
 
 interface SessionDescription {
@@ -120,25 +123,24 @@ const VideoChat: React.FC = () => {
   const addRemoteVideo = (id: string, stream: MediaStream, label?: string) => {
     if (!remoteVideoContainerRef.current) return;
 
-    let video = document.getElementById(`video-${id}`) as HTMLVideoElement;
-    if (!video) {
-      const container = document.createElement("div");
+    let container = document.getElementById(`container-${id}`);
+    if (!container) {
+      container = document.createElement("div");
       container.id = `container-${id}`;
       container.className = "w-full sm:w-1/2 md:w-1/3 lg:w-1/4 p-2 relative";
 
-      video = document.createElement("video");
+      const video = document.createElement("video");
       video.id = `video-${id}`;
       video.autoplay = true;
       video.playsInline = true;
-      video.muted = false;
-      video.volume = 1;
+      video.muted = id === userId; // mute local video
       video.className = "w-full h-auto rounded-lg shadow-lg bg-gray-700";
 
       const labelEl = document.createElement("p");
       labelEl.id = `label-${id}`;
-      labelEl.className = "text-center text-sm mt-1 text-gray-400 truncate";
-      labelEl.textContent =
-        label || peerData[id] || `Peer: ${id.slice(0, 6)}...`;
+      labelEl.className =
+        "absolute bottom-1 left-1 bg-black/60 text-white text-sm px-2 py-1 rounded";
+      labelEl.textContent = label || peerData[id] || `Peer: ${id.slice(0, 6)}`;
 
       container.appendChild(video);
       container.appendChild(labelEl);
@@ -146,9 +148,9 @@ const VideoChat: React.FC = () => {
       remoteVideoContainerRef.current.appendChild(container);
     }
 
-    video.srcObject = stream;
+    const videoEl = document.getElementById(`video-${id}`) as HTMLVideoElement;
+    if (videoEl) videoEl.srcObject = stream;
   };
-
   const removeRemoteVideo = (id: string) => {
     const container = document.getElementById(`container-${id}`);
     if (container) remoteVideoContainerRef.current?.removeChild(container);
@@ -166,36 +168,38 @@ const VideoChat: React.FC = () => {
     setStatus(`Peer ${peerData[id] || id} left the room.`);
   };
 
-  const createPeerConnection = useCallback(
-    (remoteId: string, isInitiator: boolean) => {
-      const socket = socketRef.current!;
-      const pc = new RTCPeerConnection(iceConfiguration);
-      peerConnectionsRef.current[remoteId] = pc;
+  const createPeerConnection = (remoteId: string, isInitiator: boolean) => {
+    const pc = new RTCPeerConnection(iceConfiguration);
+    peerConnectionsRef.current[remoteId] = pc;
+    const socket = socketRef.current!;
+    // Add local video/audio
+    // if (localStreamRef.current) {
+    //   localStreamRef.current
+    //     .getTracks()
+    //     .forEach((t) => pc.addTrack(t, localStreamRef?.current));
+    // }
+    if (localStreamRef.current) {
+      localStreamRef.current
+        .getTracks()
+        .forEach((track) => pc.addTrack(track, localStreamRef.current!));
+    }
 
-      if (localStreamRef.current) {
-        localStreamRef.current
-          .getTracks()
-          .forEach((track) => pc.addTrack(track, localStreamRef.current!));
+    pc.ontrack = (event) => {
+      // If this is a screen track, show it
+      addRemoteVideo(remoteId, event.streams[0]);
+      setScreenSharingPeer(remoteId);
+    };
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket?.emit("ice-candidate", event.candidate, remoteId);
       }
+    };
 
-      if (isScreenSharing && screenStream) {
-        screenStream
-          .getTracks()
-          .forEach((track) => pc.addTrack(track, screenStream));
-      }
+    if (isInitiator) negotiate(pc, remoteId);
 
-      pc.ontrack = (event) => addRemoteVideo(remoteId, event.streams[0]);
-
-      pc.onicecandidate = (event) => {
-        if (event.candidate)
-          socket.emit("ice-candidate", event.candidate, remoteId);
-      };
-
-      if (isInitiator) negotiate(pc, remoteId);
-      return pc;
-    },
-    [isScreenSharing, screenStream]
-  );
+    return pc;
+  };
 
   const negotiate = async (pc: RTCPeerConnection, remoteId: string) => {
     const socket = socketRef.current!;
@@ -231,13 +235,30 @@ const VideoChat: React.FC = () => {
           }
         }
       );
+      socket.on("request-screen-share", async (newUserId: string) => {
+        if (!screenStream || !peerConnectionsRef.current[newUserId]) return;
+
+        const pc = peerConnectionsRef.current[newUserId];
+        screenStream
+          .getTracks()
+          .forEach((track) => pc.addTrack(track, screenStream));
+
+        // Re-negotiate with the new user
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit("session-description", pc.localDescription, newUserId);
+      });
 
       socket.on(
         "session-description",
         async (senderId: string, sdp: SessionDescription) => {
           let pc = peerConnectionsRef.current[senderId];
-          if (!pc) pc = createPeerConnection(senderId, false);
+          if (!pc) {
+            pc = createPeerConnection(senderId, false);
+          }
+
           await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+
           if (sdp.type === "offer") {
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
@@ -245,7 +266,6 @@ const VideoChat: React.FC = () => {
           }
         }
       );
-
       socket.on(
         "ice-candidate",
         async (senderId: string, candidate: RTCIceCandidate) => {
@@ -270,8 +290,22 @@ const VideoChat: React.FC = () => {
       socket.on("user-left", removeRemoteVideo);
 
       socket.on("chat-message", (msg: ChatMessage) => {
+        // Log full message object
+        console.log("Received chat message:", msg);
+      
+        // Optionally log sender info if your msg has username/id
+        console.log("From user:", msg.username, "| ID:", msg.id);
+      
+        // Optionally log message text separately
+        console.log("Message text:", msg.message);
+      
+        // Update state safely without duplicates
         setChatMessages((prev) => {
-          if (prev.some((m) => m.id === msg.id)) return prev;
+          if (prev.some((m) => m.id === msg.id)) {
+            console.log("Duplicate message detected, ignoring:", msg.id);
+            return prev;
+          }
+          console.log("Adding new message to state:", msg);
           return [...prev, msg];
         });
       });
@@ -335,11 +369,7 @@ const VideoChat: React.FC = () => {
   );
 
   const handleJoinRoom = async () => {
-    if (
-      !roomId.trim() ||
-      !username.trim() ||
-      !userId.trim()
-    ) {
+    if (!roomId.trim() || !username.trim() || !userId.trim()) {
       setStatus("Enter a valid Room ID, User ID, Username, and Class ID");
       return;
     }
@@ -351,17 +381,21 @@ const VideoChat: React.FC = () => {
       setupSocketListeners(socketRef.current);
 
       socketRef.current.on("connect", () => {
-        const userObject: User = {
-          id: userId,
-          username: username,
-          roomId:roomId,
-          screensharingid: undefined,
-          screenshared: false,
-        };
+        // const userObject: User = {
+        //   id: userId,
+        //   username: username,
+        //   roomId: roomId,
+        //   screensharingid: undefined,
+        //   screenshared: false,
+        // };
 
         setPeerData((prev) => ({ ...prev, [userId]: username }));
 
         socketRef.current!.emit("join", roomId, username, userId);
+        socketRef?.current?.emit(
+          "request-current-screen-share",
+          socketRef.current.id
+        );
 
         setIsConnected(true);
         setStatus(
@@ -426,15 +460,34 @@ const VideoChat: React.FC = () => {
   };
 
   const sendChatMessage = () => {
-    if (!chatInput.trim() || !socketRef.current) return;
+    if (!chatInput.trim() || !socketRef.current) {
+      console.log("Message not sent. Empty input or socket missing.");
+      return;
+    }
+  
     const msg: ChatMessage = {
-      id: userId + "-" + Date.now(),
+      id: userId + "-" + Date.now(), // unique ID
       username,
       message: chatInput,
     };
+  
+    // Log the outgoing message
+    console.log("Sending chat message:", msg);
+  
+    // Emit to server
     socketRef.current.emit("chat-message", msg);
-    setChatMessages((prev) => [...prev, msg]);
+  
+    // Update local state and log
+    setChatMessages((prev) => {
+      console.log("Previous messages:", prev);
+      const updated = [...prev, msg];
+      console.log("Updated messages:", updated);
+      return updated;
+    });
+  
+    // Clear input and log
     setChatInput("");
+    console.log("Chat input cleared.");
   };
 
   const startScreenShare = async () => {
@@ -561,46 +614,37 @@ const VideoChat: React.FC = () => {
   }, [screenSharingPeer, screenStream]);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4 flex flex-col">
-      <h1 className="text-3xl font-bold mb-6 text-center text-blue-400">
-        WebRTC Group Video Chat 🌐
-      </h1>
-      <p className="text-center mb-4 text-gray-400">Status: {status}</p>
-
+    <div className="bg-[#071F0C] text-white flex flex-col items-center justify-center py-8 px-4 min-h-screen w-full">
       {!isConnected ? (
-        <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-lg shadow-xl">
+        <div className="">
           <h2 className="text-xl font-semibold mb-4">Join a Room</h2>
           <input
             type="text"
             placeholder="User ID (e.g., student-456)"
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
-            className="w-full p-3 mb-4 rounded-lg bg-gray-700 text-white placeholder-gray-400"
+            className=""
           />
           <input
             type="text"
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="w-full p-3 mb-4 rounded-lg bg-gray-700 text-white placeholder-gray-400"
+            className=""
           />
           <input
             type="text"
             placeholder="Room ID"
             value={roomId}
             onChange={(e) => setRoomId(e.target.value)}
-            className="w-full p-3 mb-4 rounded-lg bg-gray-700 text-white placeholder-gray-400"
+            className=""
           />
-    
+
           <button
             onClick={handleJoinRoom}
-            disabled={
-              !roomId.trim() ||
-              !username.trim() ||
-              !userId.trim()
-            }
+            disabled={!roomId.trim() || !username.trim() || !userId.trim()}
             className={`w-full p-3 rounded-lg font-bold ${
-              roomId && username && userId 
+              roomId && username && userId
                 ? "bg-green-600 hover:bg-green-700"
                 : "bg-gray-500 cursor-not-allowed"
             }`}
@@ -609,130 +653,76 @@ const VideoChat: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="flex flex-col md:flex-row flex-1 gap-4">
-          <div className="flex-1 bg-gray-800 p-4 rounded-lg shadow-xl flex flex-col">
-            <h2 className="text-xl font-semibold mb-4 text-center">
-              Participants ({Object.keys(peerData).length})
-            </h2>
-            <div
-              id="selfViewContainer"
-              className="w-40 h-32 rounded-xl overflow-hidden shadow-lg bg-black relative"
-            >
-              <canvas
-                id="selfCanvas"
-                className="absolute inset-0 w-full h-full"
-              ></canvas>
-
-              <video
-                ref={localVideoRef}
-                className="hidden"
-                autoPlay
-                muted
-                playsInline
-              />
-            </div>
-
-            <div
-              ref={remoteVideoContainerRef}
-              className="flex flex-wrap justify-center -m-2 flex-1 overflow-y-auto"
-            ></div>
-
-            <div className="flex justify-center mt-4 gap-4">
-              <button
-                onClick={toggleMic}
-                className="p-2 bg-gray-700 rounded-full"
+        <div className="w-full">
+          <div className="w-full">
+            <div className="flex flex-col flex-1 min-h-screen w-full text-white p-4">
+              <h2 className="text-xl font-semibold text-center mb-4">
+                Participants ({Object.keys(peerData).length})
+              </h2>
+              <div
+                id="participantsGrid"
+                className={`grid gap-4 flex-1 ${
+                  Object.keys(peerData).length === 0
+                    ? "grid-cols-1"
+                    : Object.keys(peerData).length === 1
+                    ? "grid-cols-1 sm:grid-cols-2" // stack on mobile, 2 columns on sm+
+                    : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                }`}
               >
-                {micEnabled ? <Mic /> : <MicOff />}
-              </button>
-              <button
-                onClick={toggleVideo}
-                className="p-2 bg-gray-700 rounded-full"
-              >
-                {videoEnabled ? <Video /> : <VideoOff />}
-              </button>
-              {!isScreenSharing ? (
-                <button
-                  onClick={startScreenShare}
-                  className="p-2 bg-blue-600 rounded-full"
-                >
-                  Share Screen
-                </button>
-              ) : (
-                <button
-                  onClick={stopScreenShare}
-                  className="p-2 bg-red-600 rounded-full"
-                >
-                  Stop Sharing
-                </button>
-              )}
-            </div>
-            <div className="flex justify-center mt-4 gap-2 flex-wrap">
-              <button
-                onClick={() => sendReaction("👍")}
-                className="p-2 bg-yellow-500 rounded-full"
-              >
-                <ThumbsUp />
-              </button>
-              <button
-                onClick={() => sendReaction("❤️")}
-                className="p-2 bg-pink-500 rounded-full"
-              >
-                <Heart />
-              </button>
-              <button
-                onClick={() => sendReaction("😂")}
-                className="p-2 bg-green-500 rounded-full"
-              >
-                <Laugh />
-              </button>
-
-              {!raisedHands.has(userId || "") ? (
-                <button
-                  onClick={raiseHand}
-                  className="p-2 bg-blue-500 rounded-full"
-                >
-                  Raise Hand
-                </button>
-              ) : (
-                <button
-                  onClick={lowerHand}
-                  className="p-2 bg-gray-500 rounded-full"
-                >
-                  Lower Hand
-                </button>
-              )}
-
-              <button onClick={muteAll} className="p-2 bg-red-600 rounded-full">
-                Mute All
-              </button>
-            </div>
-          </div>
-
-          <div className="w-full md:w-80 bg-gray-800 p-4 rounded-lg shadow-xl flex flex-col">
-            <h2 className="text-xl font-semibold mb-2">Chat</h2>
-            <div className="flex-1 overflow-y-auto mb-2 space-y-1">
-              {chatMessages.map((msg, idx) => (
-                <div key={idx} className="text-sm">
-                  <span className="font-bold">{msg.username}: </span>
-                  {msg.message}
+                {/* Self view */}
+                <div className="relative w-full rounded-xl overflow-hidden shadow-lg bg-black flex items-end justify-center h-[80vh]">
+                  <canvas
+                    id="selfCanvas"
+                    className="absolute inset-0 w-full h-full"
+                  ></canvas>
+                  <video
+                    ref={localVideoRef}
+                    className="hidden w-full"
+                    autoPlay
+                    muted
+                    playsInline
+                  />
+                  <span className="absolute bottom-2 bg-black bg-opacity-60 text-white text-sm px-2 py-1 rounded">
+                    {username || "You"}
+                  </span>
                 </div>
-              ))}
+
+                {/* Remote participants */}
+                {Object.keys(peerData).length === 1 ? (
+                  <div className="relative w-full rounded-xl overflow-hidden shadow-lg bg-black flex flex-col items-center justify-center h-[80vh]">
+                    <User size={50} className="mb-4 text-gray-400" />
+                    <span className="text-gray-400 text-lg text-center">
+                      No users joined yet
+                    </span>
+                  </div>
+                ) : (
+                  <div ref={remoteVideoContainerRef} className="contents"></div>
+                )}
+              </div>
             </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                className="flex-1 p-2 rounded bg-gray-700 text-white"
-                placeholder="Type a message..."
-              />
-              <button
-                onClick={sendChatMessage}
-                className="p-2 bg-green-600 rounded"
-              >
-                <Send size={20} />
-              </button>
-            </div>
+
+            <ControlBar
+              micEnabled={micEnabled}
+              videoEnabled={videoEnabled}
+              toggleMic={toggleMic}
+              toggleVideo={toggleVideo}
+              startScreenShare={startScreenShare}
+              stopScreenShare={stopScreenShare}
+              isScreenSharing={isScreenSharing}
+              sendReaction={sendReaction}
+              raisedHands={raisedHands}
+              userId={userId}
+              raiseHand={raiseHand}
+              lowerHand={lowerHand}
+              muteAll={muteAll}
+            />
+
+            <ChatModal
+              chatMessages={chatMessages}
+              chatInput={chatInput}
+              setChatInput={setChatInput}
+              sendChatMessage={sendChatMessage}
+            />
           </div>
         </div>
       )}
