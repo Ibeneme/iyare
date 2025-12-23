@@ -99,6 +99,7 @@ const renderAvatar = (
   title?: string
 ) => {
   let initials = "?";
+  console.log(initials);
   if (firstName && lastName)
     initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
   else if (firstName) initials = firstName.slice(0, 2).toUpperCase();
@@ -177,6 +178,9 @@ export const UserDetailsEntries = ({
 
   let initials = "",
     primaryDisplay = "";
+
+  console.warn(initials);
+
   if (firstName && lastName) {
     initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
     primaryDisplay = `${formatText(firstName)} ${formatText(lastName)}`;

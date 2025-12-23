@@ -2,15 +2,12 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Users,
   Book,
   ChevronDown,
   X,
   Search,
   Loader2,
   Plus,
-  Trash2,
-  AlertTriangle,
   ArrowRight,
   Check,
   CreditCard,
@@ -67,7 +64,7 @@ interface StudentDetail {
   _id: string;
   firstName: string;
   lastName: string;
-  class: string;
+  class?: string;
   subjects: string[];
 }
 
@@ -102,7 +99,7 @@ const UserSetupUpdates: React.FC = () => {
   /* ───── FETCH USER FROM API ───── */
   useEffect(() => {
     setLoading(true);
-    setError(null);
+    setError("");
 
     dispatch(fetchUser())
       .unwrap()
@@ -285,15 +282,15 @@ const UserSetupUpdates: React.FC = () => {
     );
   };
 
-  const resetChanges = () => {
-    if (!currentChild) return;
-    const original = childSetups[currentChild._id].originalSubjects;
-    updateChildSetup("subjects", [...original]);
-    toast.success("Changes discarded");
-  };
+  // const resetChanges = () => {
+  //   if (!currentChild) return;
+  //   const original = childSetups[currentChild._id].originalSubjects;
+  //   updateChildSetup("subjects", [...original]);
+  //   toast.success("Changes discarded");
+  // };
 
-  const hasChanges =
-    currentSetup?.subjects.join("") !== currentSetup?.originalSubjects.join("");
+  // const hasChanges =
+  //   currentSetup?.subjects.join("") !== currentSetup?.originalSubjects.join("");
 
   // ───── SAVE CURRENT CHILD ─────
   const saveCurrentChild = async () => {
@@ -305,7 +302,7 @@ const UserSetupUpdates: React.FC = () => {
     setIsSubmitting(true);
     try {
       const payload = {
-        gradeId: currentSetup.class,
+        gradeId: currentSetup?.class,
         subjects: validEnrolledSubjectIds,
       };
       const res = await axios.put(

@@ -5,7 +5,7 @@ const SettingNotifications: React.FC = () => {
   const [isEmailActive, setIsEmailActive] = useState(true);
   const [isNewsletterActive, setIsNewsletterActive] = useState(false);
   const [isConsoleLogActive, setIsConsoleLogActive] = useState(true);
-
+  console.log(setIsConsoleLogActive)
   const handleToggle = (
     setter: React.Dispatch<React.SetStateAction<boolean>>,
     type: string

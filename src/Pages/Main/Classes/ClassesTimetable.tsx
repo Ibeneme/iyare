@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../../Redux/store";
 import { fetchClassesByUser } from "../../../Redux/Slices/class.slice";
+import { useNavigate } from "react-router-dom";
 
 const SUBJECT_COLORS = [
   "bg-green-100 text-green-700 border-green-300",
@@ -52,6 +53,7 @@ const getSubjectColor = (subjectId: string | null) => {
     SUBJECT_COLORS.length;
   return SUBJECT_COLORS[index];
 };
+
 
 const capitalizeFirst = (str: string) =>
   str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -115,7 +117,7 @@ export default function ClassCalendar() {
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(true);
-
+  const router = useNavigate();
   // START: Re-added Redux data fetching structure
   const dispatch = useDispatch<AppDispatch>();
   const [classes, setClasses] = useState<ClassModel[]>([]);
@@ -407,8 +409,7 @@ export default function ClassCalendar() {
                     }}
                     className="p-4 bg-gray-50 rounded-lg border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center hover:bg-green-100 transition duration-150 cursor-pointer"
                   >
-                    <div
-                      className="mb-2 md:mb-0 md:w-1/3"
+                    <button
                       onClick={() => {
                         console.log(cls, "cls");
 
@@ -423,11 +424,16 @@ export default function ClassCalendar() {
 
                         const classId = cls._id;
                         const classTitle = encodeURIComponent(cls.title);
+                        const subject = encodeURIComponent(
+                          cls?.subjectId?.name || "N/A"
+                        );
 
-                        navigate(`/webrtc/${classId}/${classTitle}`);
+                        router(
+                          `/webrtc/${classId}/Ç${classTitle}/${subject}`
+                        );
                       }}
                       disabled={status === "finished"}
-                      className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg font-medium transition text-sm ${
+                      className={`mb-2 md:mb-0 md:w-1/3 w-full flex items-center justify-center gap-2 py-2 rounded-lg font-medium transition text-sm ${
                         status === "finished"
                           ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                           : "bg-gray-700 text-white hover:bg-gray-800"
@@ -440,7 +446,7 @@ export default function ClassCalendar() {
                       <h4 className="text-lg font-bold text-gray-900 mt-1">
                         {capitalizeFirst(cls.title)}
                       </h4>
-                    </div>
+                    </button>
 
                     <div className="text-sm space-y-1 md:w-1/3">
                       <div className="flex items-center gap-2 text-gray-700">

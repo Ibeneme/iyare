@@ -63,27 +63,12 @@ type SubjectForm = {
   teachers: string[];
 };
 
-type RawSubject = {
-  _id: string;
-  name: string;
-  code: string;
-  description?: string;
-  gradeLevel: Array<{ _id: string; title?: string }>;
-  isActive: boolean;
-  teachers: Array<{ _id: string; firstName: string; lastName: string }>;
-  children: any[];
-  classes: any[];
-  createdAt: string;
-  updatedAt: string;
-  __v?: number;
-};
-
 type Subject = {
   _id: string;
   name: string;
   code: string;
   description?: string;
-  gradeLevelTitle: string;
+  gradeLevelTitle?: string;
   gradeLevelId: string;
   isActive: boolean;
   teachers: Array<{ _id: string; firstName: string; lastName: string }>;
@@ -140,20 +125,24 @@ export default function SubjectsManager() {
     setError(null);
     dispatch(fetchSubjects())
       .unwrap()
-      .then((raw: RawSubject[]) => {
-        const filtered = raw.filter(
-          (s) =>
-            !s.description?.includes("React.useMemo") &&
-            !s.description?.includes("filteredSubjects")
-        );
-
-        const normalised: Subject[] = filtered.map((s) => ({
-          ...s,
-          gradeLevelTitle: s.gradeLevel?.[0]?.title ?? "—",
-          gradeLevelId: s.gradeLevel?.[0]?._id ?? "",
+      .then((subjectsFromApi) => {
+        // subjectsFromApi type is probably slice's Subject type
+        const normalized: Subject[] = subjectsFromApi.map((s) => ({
+          _id: s._id,
+          name: s.name,
+          code: s.code,
+          description: s.description,
+          gradeLevelTitle: s.gradeLevelTitle ?? "—",
+          gradeLevelId: s.gradeLevelId ?? "", // <-- add this
+          isActive: s.isActive,
+          teachers: s.teachers ?? [],
+          children: s.children ?? [],
+          classes: s.classes ?? [],
+          createdAt: s.createdAt,
+          updatedAt: s.updatedAt,
         }));
 
-        setSubjects(normalised);
+        setSubjects(normalized);
         setLoading(false);
       })
       .catch((err) => {

@@ -27,11 +27,21 @@ interface AdminUser {
   isSuspended: boolean;
 }
 
-export type UserType = "admin" | "parent" | "student" | "teacher" | "notFound";
+export type UserType =
+  | "admin"
+  | "teacher"
+  | "student"
+  | "parent"
+  | "notFound"
+  | "course"
+  | "department"
+  | "grade";
+
 export type FilterType = "all" | "active" | "disabled" | "suspended";
 
 interface AdminDashboardProps {
   userType: UserType;
+  initialFilter?: FilterType; // <- add this line
 }
 
 interface Grade {
@@ -51,6 +61,9 @@ const filterOptions: Record<UserType, FilterType[]> = {
   student: ["all", "active", "disabled"],
   teacher: ["all", "active", "disabled"],
   notFound: ["all"],
+  course: ["all", "active", "disabled"], // added
+  department: ["all", "active", "disabled"], // added
+  grade: ["all", "active", "disabled"], // added
 };
 
 const formatFilterText = (text: string) =>
@@ -264,8 +277,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
 
     const action =
       type === "remove"
-        ? removeAdmin(id, userType)
-        : suspendAdmin(id, userType);
+        ? removeAdmin(id, userType as any)
+        : suspendAdmin(id, userType as any);
 
     try {
       const res = await action;

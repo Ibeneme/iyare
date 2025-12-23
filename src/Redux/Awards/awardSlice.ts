@@ -15,7 +15,16 @@ export interface Award {
     classId?: string;
     createdAt: string;
     updatedAt: string;
+    course?: {
+        title: string;
+    }
+    student?: {
+        name?: any
+    }
+
 }
+
+
 
 interface AwardState {
     awards: Award[];

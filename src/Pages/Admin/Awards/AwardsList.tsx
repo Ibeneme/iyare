@@ -3,7 +3,6 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../../Redux/store";
 import {
   getAwards,
-  Award,
   createAward,
   updateAward,
   deleteAward,
@@ -20,6 +19,19 @@ interface EnrolledStudent {
   name: string;
 }
 
+interface Award {
+  _id: string;
+  title?: any;
+  description?: string;
+  courseId?: string;
+  studentId?: string;
+  course?: {
+    title: string;
+  };
+  student?: {
+    name?: any;
+  };
+}
 const months = [
   "January",
   "February",
@@ -72,7 +84,7 @@ const AwardsList: React.FC = () => {
     dispatch(getAwards())
       .unwrap()
       .then((data) => {
-        setAwards(data);
+        setAwards(data as any);
         setError(null);
       })
       .catch((err) => {
@@ -128,20 +140,25 @@ const AwardsList: React.FC = () => {
     if (name === "courseId") {
       const selectedCourse = uniqueCourses.find((c) => c._id === value);
       if (selectedCourse) {
-        setCourseData({ _id: selectedCourse._id, title: selectedCourse.title });
+        setCourseData({
+          _id: selectedCourse._id,
+          title: selectedCourse.title || "",
+        });
         const classesForCourse = teacherClasses.filter(
           (cls) => cls.courseId?._id === value
         );
         const uniqueStudents = new Map<string, EnrolledStudent>();
         classesForCourse.forEach((cls) => {
-          cls.enrolledStudents.forEach((student) => {
-            if (!uniqueStudents.has(student._id)) {
-              uniqueStudents.set(student._id, {
-                _id: student._id,
-                name: student.name,
-              });
+          cls.enrolledStudents?.forEach(
+            (student: { _id: string; name: string }) => {
+              if (!uniqueStudents.has(student._id)) {
+                uniqueStudents.set(student._id, {
+                  _id: student._id,
+                  name: student.name,
+                });
+              }
             }
-          });
+          );
         });
         setStudentsForSelectedCourse(Array.from(uniqueStudents.values()));
         setStudentData(null);
@@ -313,9 +330,7 @@ const AwardsList: React.FC = () => {
           <Loader />
         ) : awards.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
-            <p className="text-gray-500">
-              No awards yet. 
-            </p>
+            <p className="text-gray-500">No awards yet.</p>
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -366,7 +381,7 @@ const AwardsList: React.FC = () => {
                         {award.description}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {award.course?.title} • {award.student?.name}
+                        {award?.course?.title} • {award?.student?.name}
                       </p>
                       <div className="flex gap-2 mt-3">
                         {(isTeacher || isAdmin) && (

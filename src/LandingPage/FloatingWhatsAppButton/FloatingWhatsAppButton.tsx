@@ -1,7 +1,7 @@
 // FloatingWhatsAppButton.tsx  (or put directly in your layout)
 import React from "react";
 import { motion } from "framer-motion";
-import { MessageCircle } from "lucide-react";
+
 
 const FloatingWhatsAppButton: React.FC = () => {
   const phoneNumber = "2349012345678"; // Change if needed

@@ -34,6 +34,8 @@ export interface Subject {
     classes: Class[];
     createdAt: string;
     updatedAt: string;
+    gradeLevelTitle?: any;
+    gradeLevelId?: any
 }
 
 interface SubjectState {

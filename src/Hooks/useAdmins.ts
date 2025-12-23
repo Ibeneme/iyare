@@ -1,3 +1,4 @@
+// src/hooks/useAdminActions.ts
 import { useDispatch } from "react-redux";
 import {
     fetchAllAdmins,
@@ -8,93 +9,107 @@ import {
     addAdmin,
 } from "../Redux/Admin/Auth";
 import { AppDispatch } from "../Redux/store";
-import { UserType } from "../Pages/Admin/Admin/Dashboard/AdminDashboard";
 
+// Inline UserType
+export type UserType = "admin" | "superAdmin" | "moderator";
+
+// Admin type (you can expand this according to your API)
+export interface AdminType {
+    _id: string;
+    email: string;
+    role: string;
+    token?: string;
+    isSuspended?: boolean;
+    firstName?: string;
+    lastName?: string;
+}
+
+// Generic result type
+interface ActionResult<T = any> {
+    success: boolean;
+    data?: T;
+    error?: string;
+}
+
+// Payloads
+interface UpdateProfilePayload {
+    id: string;
+    email?: string;
+    password?: string;
+    role?: string;
+    token: string;
+}
+
+interface CreateAdminPayload {
+    email: string;
+    password: string;
+    role: string;
+    firstName: string; // required
+    lastName: string;  // required
+    token?: string;
+}
 
 export const useAdminActions = () => {
     const dispatch = useDispatch<AppDispatch>();
 
-    const getAdmins = () => {
-        return dispatch(fetchAllAdmins())
-            .then((res) => {
-                console.log("Fetched admins successfully:", res);
-                return { success: true, data: res.payload };
-            })
-            .catch((err) => {
-                console.error("Failed to fetch admins:", err);
-                return { success: false, error: err.message || err };
-            });
+    const getAdmins = async (): Promise<ActionResult<AdminType[]>> => {
+        try {
+            const res = await dispatch(fetchAllAdmins()).unwrap();
+            return { success: true, data: res };
+        } catch (err: any) {
+            return { success: false, error: err.message || err };
+        }
     };
 
-    const getAdminById = (id: string, userType: string) => {
-        return dispatch(fetchAdminById({ id, userType }))
-            .then((res) => {
-                console.log(`Fetched ${userType} by ID (${id}):`, res);
-                return { success: true, data: res.payload };
-            })
-            .catch((err) => {
-                console.error(`Failed to fetch ${userType} by ID (${id}):`, err);
-                return { success: false, error: err.message || err };
-            });
+    const getAdminById = async (id: string, userType: UserType): Promise<ActionResult<AdminType>> => {
+        try {
+            const res = await dispatch(fetchAdminById({ id, userType })).unwrap();
+            return { success: true, data: res };
+        } catch (err: any) {
+            return { success: false, error: err.message || err };
+        }
     };
 
-    const suspendAdmin = (id: string, userType: UserType) => {
-        return dispatch(toggleSuspendAdmin({ id, userType }))
-            .then((res) => {
-                console.log(`Suspended ${userType} ID (${id}):`, res);
-                return { success: true, data: res.payload };
-            })
-            .catch((err) => {
-                console.error(`Failed to suspend ${userType} ID (${id}):`, err);
-                return { success: false, error: err.message || err };
-            });
+    const suspendAdmin = async (
+        id: string,
+        userType: UserType
+    ): Promise<ActionResult<{ id: string; message: string }>> => {
+        try {
+            const res = await dispatch(toggleSuspendAdmin({ id, userType })).unwrap();
+            return { success: true, data: res };
+        } catch (err: any) {
+            return { success: false, error: err.message || err };
+        }
     };
 
-    const removeAdmin = (id: string, userType: UserType) => {
-        return dispatch(deleteAdmin({ id, userType }))
-            .then((res) => {
-                console.log(`Removed ${userType} ID (${id}):`, res);
-                return { success: true, data: res.payload };
-            })
-            .catch((err) => {
-                console.error(`Failed to remove ${userType} ID (${id}):`, err);
-                return { success: false, error: err.message || err };
-            });
+    const removeAdmin = async (
+        id: string,
+        userType: UserType
+    ): Promise<ActionResult<{ id: string; message: string }>> => {
+        try {
+            const res = await dispatch(deleteAdmin({ id, userType })).unwrap();
+            return { success: true, data: res };
+        } catch (err: any) {
+            return { success: false, error: err.message || err };
+        }
     };
 
-    const updateOwnProfile = (payload: {
-        id: string;
-        email?: string;
-        password?: string;
-        role?: string;
-        token: string;
-    }) => {
-        return dispatch(updateSelfAdmin(payload))
-            .then((res) => {
-                console.log("Updated own profile:", res);
-                return { success: true, data: res.payload };
-            })
-            .catch((err) => {
-                console.error("Failed to update own profile:", err);
-                return { success: false, error: err.message || err };
-            });
+    const updateOwnProfile = async (payload: UpdateProfilePayload): Promise<ActionResult<AdminType>> => {
+        try {
+            const res = await dispatch(updateSelfAdmin(payload)).unwrap();
+            return { success: true, data: res };
+        } catch (err: any) {
+            return { success: false, error: err.message || err };
+        }
     };
 
-    const createAdmin = (payload: {
-        email: string;
-        password: string;
-        role: string;
-        token: string;
-    }) => {
-        return dispatch(addAdmin(payload as any))
-            .then((res) => {
-                console.log("Created admin:", res);
-                return { success: true, data: res.payload };
-            })
-            .catch((err) => {
-                console.error("Failed to create admin:", err);
-                return { success: false, error: err.message || err };
-            });
+    const createAdmin = async (payload: CreateAdminPayload): Promise<ActionResult<AdminType>> => {
+        try {
+            const res = await dispatch(addAdmin(payload)).unwrap();
+            return { success: true, data: res };
+        } catch (err: any) {
+            return { success: false, error: err.message || err };
+        }
     };
 
     return {

@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 // --- Change 1: Import the configured axiosInstance ---
 import axiosInstance from '../axiosInstance';
 

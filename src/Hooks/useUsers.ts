@@ -1,6 +1,6 @@
+// src/hooks/useUsers.ts
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../Redux/store";
-//import { useToast } from "../Context/ToastProvider";
 import {
     createUser,
     fetchAllUsersByType,
@@ -9,106 +9,77 @@ import {
     clearUserState,
 } from "../Redux/Admin/adminUsers";
 
+// Inline User type inside the hook
+export interface User {
+    _id: string;
+    name: string;
+    email: string;
+    role: string;
+    isSuspended?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+// Generic result type for all actions
+interface ActionResult<T = any> {
+    success: boolean;
+    data?: T;
+    error?: string;
+}
+
+// Payload for creating or editing user
+interface UserPayload {
+    name: string;
+    email: string;
+    password?: string;
+    role: string;
+}
+
 export const useUserActions = () => {
     const dispatch = useDispatch<AppDispatch>();
-    //const { addToast } = useToast();
 
-    const addUser = async (userData: any) => {
+    // Add new user
+    const addUser = async (userData: UserPayload): Promise<ActionResult<User>> => {
         try {
-            const res = await dispatch(createUser(userData));
-            if (createUser.rejected.match(res)) {
-                // Ensure payload is a string. If it's an object, stringify it or access a specific message property.
-                // const errorMessage =
-                //     typeof res.payload === "string"
-                //         ? res.payload
-                //         : (res.payload as any)?.message ||
-                //         (res.error?.message as string) ||
-                //         "Failed to create user";
-                //    addToast("error", errorMessage);
-                return { success: false, error: res.payload };
-            }
-            // Assuming res.payload contains the actual data on success
-            //    addToast("success", "User created successfully");
-            return { success: true, data: res.payload };
+            const res = await dispatch(createUser(userData)).unwrap();
+            return { success: true, data: res as unknown as User };
         } catch (err: any) {
-            const message = err.message || "Failed to create user";
-            console.error(message, err);
-            //    addToast("error", message);
-            return { success: false, error: message };
+            return { success: false, error: err.message || "Failed to create user" };
         }
     };
 
-    const getAllUsersByType = async (userType: string) => {
+    // Fetch all users by type
+    const getAllUsersByType = async (userType: string): Promise<ActionResult<User[]>> => {
         try {
-            const res = await dispatch(fetchAllUsersByType(userType as any));
-            if (fetchAllUsersByType.rejected.match(res)) {
-                // const errorMessage =
-                //     typeof res.payload === "string"
-                //         ? res.payload
-                //         : (res.payload as any)?.message ||
-                //         (res.error?.message as string) ||
-                //         "Failed to fetch users";
-                //    addToast("error", errorMessage);
-                return { success: false, error: res.payload };
-            }
-            // Assuming res.payload.users contains the actual user array on success
-            //    addToast("success", `Users (${userType}) fetched successfully`);
-            return { success: true, data: (res.payload as any)?.users }; // Cast payload to any to access .users
+            const res = await dispatch(fetchAllUsersByType(userType as any)).unwrap();
+            const users = (res.users as unknown) as User[];
+            return { success: true, data: users };
         } catch (err: any) {
-            const message = err.message || "Failed to fetch users";
-            console.error(message, err);
-            //    addToast("error", message);
-            return { success: false, error: message };
+            return { success: false, error: err.message || `Failed to fetch users of type ${userType}` };
         }
     };
 
-    const getUserById = async (userType: string, id: string) => {
+    // Fetch user by ID
+    const getUserById = async (userType: string, id: string): Promise<ActionResult<User>> => {
         try {
-            const res = await dispatch(fetchUserById({ userType, id } as any));
-            if (fetchUserById.rejected.match(res)) {
-                // const errorMessage =
-                //     typeof res.payload === "string"
-                //         ? res.payload
-                //         : (res.payload as any)?.message ||
-                //         (res.error?.message as string) ||
-                //         "Failed to fetch user";
-                //    addToast("error", errorMessage);
-                return { success: false, error: res.payload };
-            }
-            //    addToast("success", "User fetched successfully");
-            return { success: true, data: res.payload };
+            const res = await dispatch(fetchUserById({ userType, id } as any)).unwrap();
+            return { success: true, data: res as unknown as User };
         } catch (err: any) {
-            const message = err.message || "Failed to fetch user";
-            console.error(message, err);
-            //    addToast("error", message);
-            return { success: false, error: message };
+            return { success: false, error: err.message || `Failed to fetch user ${id}` };
         }
     };
 
-    const editUser = async (userType: any, id: string, updateData: any) => {
+    // Edit/update user
+    const editUser = async (userType: string, id: string, updateData: Partial<UserPayload>): Promise<ActionResult<User>> => {
         try {
-            const res = await dispatch(updateUser({ userType, id, updateData } as any));
-            console.log(userType, id, updateData)
-            if (updateUser.rejected.match(res)) {
-                // const errorMessage =
-                //     typeof res.payload === "string"
-                //         ? res.payload
-                //         : (res.payload as any)?.message ||
-                //         (res.error?.message as string) ||
-                        "Failed to update user";
-                //    addToast("error", errorMessage);
-                return { success: false, error: res.payload };
-            }
-            //    addToast("success", "User updated successfully");
-            return { success: true, data: res.payload };
+            const res = await dispatch(updateUser({ userType, id, updateData } as any)).unwrap();
+            return { success: true, data: res as unknown as User };
         } catch (err: any) {
-            const message = err.message || "Failed to update user";
-            console.error(message, err);
-            //    addToast("error", message);
-            return { success: false, error: message };
+            return { success: false, error: err.message || `Failed to update user ${id}` };
         }
     };
 
+    // Reset user state in Redux
     const resetUserState = () => {
         dispatch(clearUserState());
     };

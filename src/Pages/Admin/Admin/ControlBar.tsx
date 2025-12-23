@@ -32,7 +32,8 @@ interface ControlBarProps {
   unmuteAll: () => void; // ← NEW: Unmute All function
   username: string;
   roomId: string;
-  isForceMutedByHost?: boolean; // Optional: to show muted indicator
+  isForceMutedByHost?: boolean;
+  userType: any;
 }
 
 const reactions = ["👍", "❤️", "😂", "👏", "🎉", "🤯"];
@@ -61,21 +62,14 @@ const ControlBar: React.FC<ControlBarProps> = ({
   username,
   roomId,
   isForceMutedByHost = false,
+  userType,
 }) => {
   const [showPicker, setShowPicker] = useState(false);
   const [floatingReactions, setFloatingReactions] = useState<
     FloatingReaction[]
   >([]);
 
-  // === Determine if current user is the "host" (teacher) ===
-  // You can customize this logic:
-  // - First person to join
-  // - Specific username (e.g. "Teacher", "Admin")
-  // - Pass a prop like isHost={true} from parent
-  // For now: simple check — if username contains "teacher" (case insensitive) or is "admin"
   const isHost = /teacher|admin|host/i.test(username);
-
-  // Track whether "Mute All" is currently active (only host needs this)
   const [isAllMuted, setIsAllMuted] = useState(false);
 
   const sendReaction = (emoji: string) => {
@@ -125,8 +119,6 @@ const ControlBar: React.FC<ControlBarProps> = ({
       setIsAllMuted(true);
     }
   };
-
-
 
   return (
     <>
@@ -185,17 +177,20 @@ const ControlBar: React.FC<ControlBarProps> = ({
             )}
           </button>
 
-          <button
-            onClick={isScreenSharing ? stopScreenShare : startScreenShare}
-            className={`px-5 py-3 rounded-2xl flex gap-2 items-center transition ${
-              isScreenSharing ? "bg-green-600" : "bg-white/10"
-            }`}
-          >
-            {isScreenSharing ? <MonitorOff /> : <MonitorUp />}
-            <span className="text-sm font-medium">
-              {isScreenSharing ? "Stop" : "Share"}
-            </span>
-          </button>
+          {userType === "teacher" ||
+            (userType === "admin" && (
+              <button
+                onClick={isScreenSharing ? stopScreenShare : startScreenShare}
+                className={`px-5 py-3 rounded-2xl flex gap-2 items-center transition ${
+                  isScreenSharing ? "bg-green-600" : "bg-white/10"
+                }`}
+              >
+                {isScreenSharing ? <MonitorOff /> : <MonitorUp />}
+                <span className="text-sm font-medium">
+                  {isScreenSharing ? "Stop" : "Share"}
+                </span>
+              </button>
+            ))}
 
           <div className="relative">
             <button
@@ -237,28 +232,29 @@ const ControlBar: React.FC<ControlBarProps> = ({
           </button>
 
           {/* === MUTE ALL / UNMUTE ALL BUTTON - ONLY FOR HOST === */}
-          {!isHost && (
-            <button
-              onClick={handleMuteToggleAll}
-              className={`px-6 py-3 rounded-2xl flex gap-2 items-center font-medium transition ${
-                isAllMuted
-                  ? "bg-green-600 hover:bg-green-500"
-                  : "bg-red-600/80 hover:bg-red-500"
-              }`}
-            >
-              {isAllMuted ? (
-                <>
-                  <Volume2 className="w-5 h-5" />
-                  <span>Unmute All</span>
-                </>
-              ) : (
-                <>
-                  <VolumeX className="w-5 h-5" />
-                  <span>Mute All</span>
-                </>
-              )}
-            </button>
-          )}
+          {userType === "teacher" ||
+            (userType === "admin" && (
+              <button
+                onClick={handleMuteToggleAll}
+                className={`px-6 py-3 rounded-2xl flex gap-2 items-center font-medium transition ${
+                  isAllMuted
+                    ? "bg-green-600 hover:bg-green-500"
+                    : "bg-red-600/80 hover:bg-red-500"
+                }`}
+              >
+                {isAllMuted ? (
+                  <>
+                    <Volume2 className="w-5 h-5" />
+                    <span>Unmute All</span>
+                  </>
+                ) : (
+                  <>
+                    <VolumeX className="w-5 h-5" />
+                    <span>Mute All</span>
+                  </>
+                )}
+              </button>
+            ))}
 
           {/* Optional: Show muted by host indicator for students */}
           {!isHost && isForceMutedByHost && (

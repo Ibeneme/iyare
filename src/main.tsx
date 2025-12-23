@@ -8,15 +8,13 @@ import store from "./Redux/store.tsx";
 import { ToastProvider } from "./Context/ToastProvider.tsx";
 import { SocketProvider } from "./contexts/SocketContext.tsx";
 
-
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ToastProvider>
       <Provider store={store}>
-        {/* <SocketProvider>
+        <SocketProvider>
           <App />
-        </SocketProvider> */}
-            <App />
+        </SocketProvider>
       </Provider>
     </ToastProvider>
   </StrictMode>

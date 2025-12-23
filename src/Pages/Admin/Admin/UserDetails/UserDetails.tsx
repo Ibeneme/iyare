@@ -30,12 +30,11 @@ interface UserData {
   isSubscribed?: boolean;
   lessonFee?: any[];
   gradeId?: string;
-  subjects?: string[];
+  subjects?: Subject[]; // <-- Change from string[] to Subject[]
   createdAt?: string;
   updatedAt?: string;
   phoneNumber?: string;
 }
-
 interface Subject {
   _id: string;
   name: string;
@@ -364,7 +363,8 @@ const UserDetailsPage: React.FC = () => {
 
             {/* Subjects */}
             {(user.userType === "teacher" || user.userType === "student") &&
-              user?.subjects.length > 0 && (
+              user.subjects &&
+              user.subjects.length > 0 && (
                 <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
                   <h3 className="text-2xl font-bold text-gray-900 mb-8">
                     {user.userType === "teacher"
@@ -372,9 +372,9 @@ const UserDetailsPage: React.FC = () => {
                       : "Enrolled Subjects"}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {user?.subjects.map((subject) => (
+                    {user?.subjects?.map((subject) => (
                       <button
-                        key={subject._id}
+                        key={subject?._id}
                         onClick={() => handleSubjectClick(subject._id)}
                         className="group p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 hover:border-indigo-400 hover:shadow-md transition-all text-left flex justify-between items-start"
                       >

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
- // FiUser,
+  // FiUser,
   FiEdit3,
   FiTrash2,
   FiMail,
@@ -72,8 +72,7 @@ const SettingProfile: React.FC<Props> = ({
 
     try {
       const response = await editUser(adminRole, currentUserId, {
-        firstName: editedFirstName,
-        lastName: editedLastName,
+        name: `${editedFirstName} ${editedLastName}`,
       });
 
       if (response.success) {

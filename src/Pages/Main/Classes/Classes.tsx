@@ -59,9 +59,10 @@ export default function ClassesMain() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("all");
-const navigate = useNavigate()
+  const navigate = useNavigate();
   /* ---------- Fetch Classes ---------- */
   useEffect(() => {
+    
     setLoading(true);
     setError(null);
 
@@ -347,10 +348,10 @@ const navigate = useNavigate()
 
                             const classId = cls._id;
                             const classTitle = encodeURIComponent(cls.title);
-                      
+                            const subject = cls?.subjectId?.name;
 
                             navigate(
-                              `/webrtc/${classId}/${classTitle}`
+                              `/webrtc/${classId}/${classTitle}/${subject}`
                             );
                           }}
                           disabled={status === "finished"}

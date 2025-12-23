@@ -1,13 +1,24 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 import AdminDashboard from "../Admin/Dashboard/AdminDashboard";
-import { FilterType, UserType } from "../Admin/Dashboard/AdminDashboard"; // import UserType and FilterType
+
+export type FilterType = "all" | "active" | "disabled" | "suspended";
 
 const Dashboard: React.FC = () => {
   const { userType, filter } = useParams<{
     userType?: string;
     filter?: FilterType;
   }>();
+
+  type UserType =
+    | "admin"
+    | "teacher"
+    | "student"
+    | "parent"
+    | "notFound"
+    | "course"
+    | "department"
+    | "grade";
 
   const validUserTypes: UserType[] = [
     "admin",
@@ -17,9 +28,9 @@ const Dashboard: React.FC = () => {
     "notFound",
     "course",
     "department",
-    "grade"
-    
+    "grade",
   ];
+
   const resolvedUserType = validUserTypes.includes(userType as UserType)
     ? (userType as UserType)
     : "notFound";

@@ -5,7 +5,6 @@ import axiosInstance from '../axiosInstance'
 export interface ClassData {
     _id: string;
     title: string;
-    course: string;
     courseId: { _id: string; title?: string; name?: string };
     departmentId?: { _id: string; title?: string; name?: string };
     teacherId: { _id: string; firstName?: string; lastName?: string };
@@ -30,6 +29,13 @@ export interface ClassData {
         status: 'ongoing' | 'upcoming' | 'finished' | 'canceled';
         createdAt: string;
         updatedAt: string;
+    }
+    enrolledStudents?: { _id: string; name: string }[];
+    course?: {
+        title: string;
+    }
+    student?: {
+        name?: any
     }
 }
 

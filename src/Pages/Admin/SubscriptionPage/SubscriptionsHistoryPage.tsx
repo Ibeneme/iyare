@@ -20,7 +20,7 @@ const SubscriptionsHistoryPage = () => {
 
   return (
     <div>
-      {payerId && <SubscriptionsHistory payerId={payerId} />}
+      {payerId && <SubscriptionsHistory />}
     </div>
   );
 };

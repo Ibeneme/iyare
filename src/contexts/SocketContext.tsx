@@ -3,7 +3,6 @@ import React, {
   createContext,
   useContext,
   useEffect,
-  useRef,
   ReactNode,
 } from "react";
 import { io, Socket } from "socket.io-client";
@@ -19,31 +18,20 @@ const SocketContext = createContext<SocketContextType>({ socket: null });
 
 export const useSocket = () => useContext(SocketContext);
 
-export const SocketProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
-  const socketRef = useRef<Socket | null>(null);
+export const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [socket, setSocket] = React.useState<Socket | null>(null);
 
   useEffect(() => {
-    const socket = io(SOCKET_URL, { transports: ["websocket"] });
-
-    socketRef.current = socket;
-
-    socket.on("connect", () => {
-      console.log("🔌 Connected to Socket.IO server:", socket.id);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("⚠️ Disconnected from Socket.IO server");
-    });
+    const newSocket = io(SOCKET_URL, { transports: ["websocket"] });
+    setSocket(newSocket);
 
     return () => {
-      socket.disconnect();
+      newSocket.disconnect();
     };
   }, []);
 
   return (
-    <SocketContext.Provider value={{ socket: socketRef.current }}>
+    <SocketContext.Provider value={{ socket }}>
       {children}
     </SocketContext.Provider>
   );

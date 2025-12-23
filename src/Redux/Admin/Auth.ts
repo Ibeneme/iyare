@@ -2,8 +2,19 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 // --- Change 1: Import the configured axiosInstance ---
 import axiosInstance from '../axiosInstance';
-import { UserType } from '../../Pages/Admin/Admin/Dashboard/AdminDashboard'; // Assuming this interface is available
 
+//import UserType from '../../Pages/Admin/Admin/Dashboard/AdminDashboard'
+
+
+// type UserType =
+//     | "admin"
+//     | "teacher"
+//     | "student"
+//     | "parent"
+//     | "notFound"
+//     | "course"
+//     | "department"
+//     | "grade";
 
 
 interface AdminState {
@@ -153,6 +164,8 @@ export const fetchAdminById = createAsyncThunk(
     }
 );
 
+export type UserType = "admin" | "superAdmin" | "moderator";
+
 export const toggleSuspendAdmin = createAsyncThunk(
     "admin/suspend",
     async (
@@ -160,13 +173,10 @@ export const toggleSuspendAdmin = createAsyncThunk(
         thunkAPI
     ) => {
         try {
-            // Use axiosInstance
             const res = await axiosInstance.put(`${API_BASE}/suspend/${id}`, { userType });
             return { id, userType, message: res.data.message };
         } catch (err: any) {
-            return thunkAPI.rejectWithValue(
-                err.response?.data?.message || "Failed to toggle suspension"
-            );
+            return thunkAPI.rejectWithValue(err.response?.data?.message || "Failed to toggle suspension");
         }
     }
 );
@@ -174,17 +184,13 @@ export const toggleSuspendAdmin = createAsyncThunk(
 export const deleteAdmin = createAsyncThunk(
     "admin/delete",
     async (
-        { id, userType }: {
-            id: string; userType: UserType
-        },
+        { id, userType }: { id: string; userType: UserType }, // <-- FIXED from any[]
         thunkAPI
     ) => {
         try {
-            // Use axiosInstance
-            const res = await axiosInstance.delete(
-                `${API_BASE}/delete/${id}`,
-                { data: { userType } }
-            );
+            const res = await axiosInstance.delete(`${API_BASE}/delete/${id}`, {
+                data: { userType },
+            });
             return { id, userType, message: res.data.message };
         } catch (err: any) {
             return thunkAPI.rejectWithValue(
@@ -193,7 +199,6 @@ export const deleteAdmin = createAsyncThunk(
         }
     }
 );
-
 export const updateSelfAdmin = createAsyncThunk(
     "admin/updateSelf",
     async (
@@ -201,6 +206,7 @@ export const updateSelfAdmin = createAsyncThunk(
         thunkAPI
     ) => {
         try {
+            console.log(token)
             // Use axiosInstance, token is handled by the interceptor (token argument no longer strictly necessary)
             const res = await axiosInstance.put(
                 `${API_BASE}/self-update/${id}`,

@@ -1,7 +1,6 @@
+// src/hooks/useCourses.ts
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../Redux/store";
-//import { useToast } from "../Context/ToastProvider";
-
 import {
     createCourse,
     fetchCourses,
@@ -9,59 +8,53 @@ import {
     clearCourse,
 } from "../Redux/Admin/adminCourse";
 
+// Inline types to avoid TS4023
+export interface CourseData {
+    _id: string;
+    title: string;
+    description?: string;
+    instructor?: string;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+interface ActionResult<T = any> {
+    success: boolean;
+    data?: T;
+    error?: string;
+}
+
 export const useCourseActions = () => {
     const dispatch = useDispatch<AppDispatch>();
-   // const { addToast } = useToast();
 
-    // Get all courses
-    const getCourses = async () => {
+    const getCourses = async (): Promise<ActionResult<CourseData[]>> => {
         try {
-            const res = await dispatch(fetchCourses());
-            if (fetchCourses.rejected.match(res)) {
-            //    throw new Error(res.payload || "Failed to fetch courses");
-            }
-            //addToast("success", "Courses fetched successfully");
-            return { success: true, data: res.payload };
+            const res = await dispatch(fetchCourses()).unwrap();
+            return { success: true, data: res };
         } catch (err: any) {
-            const message = err.message || "Error fetching courses";
-            console.error(message, err);
-            //addToast("error", message);
-            return { success: false, error: message };
+            return { success: false, error: err.message || "Error fetching courses" };
         }
     };
 
-    // Get course by ID
-    const getCourseById = async (id: string) => {
+    const getCourseById = async (id: string): Promise<ActionResult<CourseData>> => {
         try {
-            const res = await dispatch(fetchCourseById(id));
-            if (fetchCourseById.rejected.match(res)) {
-            //    throw new Error(res.payload || `Failed to fetch course ${id}`);
-            }
-            //addToast("success", "Course details loaded");
-            return { success: true, data: res.payload };
+            const res = await dispatch(fetchCourseById(id)).unwrap();
+            return { success: true, data: res };
         } catch (err: any) {
-            const message = err.message || `Error fetching course ${id}`;
-            console.error(message, err);
-            //addToast("error", message);
-            return { success: false, error: message };
+            return { success: false, error: err.message || `Error fetching course ${id}` };
         }
     };
 
-    // Create course
-    const addCourse = async (courseData: any) => {
+    const addCourseAction = async (courseData: {
+        title: string;
+        description?: string;
+        instructor?: string;
+    }): Promise<ActionResult<CourseData>> => {
         try {
-            const res = await dispatch(createCourse(courseData));
-            if (createCourse.rejected.match(res)) {
-                //addToast("error", res.payload || "Failed to create course");
-                return { success: false, error: res.payload };
-            }
-            //addToast("success", "Course created successfully");
-            return { success: true, data: res.payload };
+            const res = await dispatch(createCourse(courseData)).unwrap();
+            return { success: true, data: res };
         } catch (err: any) {
-            const message = err.message || "Error creating course";
-            console.error(message, err);
-            //addToast("error", message);
-            return { success: false, error: message };
+            return { success: false, error: err.message || "Error creating course" };
         }
     };
 
@@ -72,7 +65,7 @@ export const useCourseActions = () => {
     return {
         getCourses,
         getCourseById,
-        addCourse,
+        addCourse: addCourseAction,
         resetSelectedCourse,
     };
 };

@@ -308,7 +308,7 @@ function App() {
           <Route path="/class-details/:id" element={<ClassDetails />} />
       
           <Route
-            path="/webrtc/:classId/:classTitle"
+            path="/webrtc/:classId/:classTitle/:subject"
             element={<WebRTCComponent />}
           />
         </Route>
