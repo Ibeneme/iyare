@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import axiosInstance from '../axiosInstance';
+import axiosInstance from '../axiosInstance'; // Centralized API client
 
 
 interface Teacher {
@@ -22,7 +22,7 @@ interface Class {
     gradeLevel: string;
 }
 
-interface Subject {
+export interface Subject {
     _id: string;
     name: string;
     code: string;
@@ -52,6 +52,7 @@ const initialState: SubjectState = {
 
 // Helper: Log with timestamp and country
 const log = (type: 'REQ' | 'RES' | 'ERR', action: string, data?: any) => {
+    // Note: Logging utility using console colors is kept as is.
     const now = new Date().toLocaleString('en-NG', {
         timeZone: 'Africa/Lagos',
         year: 'numeric',
@@ -70,8 +71,17 @@ const log = (type: 'REQ' | 'RES' | 'ERR', action: string, data?: any) => {
     console.log(`${color}${prefix} [${type}] ${action}${reset}`, data || '');
 };
 
-// Async Thunks with logging
-export const fetchSubjects = createAsyncThunk('subject/fetchAll', async (_, { rejectWithValue }) => {
+// --- Async Thunks (CRUD Operations) ---
+
+/**
+ * Fetch all subjects relevant to the authenticated user's token.
+ * Note: Endpoint is `/api/subject/token`.
+ */
+export const fetchSubjects = createAsyncThunk<
+    Subject[],
+    void,
+    { rejectValue: string }
+>('subject/fetchAll', async (_, { rejectWithValue }) => {
     log('REQ', 'Fetching all subjects');
     try {
         const response = await axiosInstance.get('/api/subject/token');
@@ -84,7 +94,14 @@ export const fetchSubjects = createAsyncThunk('subject/fetchAll', async (_, { re
     }
 });
 
-export const fetchSubjectById = createAsyncThunk('subject/fetchById', async (id: string, { rejectWithValue }) => {
+/**
+ * Fetch a single subject by its ID.
+ */
+export const fetchSubjectById = createAsyncThunk<
+    Subject,
+    string, // id argument
+    { rejectValue: string }
+>('subject/fetchById', async (id: string, { rejectWithValue }) => {
     log('REQ', `Fetching subject by ID: ${id}`);
     try {
         const response = await axiosInstance.get(`/api/subject/${id}`);
@@ -97,7 +114,14 @@ export const fetchSubjectById = createAsyncThunk('subject/fetchById', async (id:
     }
 });
 
-export const createSubject = createAsyncThunk(
+/**
+ * Create a new subject.
+ */
+export const createSubject = createAsyncThunk<
+    Subject,
+    Partial<Subject>, // subjectData argument
+    { rejectValue: string }
+>(
     'subject/create',
     async (subjectData: Partial<Subject>, { rejectWithValue }) => {
         log('REQ', 'Creating subject', subjectData);
@@ -113,9 +137,16 @@ export const createSubject = createAsyncThunk(
     }
 );
 
-export const updateSubject = createAsyncThunk(
+/**
+ * Update an existing subject by ID.
+ */
+export const updateSubject = createAsyncThunk<
+    Subject,
+    { id: string; data: Partial<Subject> }, // Arguments
+    { rejectValue: string }
+>(
     'subject/update',
-    async ({ id, data }: { id: string; data: Partial<Subject> }, { rejectWithValue }) => {
+    async ({ id, data }, { rejectWithValue }) => {
         log('REQ', `Updating subject ID: ${id}`, data);
         try {
             const response = await axiosInstance.put(`/api/subject/${id}`, data);
@@ -129,7 +160,14 @@ export const updateSubject = createAsyncThunk(
     }
 );
 
-export const deleteSubject = createAsyncThunk('subject/delete', async (id: string, { rejectWithValue }) => {
+/**
+ * Delete a subject by ID.
+ */
+export const deleteSubject = createAsyncThunk<
+    string, // Returned ID of the deleted subject
+    string, // id argument
+    { rejectValue: string }
+>('subject/delete', async (id: string, { rejectWithValue }) => {
     log('REQ', `Deleting subject ID: ${id}`);
     try {
         await axiosInstance.delete(`/api/subject/${id}`);
@@ -142,7 +180,7 @@ export const deleteSubject = createAsyncThunk('subject/delete', async (id: strin
     }
 });
 
-// Slice
+// --- Slice ---
 const subjectSlice = createSlice({
     name: 'subject',
     initialState,
@@ -208,8 +246,10 @@ const subjectSlice = createSlice({
             })
             .addCase(updateSubject.fulfilled, (state, action: PayloadAction<Subject>) => {
                 state.loading = false;
+                // Update in the subjects list
                 const index = state.subjects.findIndex((s) => s._id === action.payload._id);
                 if (index !== -1) state.subjects[index] = action.payload;
+                // Update currentSubject if it matches
                 if (state.currentSubject?._id === action.payload._id) {
                     state.currentSubject = action.payload;
                 }
@@ -227,7 +267,9 @@ const subjectSlice = createSlice({
             })
             .addCase(deleteSubject.fulfilled, (state, action: PayloadAction<string>) => {
                 state.loading = false;
+                // Remove from the subjects list
                 state.subjects = state.subjects.filter((s) => s._id !== action.payload);
+                // Clear currentSubject if it was the deleted one
                 if (state.currentSubject?._id === action.payload) {
                     state.currentSubject = null;
                 }

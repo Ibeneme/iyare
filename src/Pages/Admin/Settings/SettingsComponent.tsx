@@ -303,7 +303,7 @@ const SettingsComponent: React.FC<Props> = ({ adminId, adminRole }) => {
             {showDetails && selectedItem && (
               <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200">
                 {/* Header with Back button (mobile) & Close X (desktop) */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                <div className=" items-center justify-between p-4 border-b border-gray-200">
                   <button
                     onClick={handleBack}
                     className="flex items-center gap-2 text-yellow-700 font-medium lg:hidden"
@@ -311,7 +311,7 @@ const SettingsComponent: React.FC<Props> = ({ adminId, adminRole }) => {
                     <FiArrowLeft className="w-5 h-5" />
                     Back
                   </button>
-
+<br/>
                   <div className="flex items-center gap-3 flex-1 lg:flex-none">
                     <div className="p-2 rounded-full bg-yellow-100 text-yellow-700">
                       {selectedItem.icon}

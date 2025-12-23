@@ -1,8 +1,10 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import axios from "axios";
-import { BASE_URL } from "../baseurl";
+// --- Change 1: Import the configured axiosInstance ---
+import axiosInstance from "../axiosInstance";
 
-const API_BASE_URL = `${BASE_URL}/api/users`;
+// --- Removed imports: axios, BASE_URL ---
+
+const API_BASE_URL = `/api/users`; // Relative path
 
 // 1. Define Interfaces for State and Payloads
 interface User {
@@ -11,11 +13,11 @@ interface User {
     firstName: string;
     lastName: string;
     subjects: [];
-    userType?:string;
-    children?:[];
-    parentId?:string;
+    userType?: string;
+    children?: [];
+    parentId?: string;
     isSubscribed?: string;
-    class?:string
+    class?: string
     // Add other user properties here as they exist in your models
 }
 
@@ -35,7 +37,7 @@ interface AllUsersPayload {
 
 interface AuthState {
     loading: boolean;
-    error: any | null; // Use 'any' to handle potential complex error objects
+    error: any | null;
     allUsers: {
         teacher: User[];
         student: User[];
@@ -47,33 +49,21 @@ interface AuthState {
     updateResponse: any | null;
     authStatus: "idle" | "loading" | "succeeded" | "failed";
     authMessage: string | null;
-    resetToken: string | null; // Added for verify-forgot-password
+    resetToken: string | null;
 }
 
-// 2. Utility to get token and headers
-const getAuthHeaders = () => {
-    const token =
-        localStorage.getItem("yareadmintoken") || localStorage.getItem("token");
+// --- Removed: getAuthHeaders utility ---
 
-    return {
-        headers: {
-            Authorization: `Bearer ${token || ""}`,
-        },
-    };
-};
-// 3. Update Thunks with proper generics for types
-// The generics are: <Returned, ThunkArg, ThunkApiConfig>
-// We are primarily concerned with 'Returned' and 'ThunkApiConfig' to type the payload and errors.
+// 3. Update Thunks (Using axiosInstance)
 
 export const createUser = createAsyncThunk<
-    ApiResponse<User>, // Fulfilled payload
-    any, // Arguments
-    { rejectValue: any } // ThunkAPI configuration
+    ApiResponse<User>,
+    any,
+    { rejectValue: any }
 >("users/createUser", async (userData, thunkAPI) => {
     try {
-
-        console.log(getAuthHeaders(), 'getAuthHeaders')
-        const res = await axios.post(`${API_BASE_URL}/create`, userData, getAuthHeaders());
+        // Use axiosInstance; token handled by interceptor
+        const res = await axiosInstance.post(`${API_BASE_URL}/create`, userData);
         return res.data;
     } catch (err: any) {
         return thunkAPI.rejectWithValue(err.response?.data || err.message);
@@ -81,12 +71,13 @@ export const createUser = createAsyncThunk<
 });
 
 export const fetchAllUsersByType = createAsyncThunk<
-    AllUsersPayload, // Fulfilled payload
-    "teacher" | "student" | "parent" | "admin" | "grade" | "course", // userType argument
+    AllUsersPayload,
+    "teacher" | "student" | "parent" | "admin" | "grade" | "course",
     { rejectValue: any }
 >("users/fetchAllUsersByType", async (userType) => {
     try {
-        const res = await axios.get(`${API_BASE_URL}/all/${userType}`, getAuthHeaders());
+        // Use axiosInstance; token handled by interceptor
+        const res = await axiosInstance.get(`${API_BASE_URL}/all/${userType}`);
         return { userType, users: res.data.data };
     } catch (err: any) {
         return (err.response?.data || err.message);
@@ -100,12 +91,13 @@ interface FetchUserByIdParams {
 }
 
 export const fetchUserById = createAsyncThunk<
-    User, // Fulfilled payload
-    FetchUserByIdParams, // Arguments
+    User,
+    FetchUserByIdParams,
     { rejectValue: any }
 >("users/fetchUserById", async ({ userType, id }, thunkAPI) => {
     try {
-        const res = await axios.get(`${API_BASE_URL}/${userType}/${id}`, getAuthHeaders());
+        // Use axiosInstance; token handled by interceptor
+        const res = await axiosInstance.get(`${API_BASE_URL}/${userType}/${id}`);
         return res.data.data;
     } catch (err: any) {
         return thunkAPI.rejectWithValue(err.response?.data || err.message);
@@ -113,17 +105,15 @@ export const fetchUserById = createAsyncThunk<
 });
 
 export const updateUser = createAsyncThunk<
-    User, // Fulfilled payload
-    FetchUserByIdParams, // Arguments
+    User,
+    FetchUserByIdParams,
     { rejectValue: any }
 >("users/updateUser", async ({ userType, id, updateData }, thunkAPI) => {
     try {
-
-        console.log(updateData, 'updateData')
-        const res = await axios.put(
+        // Use axiosInstance; token handled by interceptor
+        const res = await axiosInstance.put(
             `${API_BASE_URL}/update/${userType}/${id}`,
-            updateData,
-            getAuthHeaders()
+            updateData
         );
         return res.data.data;
     } catch (err: any) {
@@ -131,14 +121,15 @@ export const updateUser = createAsyncThunk<
     }
 });
 
-// New Thunks for Authentication and Password Reset
+// New Thunks for Authentication and Password Reset (Authentication is often public, so using axiosInstance is fine)
 export const signInUser = createAsyncThunk<
-    ApiResponse<User>, // Fulfilled payload
-    { userType: string; email: string; password: string }, // Arguments
+    ApiResponse<User>,
+    { userType: string; email: string; password: string },
     { rejectValue: any }
 >("auth/signInUser", async ({ userType, email, password }, thunkAPI) => {
     try {
-        const res = await axios.post(`${API_BASE_URL}/auth/signin`, {
+        // Use axiosInstance
+        const res = await axiosInstance.post(`${API_BASE_URL}/auth/signin`, {
             userType,
             email,
             password,
@@ -151,12 +142,13 @@ export const signInUser = createAsyncThunk<
 
 // New: Forgot Password (Send OTP)
 export const forgotPassword = createAsyncThunk<
-    ApiResponse<null>, // No data returned on success, just a message
-    { userType: string; email: string }, // Arguments
+    ApiResponse<null>,
+    { userType: string; email: string },
     { rejectValue: any }
 >("auth/forgotPassword", async ({ userType, email }, thunkAPI) => {
     try {
-        const res = await axios.post(`${API_BASE_URL}/forgot-password`, {
+        // Use axiosInstance
+        const res = await axiosInstance.post(`${API_BASE_URL}/forgot-password`, {
             userType,
             email,
         });
@@ -168,12 +160,13 @@ export const forgotPassword = createAsyncThunk<
 
 // New: Resend OTP
 export const resendOtp = createAsyncThunk<
-    ApiResponse<null>, // No data returned on success, just a message
-    { userType: string; email: string }, // Arguments
+    ApiResponse<null>,
+    { userType: string; email: string },
     { rejectValue: any }
 >("auth/resendOtp", async ({ userType, email }, thunkAPI) => {
     try {
-        const res = await axios.post(`${API_BASE_URL}/resend-otp`, {
+        // Use axiosInstance
+        const res = await axiosInstance.post(`${API_BASE_URL}/resend-otp`, {
             userType,
             email,
         });
@@ -189,12 +182,13 @@ interface VerifyOtpResponse {
 }
 
 export const verifyForgotPassword = createAsyncThunk<
-    ApiResponse<VerifyOtpResponse>, // Returns a resetToken on success
-    { email: string; otp: string }, // Arguments
+    ApiResponse<VerifyOtpResponse>,
+    { email: string; otp: string },
     { rejectValue: any }
 >("auth/verifyForgotPassword", async ({ email, otp }, thunkAPI) => {
     try {
-        const res = await axios.post(`${API_BASE_URL}/verify-forgot-password`, {
+        // Use axiosInstance
+        const res = await axiosInstance.post(`${API_BASE_URL}/verify-forgot-password`, {
             email,
             otp,
         });
@@ -205,12 +199,13 @@ export const verifyForgotPassword = createAsyncThunk<
 });
 
 export const resetPassword = createAsyncThunk<
-    ApiResponse<null>, // No data returned on success
-    { userType: string; email: string; password: string; token: string }, // Arguments (added token)
+    ApiResponse<null>,
+    { userType: string; email: string; password: string; token: string },
     { rejectValue: any }
 >("auth/resetPassword", async ({ userType, email, password, token }, thunkAPI) => {
     try {
-        const res = await axios.post(
+        // Use axiosInstance, but manually set the unique reset token header
+        const res = await axiosInstance.post(
             `${API_BASE_URL}/reset-password`,
             {
                 userType,
@@ -218,8 +213,9 @@ export const resetPassword = createAsyncThunk<
                 password,
             },
             {
+                // This custom header is necessary because the interceptor only handles the main admin/user token.
                 headers: {
-                    Authorization: `Bearer ${token}`, // Send token in headers
+                    Authorization: `Bearer ${token}`,
                 },
             }
         );
@@ -229,7 +225,7 @@ export const resetPassword = createAsyncThunk<
     }
 });
 
-// 4. Update Slice with the new State Interface
+// 4. Slice
 const userSlice = createSlice({
     name: "users",
     initialState: {
@@ -246,8 +242,8 @@ const userSlice = createSlice({
         updateResponse: null,
         authStatus: "idle",
         authMessage: null,
-        resetToken: null, // Initialize resetToken
-    } as AuthState, // Cast initialState to the AuthState type
+        resetToken: null,
+    } as AuthState,
     reducers: {
         clearUserState: (state) => {
             state.error = null;
@@ -256,11 +252,11 @@ const userSlice = createSlice({
             state.updateResponse = null;
             state.authStatus = "idle";
             state.authMessage = null;
-            state.resetToken = null; // Clear resetToken on state clear
+            state.resetToken = null;
         },
     },
     extraReducers: (builder) => {
-        // Existing cases
+        // Existing CRUD cases
         builder
             .addCase(createUser.pending, (state) => {
                 state.loading = true;
@@ -278,10 +274,13 @@ const userSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchAllUsersByType.fulfilled, (state) => {
+            .addCase(fetchAllUsersByType.fulfilled, (state, action) => {
                 state.loading = false;
-                // const userTypeKey = action.payload.userType.toLowerCase();
-                // state.allUsers[userTypeKey] = action.payload.users;
+                // Correctly update the specific user type array
+                const userTypeKey = action.payload.userType.toLowerCase() as keyof AuthState['allUsers'];
+                if (state.allUsers.hasOwnProperty(userTypeKey)) {
+                    state.allUsers[userTypeKey] = action.payload.users;
+                }
             })
             .addCase(fetchAllUsersByType.rejected, (state, action) => {
                 state.loading = false;
@@ -307,6 +306,10 @@ const userSlice = createSlice({
             .addCase(updateUser.fulfilled, (state, action) => {
                 state.loading = false;
                 state.updateResponse = action.payload;
+                // Optionally update currentUser if it matches the updated user
+                if (state.currentUser && state.currentUser._id === action.payload._id) {
+                    state.currentUser = action.payload;
+                }
             })
             .addCase(updateUser.rejected, (state, action) => {
                 state.loading = false;
@@ -329,7 +332,7 @@ const userSlice = createSlice({
                 state.authMessage = action.payload?.message || "Sign-in failed";
                 state.error = action.payload;
             })
-            // New: Forgot Password
+            // Forgot Password
             .addCase(forgotPassword.pending, (state) => {
                 state.authStatus = "loading";
                 state.authMessage = null;
@@ -345,7 +348,7 @@ const userSlice = createSlice({
                 state.authMessage = action.payload?.message || "Failed to send OTP";
                 state.error = action.payload;
             })
-            // New: Resend OTP
+            // Resend OTP
             .addCase(resendOtp.pending, (state) => {
                 state.authStatus = "loading";
                 state.authMessage = null;
@@ -361,7 +364,7 @@ const userSlice = createSlice({
                 state.authMessage = action.payload?.message || "Failed to resend OTP";
                 state.error = action.payload;
             })
-            // New: Verify Forgot Password
+            // Verify Forgot Password
             .addCase(verifyForgotPassword.pending, (state) => {
                 state.authStatus = "loading";
                 state.authMessage = null;
@@ -371,7 +374,7 @@ const userSlice = createSlice({
             .addCase(verifyForgotPassword.fulfilled, (state, action: PayloadAction<ApiResponse<VerifyOtpResponse>>) => {
                 state.authStatus = "succeeded";
                 state.authMessage = action.payload.message;
-                state.resetToken = action.payload.data?.resetToken || null; // Store the reset token
+                state.resetToken = action.payload.data?.resetToken || null;
                 state.error = null;
             })
             .addCase(verifyForgotPassword.rejected, (state, action) => {
@@ -380,6 +383,7 @@ const userSlice = createSlice({
                 state.error = action.payload;
                 state.resetToken = null;
             })
+            // Reset Password
             .addCase(resetPassword.pending, (state) => {
                 state.authStatus = "loading";
                 state.authMessage = null;
@@ -389,7 +393,7 @@ const userSlice = createSlice({
                 state.authStatus = "succeeded";
                 state.authMessage = action.payload.message;
                 state.error = null;
-                state.resetToken = null; // Clear token after successful reset
+                state.resetToken = null;
             })
             .addCase(resetPassword.rejected, (state, action) => {
                 state.authStatus = "failed";

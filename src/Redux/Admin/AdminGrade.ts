@@ -1,6 +1,6 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
-import { BASE_URL } from "../baseurl";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+// --- Change 1: Import the configured axiosInstance ---
+import axiosInstance from "../axiosInstance";
 
 // Types
 export interface Grade {
@@ -26,28 +26,27 @@ const initialState: GradeState = {
     error: null,
 };
 
-// === ASYNC THUNKS ===
+// --- API Path ---
+const API_BASE = "/api/admin/grades"; // Relative path used by axiosInstance
+
+// === ASYNC THUNKS (Refactored to use axiosInstance) ===
 
 // Create Grade
-// Modify response structure
-interface GradeResponse {
-    success: boolean;
-    data: Grade;
-  }
-  
-  // Then update your thunk like this:
-  export const createGrade = createAsyncThunk<
-    GradeResponse,
+// We will use the Grade interface directly for the fulfilled payload, 
+// assuming the API response wrapper is handled, or just use the data property.
+export const createGrade = createAsyncThunk<
+    Grade, // Expected payload is the created Grade object
     { title: string; description: string },
     { rejectValue: string }
-  >("grades/createGrade", async ({ title, description }, { rejectWithValue }) => {
+>("grades/createGrade", async ({ title, description }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${BASE_URL}/api/admin/grades`, { title, description });
-      return response.data as GradeResponse;
+        // Use axiosInstance
+        const response = await axiosInstance.post<{ data: Grade }>(API_BASE, { title, description });
+        return response.data.data;
     } catch (err: any) {
-      return rejectWithValue(err.response?.data?.message || "Failed to create grade");
+        return rejectWithValue(err.response?.data?.message || "Failed to create grade");
     }
-  });
+});
 
 // Get All Grades
 export const getGrades = createAsyncThunk<
@@ -56,8 +55,9 @@ export const getGrades = createAsyncThunk<
     { rejectValue: string }
 >("grades/getGrades", async (_, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`${BASE_URL}/api/admin/grades`);
-        return response.data.data as Grade[];
+        // Use axiosInstance
+        const response = await axiosInstance.get<{ data: Grade[] }>(API_BASE);
+        return response.data.data;
     } catch (err: any) {
         return rejectWithValue(err.response?.data?.message || "Failed to fetch grades");
     }
@@ -70,8 +70,9 @@ export const getGradeById = createAsyncThunk<
     { rejectValue: string }
 >("grades/getGradeById", async (id, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`${BASE_URL}/api/admin/grades/${id}`);
-        return response.data.data as Grade;
+        // Use axiosInstance
+        const response = await axiosInstance.get<{ data: Grade }>(`${API_BASE}/${id}`);
+        return response.data.data;
     } catch (err: any) {
         return rejectWithValue(err.response?.data?.message || "Failed to fetch grade");
     }
@@ -84,8 +85,9 @@ export const updateGrade = createAsyncThunk<
     { rejectValue: string }
 >("grades/updateGrade", async ({ id, title, description }, { rejectWithValue }) => {
     try {
-        const response = await axios.put(`${BASE_URL}/api/admin/grades/${id}`, { title, description });
-        return response.data.data as Grade;
+        // Use axiosInstance
+        const response = await axiosInstance.put<{ data: Grade }>(`${API_BASE}/${id}`, { title, description });
+        return response.data.data;
     } catch (err: any) {
         return rejectWithValue(err.response?.data?.message || "Failed to update grade");
     }
@@ -98,7 +100,8 @@ export const deleteGrade = createAsyncThunk<
     { rejectValue: string }
 >("grades/deleteGrade", async (id, { rejectWithValue }) => {
     try {
-        await axios.delete(`${BASE_URL}/api/admin/grades/${id}`);
+        // Use axiosInstance
+        await axiosInstance.delete(`${API_BASE}/${id}`);
         return id;
     } catch (err: any) {
         return rejectWithValue(err.response?.data?.message || "Failed to delete grade");
@@ -121,9 +124,10 @@ const gradeSlice = createSlice({
             state.loading = true;
             state.error = null;
         });
-        builder.addCase(createGrade.fulfilled, (state, action) => {
+        // Action payload is now Grade, not GradeResponse
+        builder.addCase(createGrade.fulfilled, (state, action: PayloadAction<Grade>) => {
             state.loading = false;
-            state.grades.unshift(action.payload as any);
+            state.grades.unshift(action.payload);
         });
         builder.addCase(createGrade.rejected, (state, action) => {
             state.loading = false;
@@ -135,7 +139,7 @@ const gradeSlice = createSlice({
             state.loading = true;
             state.error = null;
         });
-        builder.addCase(getGrades.fulfilled, (state, action) => {
+        builder.addCase(getGrades.fulfilled, (state, action: PayloadAction<Grade[]>) => {
             state.loading = false;
             state.grades = action.payload;
         });
@@ -149,7 +153,7 @@ const gradeSlice = createSlice({
             state.loading = true;
             state.error = null;
         });
-        builder.addCase(getGradeById.fulfilled, (state, action) => {
+        builder.addCase(getGradeById.fulfilled, (state, action: PayloadAction<Grade>) => {
             state.loading = false;
             state.selectedGrade = action.payload;
         });
@@ -163,11 +167,14 @@ const gradeSlice = createSlice({
             state.loading = true;
             state.error = null;
         });
-        builder.addCase(updateGrade.fulfilled, (state, action) => {
+        builder.addCase(updateGrade.fulfilled, (state, action: PayloadAction<Grade>) => {
             state.loading = false;
             const index = state.grades.findIndex((g) => g._id === action.payload._id);
             if (index !== -1) {
                 state.grades[index] = action.payload;
+            }
+            if (state.selectedGrade && state.selectedGrade._id === action.payload._id) {
+                state.selectedGrade = action.payload;
             }
         });
         builder.addCase(updateGrade.rejected, (state, action) => {
@@ -180,9 +187,12 @@ const gradeSlice = createSlice({
             state.loading = true;
             state.error = null;
         });
-        builder.addCase(deleteGrade.fulfilled, (state, action) => {
+        builder.addCase(deleteGrade.fulfilled, (state, action: PayloadAction<string>) => {
             state.loading = false;
             state.grades = state.grades.filter((g) => g._id !== action.payload);
+            if (state.selectedGrade && state.selectedGrade._id === action.payload) {
+                state.selectedGrade = null;
+            }
         });
         builder.addCase(deleteGrade.rejected, (state, action) => {
             state.loading = false;

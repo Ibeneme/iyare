@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import axios from 'axios';
-import { BASE_URL } from '../baseurl';
+import axiosInstance from '../axiosInstance'; // Import the centralized axios instance
 
 // --- Interfaces ---
 export interface TeacherInfo {
@@ -26,31 +25,22 @@ const initialState: DashboardTeachersState = {
     data: [],
 };
 
-// --- Helper to get token ---
-const getAuthToken = (): string | null => {
-    try {
-        return localStorage.getItem('token') || null;
-    } catch {
-        return null;
-    }
-};
+// Base URL (relative path only, handled by axiosInstance)
+const API_URL = `/api/admin-classes/dashboard-teachers`;
 
-// --- Async thunk to fetch all teachers ---
+// --- Async thunk to fetch all teachers (Refactored) ---
 export const fetchTeachers = createAsyncThunk<
     TeacherInfo[],
     void,
     { rejectValue: string }
 >('dashboardTeachers/fetch', async (_, { rejectWithValue }) => {
     try {
-        const token = getAuthToken();
-        if (!token) return rejectWithValue('No auth token found');
-
-        const response = await axios.get(`${BASE_URL}/api/admin-classes/dashboard-teachers`, {
-            headers: { Authorization: `Bearer ${token}` },
-        });
+        // Use axiosInstance; token and base URL are handled by interceptors
+        const response = await axiosInstance.get<{ data: TeacherInfo[] }>(API_URL);
 
         return response.data.data;
     } catch (error: any) {
+        // Interceptors handle token/server error logging; thunk handles payload
         return rejectWithValue(error.response?.data?.message || 'Failed to fetch teachers');
     }
 });

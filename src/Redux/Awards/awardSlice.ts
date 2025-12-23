@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
-import { BASE_URL } from "../baseurl";
+// --- Change 1: Import the centralized axios instance ---
+import axiosInstance from '../axiosInstance';
 
-// Base URL for awards API
-const baseUrl = `${BASE_URL}/api/awards-for-student/awarding`;
+// Base URL for awards API (relative path)
+const API_BASE = `/api/awards-for-student/awarding`;
 
 // 📦 Types
 export interface Award {
@@ -32,77 +32,55 @@ interface CreateAwardPayload {
     classId?: string;
 }
 
-// 🆕 Create Award
+// 🆕 Create Award (Refactored)
 export const createAward = createAsyncThunk<
     Award,
     CreateAwardPayload,
     { rejectValue: string }
 >("awards/create", async (awardData, { rejectWithValue }) => {
     try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            return rejectWithValue("Authentication token not found.");
-        }
-        const config = {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        };
-        const res = await axios.post(baseUrl, awardData, config);
+        // Use axiosInstance: token handling removed
+        const res = await axiosInstance.post(API_BASE, awardData);
+        // Assuming response.data is the Award object
         return res.data;
     } catch (error: any) {
         return rejectWithValue(error.response?.data?.message || error.message);
     }
 });
 
-// 📥 Get All Awards
+// 📥 Get All Awards (Refactored)
 export const getAwards = createAsyncThunk<
     Award[],
     void,
     { rejectValue: string }
 >("awards/getAll", async (_, { rejectWithValue }) => {
     try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            return rejectWithValue("Authentication token not found.");
-        }
-        const config = {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        };
-        const res = await axios.get(baseUrl, config);
-        console.log(res, 'red')
+        // Use axiosInstance: token handling removed
+        const res = await axiosInstance.get<{ data: Award[] }>(API_BASE);
+        // Assuming your API returns { data: [...] }
         return res.data.data;
     } catch (error: any) {
         return rejectWithValue(error.response?.data?.message || error.message);
     }
 });
 
-// 📥 Get Award by ID
+// 📥 Get Award by ID (Refactored)
 export const getAwardById = createAsyncThunk<
     Award,
     string,
     { rejectValue: string }
 >("awards/getById", async (id, { rejectWithValue }) => {
     try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            return rejectWithValue("Authentication token not found.");
-        }
-        const config = {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        };
-        const res = await axios.get(`${baseUrl}/${id}`, config);
+        // Use axiosInstance: token handling removed
+        const res = await axiosInstance.get(`${API_BASE}/${id}`);
+        // Assuming response.data is the Award object
         return res.data;
     } catch (error: any) {
         return rejectWithValue(error.response?.data?.message || error.message);
     }
 });
 
-// 📝 Update Award
+// 📝 Update Award (Refactored)
 interface UpdateAwardPayload {
     id: string;
     data: Partial<CreateAwardPayload>;
@@ -113,39 +91,24 @@ export const updateAward = createAsyncThunk<
     { rejectValue: string }
 >("awards/update", async ({ id, data }, { rejectWithValue }) => {
     try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            return rejectWithValue("Authentication token not found.");
-        }
-        const config = {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        };
-        const res = await axios.put(`${baseUrl}/${id}`, data, config);
+        // Use axiosInstance: token handling removed
+        const res = await axiosInstance.put(`${API_BASE}/${id}`, data);
+        // Assuming response.data is the updated Award object
         return res.data;
     } catch (error: any) {
         return rejectWithValue(error.response?.data?.message || error.message);
     }
 });
 
-// 🗑 Delete Award
+// 🗑 Delete Award (Refactored)
 export const deleteAward = createAsyncThunk<
     string,
     string,
     { rejectValue: string }
 >("awards/delete", async (id, { rejectWithValue }) => {
     try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            return rejectWithValue("Authentication token not found.");
-        }
-        const config = {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        };
-        await axios.delete(`${baseUrl}/${id}`, config);
+        // Use axiosInstance: token handling removed
+        await axiosInstance.delete(`${API_BASE}/${id}`);
         return id;
     } catch (error: any) {
         return rejectWithValue(error.response?.data?.message || error.message);
@@ -218,6 +181,10 @@ const awardSlice = createSlice({
                 state.loading = false;
                 const index = state.awards.findIndex((a) => a._id === action.payload._id);
                 if (index !== -1) state.awards[index] = action.payload;
+                // Update currentAward if the updated award is currently selected
+                if (state.currentAward && state.currentAward._id === action.payload._id) {
+                    state.currentAward = action.payload;
+                }
             })
             .addCase(updateAward.rejected, (state, action) => {
                 state.loading = false;
@@ -232,6 +199,10 @@ const awardSlice = createSlice({
             .addCase(deleteAward.fulfilled, (state, action) => {
                 state.loading = false;
                 state.awards = state.awards.filter((a) => a._id !== action.payload);
+                // Clear currentAward if the deleted award was currently selected
+                if (state.currentAward && state.currentAward._id === action.payload) {
+                    state.currentAward = null;
+                }
             })
             .addCase(deleteAward.rejected, (state, action) => {
                 state.loading = false;

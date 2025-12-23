@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import axiosInstance from '../axiosInstance';
+import axiosInstance from '../axiosInstance'; // Centralized API client
 
 
 interface TeacherInfo {
@@ -24,9 +24,10 @@ interface ClassModel {
     studentIds: string[];
     date: string;
     time: string;
-    duration: number;
+    duration: number; // Duration in minutes/hours
     createdAt: string;
     updatedAt: string;
+    status: string; // Assuming status is part of the model based on similar slices
 }
 
 interface ClassState {
@@ -45,6 +46,7 @@ const initialState: ClassState = {
 
 // --- LOGGING HELPER ---
 const log = (type: 'REQ' | 'RES' | 'ERR', action: string, data?: any) => {
+    // Note: Logging utility using console colors is kept as is.
     const now = new Date().toLocaleString('en-NG', {
         timeZone: 'Africa/Lagos',
         year: 'numeric',
@@ -62,36 +64,58 @@ const log = (type: 'REQ' | 'RES' | 'ERR', action: string, data?: any) => {
     console.log(`\x1b[35m${prefix}\x1b[0m ${color}[${type}] ${action}${reset}`, data || '');
 };
 
-export const fetchClass = createAsyncThunk(
+// --- ASYNC THUNKS (CRUD Operations) ---
+
+/**
+ * Fetch all classes (Generic/Admin view).
+ */
+export const fetchClass = createAsyncThunk<
+    ClassModel[],
+    void,
+    { rejectValue: string }
+>(
     'class/fetchClass',
     async (_, { rejectWithValue }) => {
         try {
             const response = await axiosInstance.get(`/api/class/class`);
-            log('RES', 'Fetched classes', { count: response.data.data.length });
+            log('RES', 'Fetched classes (All)', { count: response.data.data.length });
             return response.data.data as ClassModel[];
         } catch (err: any) {
             const msg = err.response?.data?.message || err.message || 'Network error';
-            log('ERR', 'Failed to fetch classes', { error: msg, status: err.response?.status });
+            log('ERR', 'Failed to fetch classes (All)', { error: msg, status: err.response?.status });
             return rejectWithValue(msg);
         }
     }
 );
 
-export const fetchClasses = createAsyncThunk(
+/**
+ * Fetch classes, potentially filtered by subject ID (used in two places in original).
+ */
+export const fetchClasses = createAsyncThunk<
+    ClassModel[],
+    string | undefined, // subjectId argument
+    { rejectValue: string }
+>(
     'class/fetchAll',
-    async (subjectId?: string, { rejectWithValue }) => {
+    async (subjectId, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(`/api/class/class/${subjectId}`);
-            log('RES', 'Fetched classes', { count: response.data.data.length });
+            // If subjectId is provided, the API endpoint appears to be `/api/class/class/${subjectId}`
+            // If not provided, it attempts to hit an endpoint that might return an error or all classes.
+            const endpoint = subjectId ? `/api/class/class/${subjectId}` : `/api/class/class`;
+            const response = await axiosInstance.get(endpoint);
+            log('RES', `Fetched classes by subject: ${subjectId || 'None'}`, { count: response.data.data.length });
             return response.data.data as ClassModel[];
         } catch (err: any) {
             const msg = err.response?.data?.message || err.message || 'Network error';
-            log('ERR', 'Failed to fetch classes', { error: msg, status: err.response?.status });
+            log('ERR', 'Failed to fetch classes by subject', { error: msg, status: err.response?.status });
             return rejectWithValue(msg);
         }
     }
 );
 
+/**
+ * Fetch classes relevant to the currently logged-in user (student or teacher).
+ */
 export const fetchClassesByUser = createAsyncThunk(
     "class/fetchByUser",
     async (_, { rejectWithValue }) => {
@@ -113,7 +137,14 @@ export const fetchClassesByUser = createAsyncThunk(
     }
 );
 
-export const fetchClassById = createAsyncThunk(
+/**
+ * Fetch a single class by its ID.
+ */
+export const fetchClassById = createAsyncThunk<
+    ClassModel,
+    string, // id argument
+    { rejectValue: string }
+>(
     'class/fetchById',
     async (id: string, { rejectWithValue }) => {
         log('REQ', `Fetching class by ID: ${id}`);
@@ -130,7 +161,14 @@ export const fetchClassById = createAsyncThunk(
 );
 
 
-export const createClass = createAsyncThunk(
+/**
+ * Create a new class.
+ */
+export const createClass = createAsyncThunk<
+    ClassModel,
+    Partial<ClassModel>, // classData argument
+    { rejectValue: string }
+>(
     'class/create',
     async (classData: Partial<ClassModel>, { rejectWithValue }) => {
         log('REQ', 'Creating class', classData);
@@ -146,10 +184,16 @@ export const createClass = createAsyncThunk(
     }
 );
 
-
-export const updateClass = createAsyncThunk(
+/**
+ * Update an existing class by ID.
+ */
+export const updateClass = createAsyncThunk<
+    ClassModel,
+    { id: string; data: Partial<ClassModel> }, // Arguments
+    { rejectValue: string }
+>(
     'class/update',
-    async ({ id, data }: { id: string; data: Partial<ClassModel> }, { rejectWithValue }) => {
+    async ({ id, data }, { rejectWithValue }) => {
         log('REQ', `Updating class ID: ${id}`, data);
         try {
             const response = await axiosInstance.put(`/api/class/class/${id}`, data);
@@ -164,7 +208,14 @@ export const updateClass = createAsyncThunk(
 );
 
 
-export const deleteClass = createAsyncThunk(
+/**
+ * Delete a class by ID.
+ */
+export const deleteClass = createAsyncThunk<
+    string, // Returned ID of the deleted class
+    string, // id argument
+    { rejectValue: string }
+>(
     'class/delete',
     async (id: string, { rejectWithValue }) => {
         log('REQ', `Deleting class ID: ${id}`);
@@ -181,7 +232,6 @@ export const deleteClass = createAsyncThunk(
 );
 
 
-
 const classSlice = createSlice({
     name: 'class',
     initialState,
@@ -194,7 +244,7 @@ const classSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
-        // Fetch All
+        // --- fetchClasses (By Subject ID) ---
         builder
             .addCase(fetchClasses.pending, (state) => {
                 state.loading = true;
@@ -209,7 +259,7 @@ const classSlice = createSlice({
                 state.error = action.payload as string;
             });
 
-
+        // --- fetchClass (All) ---
         builder
             .addCase(fetchClass.pending, (state) => {
                 state.loading = true;
@@ -224,7 +274,22 @@ const classSlice = createSlice({
                 state.error = action.payload as string;
             });
 
-        // Fetch One fetchClass
+        // --- fetchClassesByUser ---
+        builder
+            .addCase(fetchClassesByUser.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchClassesByUser.fulfilled, (state, action: PayloadAction<ClassModel[]>) => {
+                state.loading = false;
+                state.classes = action.payload;
+            })
+            .addCase(fetchClassesByUser.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            })
+
+        // --- fetchClassById (Fetch One) ---
         builder
             .addCase(fetchClassById.pending, (state) => {
                 state.loading = true;
@@ -239,7 +304,7 @@ const classSlice = createSlice({
                 state.error = action.payload as string;
             });
 
-        // Create
+        // --- Create ---
         builder
             .addCase(createClass.pending, (state) => {
                 state.loading = true;
@@ -254,7 +319,7 @@ const classSlice = createSlice({
                 state.error = action.payload as string;
             });
 
-        // Update
+        // --- Update ---
         builder
             .addCase(updateClass.pending, (state) => {
                 state.loading = true;
@@ -262,8 +327,10 @@ const classSlice = createSlice({
             })
             .addCase(updateClass.fulfilled, (state, action: PayloadAction<ClassModel>) => {
                 state.loading = false;
+                // Update in the classes list
                 const index = state.classes.findIndex((c) => c._id === action.payload._id);
                 if (index !== -1) state.classes[index] = action.payload;
+                // Update currentClass if it matches
                 if (state.currentClass?._id === action.payload._id) {
                     state.currentClass = action.payload;
                 }
@@ -273,21 +340,7 @@ const classSlice = createSlice({
                 state.error = action.payload as string;
             });
 
-
-        builder
-            .addCase(fetchClassesByUser.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(fetchClassesByUser.fulfilled, (state, action: PayloadAction<ClassModel[]>) => {
-                state.loading = false;
-                state.classes = action.payload;
-            })
-            .addCase(fetchClassesByUser.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload as string;
-            })
-        // Delete
+        // --- Delete ---
         builder
             .addCase(deleteClass.pending, (state) => {
                 state.loading = true;
@@ -295,7 +348,9 @@ const classSlice = createSlice({
             })
             .addCase(deleteClass.fulfilled, (state, action: PayloadAction<string>) => {
                 state.loading = false;
+                // Remove from the classes list
                 state.classes = state.classes.filter((c) => c._id !== action.payload);
+                // Clear currentClass if it was the deleted one
                 if (state.currentClass?._id === action.payload) {
                     state.currentClass = null;
                 }

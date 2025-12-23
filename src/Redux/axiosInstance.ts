@@ -1,4 +1,8 @@
-import axios from "axios";
+import axios, {
+  AxiosError,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from "axios";
 import { BASE_URL } from "./baseurl";
 
 const axiosInstance = axios.create({
@@ -9,34 +13,44 @@ const axiosInstance = axios.create({
   },
 });
 
+/* ============================
+   REQUEST INTERCEPTOR
+============================ */
 axiosInstance.interceptors.request.use(
-  (config) => {
-    // Get token from localStorage
+  (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem("token");
 
-    console.log(token, 'token')
     if (token) {
+      // Ensure headers object exists before setting Authorization
+      config.headers = config.headers ?? {};
       config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;
   },
-  (error) => {
+  (error: AxiosError) => {
     console.error("Request interceptor error:", error);
     return Promise.reject(error);
   }
 );
 
-axiosInstance.interceptors.response.use(
-  (response) => {
 
-    return response;
-  },
-  (error) => {
+axiosInstance.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  (error: AxiosError) => {
     const status = error.response?.status;
 
-    if (status >= 500) {
-      console.error("Server error:", error.response?.data);
+    if (status) {
+      if (status === 401) {
+        // --- ADDED: Specific 401 handling ---
+        console.log("401 Unauthorized: Session expired or invalid token.");
+        // Optional: Clear token and redirect to login page here.
+        localStorage.removeItem("token");
+        window.location.href = "/auth-sign-in";
+      } else if (status >= 500) {
+        // Server Error handling
+        console.error("Server error:", error.response?.data);
+      }
     }
 
     return Promise.reject(error);

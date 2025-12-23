@@ -149,7 +149,7 @@ function App() {
             </>
           }
         />
-            <Route path="webrtc" element={<WebRTCComponent />} />
+            
         <Route path="/verify-payments" element={<VerifyPayment />} />
         {/* --- Auth Routes (Accessible ONLY if NOT logged in) --- */}
         <Route element={<PublicRoute />}>
@@ -308,7 +308,7 @@ function App() {
           <Route path="/class-details/:id" element={<ClassDetails />} />
       
           <Route
-            path="/join/:classId/:classTitle"
+            path="/webrtc/:classId/:classTitle"
             element={<WebRTCComponent />}
           />
         </Route>

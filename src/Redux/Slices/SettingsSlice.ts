@@ -1,10 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-import { BASE_URL } from '../baseurl';
+// --- Change 1: Import the centralized axios instance ---
+import axiosInstance from '../axiosInstance';
 
-const baseUrl = `${BASE_URL}/api/admin/yare/settings`;
+// --- Removed imports: axios, BASE_URL ---
 
-// Thunks
+// Base API Path (Relative)
+const API_BASE = `/api/admin/yare/settings`;
 
 // Helper to get admin ID from localStorage
 const getAdminId = () => {
@@ -13,13 +14,16 @@ const getAdminId = () => {
 
     try {
         const user = JSON.parse(storedUser);
+        // Assuming the user object has a unique identifier field like '_id'
         return user?._id || null;
     } catch {
         return null;
     }
 };
 
+// --- ASYNC THUNKS (Refactored) ---
 
+// 1. Set Local Price
 export const setLocalPrice = createAsyncThunk(
     "settings/setLocalPrice",
     async (
@@ -32,13 +36,15 @@ export const setLocalPrice = createAsyncThunk(
                 return rejectWithValue("Admin ID not found in local storage.");
             }
 
-            const res = await axios.post(`${baseUrl}/set-local-price`, {
+            // Use axiosInstance
+            const res = await axiosInstance.post(`${API_BASE}/set-local-price`, {
                 localPrice,
                 id,
             });
             return res.data.data;
         } catch (err: any) {
-            return rejectWithValue(err.response?.data || err.message);
+            // Using err.response?.data?.message or common error structure
+            return rejectWithValue(err.response?.data?.message || err.message || "Failed to set local price");
         }
     }
 );
@@ -56,29 +62,29 @@ export const setInternationalPrice = createAsyncThunk(
                 return rejectWithValue("Admin ID not found in local storage.");
             }
 
-            const res = await axios.post(`${baseUrl}/set-international-price`, {
+            // Use axiosInstance
+            const res = await axiosInstance.post(`${API_BASE}/set-international-price`, {
                 internationalPrice,
                 id,
             });
             return res.data.data;
         } catch (err: any) {
-            return rejectWithValue(err.response?.data || err.message);
+            return rejectWithValue(err.response?.data?.message || err.message || "Failed to set international price");
         }
     }
 );
-
-// New Thunks to Fetch Prices
 
 // 5. Fetch Local Price
 export const fetchLocalPrice = createAsyncThunk(
     'settings/fetchLocalPrice',
     async (_, { rejectWithValue }) => {
         try {
-            const res = await axios.get(`${baseUrl}/get-local-price`);
-            console.log(res, 'res')
+            // Use axiosInstance
+            const res = await axiosInstance.get(`${API_BASE}/get-local-price`);
+            // console.log(res, 'res') // Removed console.log
             return res.data.data;
         } catch (err: any) {
-            return rejectWithValue(err.response?.data || err.message);
+            return rejectWithValue(err.response?.data?.message || err.message || "Failed to fetch local price");
         }
     }
 );
@@ -88,22 +94,25 @@ export const fetchInternationalPrice = createAsyncThunk(
     'settings/fetchInternationalPrice',
     async (_, { rejectWithValue }) => {
         try {
-            const res = await axios.get(`${baseUrl}/get-international-price`);
+            // Use axiosInstance
+            const res = await axiosInstance.get(`${API_BASE}/get-international-price`);
             return res.data.data;
         } catch (err: any) {
-            return rejectWithValue(err.response?.data || err.message);
+            return rejectWithValue(err.response?.data?.message || err.message || "Failed to fetch international price");
         }
     }
 );
 
+// Fetch All Prices
 export const AllPrices = createAsyncThunk(
     'settings/AllPrices',
     async (_, { rejectWithValue }) => {
         try {
-            const res = await axios.get(`${baseUrl}/all-prices`);
+            // Use axiosInstance
+            const res = await axiosInstance.get(`${API_BASE}/all-prices`);
             return res.data.data;
         } catch (err: any) {
-            return rejectWithValue(err.response?.data || err.message);
+            return rejectWithValue(err.response?.data?.message || err.message || "Failed to fetch all prices");
         }
     }
 );
@@ -114,14 +123,15 @@ export const submitReport = createAsyncThunk(
     'settings/submitReport',
     async ({ email, title, description }: { email: string; title: string; description: string }, { rejectWithValue }) => {
         try {
-            const res = await axios.post(`${baseUrl}/report`, {
+            // Use axiosInstance
+            const res = await axiosInstance.post(`${API_BASE}/report`, {
                 email,
                 title,
                 description,
             });
             return res.data.data;
         } catch (err: any) {
-            return rejectWithValue(err.response?.data || err.message);
+            return rejectWithValue(err.response?.data?.message || err.message || "Failed to submit report");
         }
     }
 );
@@ -131,10 +141,11 @@ export const fetchReports = createAsyncThunk(
     'settings/fetchReports',
     async (_, { rejectWithValue }) => {
         try {
-            const res = await axios.get(`${baseUrl}/reports`);
+            // Use axiosInstance
+            const res = await axiosInstance.get(`${API_BASE}/reports`);
             return res.data.data;
         } catch (err: any) {
-            return rejectWithValue(err.response?.data || err.message);
+            return rejectWithValue(err.response?.data?.message || err.message || "Failed to fetch reports");
         }
     }
 );
@@ -144,12 +155,13 @@ export const addDiscount = createAsyncThunk(
     'settings/addDiscount',
     async ({ title, percentage }: { title: string; percentage: number }, { rejectWithValue }) => {
         try {
-            console.log(title, percentage, 'title, percentag')
-            const res = await axios.post(`${baseUrl}/discount-feature/discounts`, { title, percentage });
-            console.log(res, 'res')
+            // console.log(title, percentage, 'title, percentag') // Removed console.log
+            // Use axiosInstance
+            const res = await axiosInstance.post(`${API_BASE}/discount-feature/discounts`, { title, percentage });
+            // console.log(res, 'res') // Removed console.log
             return res.data.data; // all discounts
         } catch (err: any) {
-            return rejectWithValue(err.response?.data || err.message);
+            return rejectWithValue(err.response?.data?.message || err.message || "Failed to add discount");
         }
     }
 );
@@ -162,10 +174,11 @@ export const updateDiscount = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
-            const res = await axios.put(`${baseUrl}/discount-feature/discounts/${index}`, { title, percentage });
+            // Use axiosInstance
+            const res = await axiosInstance.put(`${API_BASE}/discount-feature/discounts/${index}`, { title, percentage });
             return res.data.data;
         } catch (err: any) {
-            return rejectWithValue(err.response?.data || err.message);
+            return rejectWithValue(err.response?.data?.message || err.message || "Failed to update discount");
         }
     }
 );
@@ -175,10 +188,11 @@ export const deleteDiscount = createAsyncThunk(
     'settings/deleteDiscount',
     async (index: number, { rejectWithValue }) => {
         try {
-            const res = await axios.delete(`${baseUrl}/discount-feature/discounts/${index}`);
-            return res.data.data;
+            // Use axiosInstance
+            const res = await axiosInstance.delete(`${API_BASE}/discount-feature/discounts/${index}`);
+            return res.data.data; // Assuming it returns the updated list of discounts
         } catch (err: any) {
-            return rejectWithValue(err.response?.data || err.message);
+            return rejectWithValue(err.response?.data?.message || err.message || "Failed to delete discount");
         }
     }
 );
@@ -188,10 +202,11 @@ export const fetchDiscounts = createAsyncThunk(
     'settings/fetchDiscounts',
     async (_, { rejectWithValue }) => {
         try {
-            const res = await axios.get(`${baseUrl}/discount-feature/discounts`);
+            // Use axiosInstance
+            const res = await axiosInstance.get(`${API_BASE}/discount-feature/discounts`);
             return res.data.data;
         } catch (err: any) {
-            return rejectWithValue(err.response?.data || err.message);
+            return rejectWithValue(err.response?.data?.message || err.message || "Failed to fetch discounts");
         }
     }
 );
@@ -202,12 +217,12 @@ export const fetchDiscounts = createAsyncThunk(
 const settingsSlice = createSlice({
     name: 'settings',
     initialState: {
-        localPrice: null,
-        internationalPrice: null,
-        reports: [],
-        discounts: [], // ✅ NEW
+        localPrice: null as number | null,
+        internationalPrice: null as number | null,
+        reports: [] as any[],
+        discounts: [] as any[],
         loading: false,
-        error: null,
+        error: null as string | null,
     },
     reducers: {
         // Add synchronous reducers if needed.
@@ -225,7 +240,8 @@ const settingsSlice = createSlice({
             })
             .addCase(setLocalPrice.rejected, (state, action: any) => {
                 state.loading = false;
-                state.error = action.payload.message || action.payload;
+                // Standardize error payload access
+                state.error = action.payload as string;
             });
         // setInternationalPrice
         builder
@@ -239,7 +255,7 @@ const settingsSlice = createSlice({
             })
             .addCase(setInternationalPrice.rejected, (state, action: any) => {
                 state.loading = false;
-                state.error = action.payload.message || action.payload;
+                state.error = action.payload as string;
             });
         // fetchLocalPrice
         builder
@@ -253,7 +269,7 @@ const settingsSlice = createSlice({
             })
             .addCase(fetchLocalPrice.rejected, (state, action: any) => {
                 state.loading = false;
-                state.error = action.payload.message || action.payload;
+                state.error = action.payload as string;
             });
         // fetchInternationalPrice
         builder
@@ -267,7 +283,7 @@ const settingsSlice = createSlice({
             })
             .addCase(fetchInternationalPrice.rejected, (state, action: any) => {
                 state.loading = false;
-                state.error = action.payload.message || action.payload;
+                state.error = action.payload as string;
             });
         // submitReport
         builder
@@ -277,12 +293,10 @@ const settingsSlice = createSlice({
             })
             .addCase(submitReport.fulfilled, (state) => {
                 state.loading = false;
-                // Optionally, add the new report to the list
-                //state.reports.unshift(action.payload);
             })
             .addCase(submitReport.rejected, (state, action: any) => {
                 state.loading = false;
-                state.error = action.payload.message || action.payload;
+                state.error = action.payload as string;
             });
         // fetchReports
         builder
@@ -296,20 +310,39 @@ const settingsSlice = createSlice({
             })
             .addCase(fetchReports.rejected, (state, action: any) => {
                 state.loading = false;
-                state.error = action.payload.message || action.payload;
-            })// addDiscount
+                state.error = action.payload as string;
+            });
+
+        // AllPrices
+        builder
+            .addCase(AllPrices.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(AllPrices.fulfilled, (state, action) => {
+                state.loading = false;
+                // Assuming AllPrices returns { localPrice: number, internationalPrice: number }
+                state.localPrice = action.payload.localPrice;
+                state.internationalPrice = action.payload.internationalPrice;
+            })
+            .addCase(AllPrices.rejected, (state, action: any) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
+
+        // addDiscount
         builder
             .addCase(addDiscount.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(addDiscount.fulfilled, (state) => {
+            .addCase(addDiscount.fulfilled, (state, action) => {
                 state.loading = false;
-                //state.discounts = action.payload;
+                state.discounts = action.payload; // Assuming it returns the updated list
             })
             .addCase(addDiscount.rejected, (state, action: any) => {
                 state.loading = false;
-                state.error = action.payload.message || action.payload;
+                state.error = action.payload as string;
             });
 
         // updateDiscount
@@ -318,13 +351,13 @@ const settingsSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(updateDiscount.fulfilled, (state) => {
+            .addCase(updateDiscount.fulfilled, (state, action) => {
                 state.loading = false;
-                //state.discounts = action.payload;
+                state.discounts = action.payload; // Assuming it returns the updated list
             })
             .addCase(updateDiscount.rejected, (state, action: any) => {
                 state.loading = false;
-                state.error = action.payload.message || action.payload;
+                state.error = action.payload as string;
             });
 
         // deleteDiscount
@@ -333,28 +366,15 @@ const settingsSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(deleteDiscount.fulfilled, (state) => {
+            .addCase(deleteDiscount.fulfilled, (state, action) => {
                 state.loading = false;
-                //state.discounts = action.payload;
+                state.discounts = action.payload; // Assuming it returns the updated list
             })
             .addCase(deleteDiscount.rejected, (state, action: any) => {
                 state.loading = false;
-                state.error = action.payload.message || action.payload;
+                state.error = action.payload as string;
             });
-        builder
-            .addCase(AllPrices.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(AllPrices.fulfilled, (state) => {
-                state.loading = false;
-                //state.discounts = action.payload;
-            })
-            .addCase(AllPrices.rejected, (state, action: any) => {
-                state.loading = false;
-                state.error = action.payload.message || action.payload;
-            });
-        //AllPrices
+
         // fetchDiscounts
         builder
             .addCase(fetchDiscounts.pending, (state) => {
@@ -365,9 +385,9 @@ const settingsSlice = createSlice({
                 state.loading = false;
                 state.discounts = action.payload;
             })
-            .addCase(fetchDiscounts.rejected, (state) => {
+            .addCase(fetchDiscounts.rejected, (state, action) => {
                 state.loading = false;
-                // state.error = action.payload.message || action.payload;
+                state.error = action.payload as string || 'Failed to fetch discounts';
             });
     },
 });

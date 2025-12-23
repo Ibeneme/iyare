@@ -1,8 +1,8 @@
 // src/redux/slices/adminAuthSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import axios from 'axios';
-import { BASE_URL } from '../baseurl';
-import { UserType } from '../../Pages/Admin/Admin/Dashboard/AdminDashboard';
+// --- Change 1: Import the configured axiosInstance ---
+import axiosInstance from '../axiosInstance';
+import { UserType } from '../../Pages/Admin/Admin/Dashboard/AdminDashboard'; // Assuming this interface is available
 
 
 
@@ -27,12 +27,18 @@ const initialState: AdminState = {
     resetToken: null,
 };
 
+// Base API Path
+const API_BASE = `/api/admin`;
+
+// --- Thunks (Refactored to use axiosInstance) ---
+
 // Register Admin
 export const registerAdmin = createAsyncThunk(
     'admin/register',
     async ({ email, password, role }: { email: string; password: string; role: string }, thunkAPI) => {
         try {
-            const response = await axios.post(`${BASE_URL}/api/admin/register`, { email, password, role });
+            // Use axiosInstance
+            const response = await axiosInstance.post(`${API_BASE}/register`, { email, password, role });
             return response.data;
         } catch (err: any) {
             return thunkAPI.rejectWithValue(err.response?.data?.message || 'Registration failed');
@@ -45,7 +51,8 @@ export const loginAdmin = createAsyncThunk(
     'admin/login',
     async ({ email, password }: { email: string; password: string }, thunkAPI) => {
         try {
-            const response = await axios.post(`${BASE_URL}/api/admin/login`, { email, password });
+            // Use axiosInstance
+            const response = await axiosInstance.post(`${API_BASE}/login`, { email, password });
             return response.data;
         } catch (err: any) {
             return thunkAPI.rejectWithValue(err.response?.data?.message || 'Login failed');
@@ -58,7 +65,8 @@ export const forgotPassword = createAsyncThunk(
     'admin/forgotPassword',
     async ({ email }: { email: string }, thunkAPI) => {
         try {
-            const response = await axios.post(`${BASE_URL}/api/admin/forgot-password`, { email });
+            // Use axiosInstance
+            const response = await axiosInstance.post(`${API_BASE}/forgot-password`, { email });
             return response.data.message;
         } catch (err: any) {
             return thunkAPI.rejectWithValue(err.response?.data?.message || 'Failed to send OTP');
@@ -71,7 +79,8 @@ export const resendOtp = createAsyncThunk(
     'admin/resendOtp',
     async ({ email }: { email: string }, thunkAPI) => {
         try {
-            const response = await axios.post(`${BASE_URL}/api/admin/resend-otp`, { email });
+            // Use axiosInstance
+            const response = await axiosInstance.post(`${API_BASE}/resend-otp`, { email });
             return response.data.message;
         } catch (err: any) {
             return thunkAPI.rejectWithValue(err.response?.data?.message || 'Failed to resend OTP');
@@ -84,7 +93,8 @@ export const verifyOtp = createAsyncThunk(
     'admin/verifyOtp',
     async ({ email, otp }: { email: string; otp: string }, thunkAPI) => {
         try {
-            const response = await axios.post(`${BASE_URL}/api/admin/verify-forgot-password`, { email, otp });
+            // Use axiosInstance
+            const response = await axiosInstance.post(`${API_BASE}/verify-forgot-password`, { email, otp });
             return response.data.resetToken;
         } catch (err: any) {
             return thunkAPI.rejectWithValue(err.response?.data?.message || 'Invalid OTP');
@@ -92,7 +102,7 @@ export const verifyOtp = createAsyncThunk(
     }
 );
 
-// Reset Password
+// Reset Password (Kept manual header due to unique temporary token)
 export const resetPassword = createAsyncThunk(
     'admin/resetPassword',
     async (
@@ -100,8 +110,9 @@ export const resetPassword = createAsyncThunk(
         thunkAPI
     ) => {
         try {
-            const response = await axios.post(
-                `${BASE_URL}/api/admin/reset-password`,
+            // Use axiosInstance with manual header for the temporary reset token
+            const response = await axiosInstance.post(
+                `${API_BASE}/reset-password`,
                 { email, password },
                 {
                     headers: {
@@ -117,10 +128,10 @@ export const resetPassword = createAsyncThunk(
 );
 
 
-
 export const fetchAllAdmins = createAsyncThunk("admin/fetchAll", async (_, thunkAPI) => {
     try {
-        const res = await axios.get(`${BASE_URL}/api/admin`);
+        // Use axiosInstance
+        const res = await axiosInstance.get(API_BASE);
         return res.data.data;
     } catch (err: any) {
         return thunkAPI.rejectWithValue(err.response?.data?.message || "Failed to fetch admins");
@@ -131,7 +142,8 @@ export const fetchAdminById = createAsyncThunk(
     "user/fetchAdminById",
     async ({ id, userType }: { id: string; userType: string }, thunkAPI) => {
         try {
-            const res = await axios.get(`${BASE_URL}/api/admin/${userType}/${id}`);
+            // Use axiosInstance
+            const res = await axiosInstance.get(`${API_BASE}/${userType}/${id}`);
             return res.data.data;
         } catch (err: any) {
             return thunkAPI.rejectWithValue(
@@ -148,7 +160,8 @@ export const toggleSuspendAdmin = createAsyncThunk(
         thunkAPI
     ) => {
         try {
-            const res = await axios.put(`${BASE_URL}/api/admin/suspend/${id}`, { userType });
+            // Use axiosInstance
+            const res = await axiosInstance.put(`${API_BASE}/suspend/${id}`, { userType });
             return { id, userType, message: res.data.message };
         } catch (err: any) {
             return thunkAPI.rejectWithValue(
@@ -167,9 +180,10 @@ export const deleteAdmin = createAsyncThunk(
         thunkAPI
     ) => {
         try {
-            const res = await axios.delete(
-                `${BASE_URL}/api/admin/delete/${id}`,
-                { data: { userType } } 
+            // Use axiosInstance
+            const res = await axiosInstance.delete(
+                `${API_BASE}/delete/${id}`,
+                { data: { userType } }
             );
             return { id, userType, message: res.data.message };
         } catch (err: any) {
@@ -187,12 +201,11 @@ export const updateSelfAdmin = createAsyncThunk(
         thunkAPI
     ) => {
         try {
-            const res = await axios.put(
-                `${BASE_URL}/api/admin/self-update/${id}`,
-                { email, password, role },
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
+            // Use axiosInstance, token is handled by the interceptor (token argument no longer strictly necessary)
+            const res = await axiosInstance.put(
+                `${API_BASE}/self-update/${id}`,
+                { email, password, role }
+                // Removed manual headers
             );
             return res.data.data;
         } catch (err: any) {
@@ -201,17 +214,6 @@ export const updateSelfAdmin = createAsyncThunk(
     }
 );
 
-// const getAuthHeaders = () => {
-//     const token =
-//       localStorage.getItem("yareadmintoken") || localStorage.getItem("token");
-  
-//     return {
-//       headers: {
-//         Authorization: `Bearer ${token || ""}`,
-//       },
-//     };
-//   };
-
 export const addAdmin = createAsyncThunk(
     "admin/add",
     async (
@@ -219,19 +221,15 @@ export const addAdmin = createAsyncThunk(
         thunkAPI
     ) => {
         try {
+            // Token check is no longer needed here as it's handled by the interceptor
+            // Removed: const token: string | null = localStorage.getItem("yareadmintoken") || localStorage.getItem("token");
+            // Removed: if (!token) { return thunkAPI.rejectWithValue("Authorization token not found."); }
 
-            const token: string | null =   localStorage.getItem("yareadmintoken") || localStorage.getItem("token");
-
-            if (!token) {
-                return thunkAPI.rejectWithValue("Authorization token not found.");
-            }
-
-            const res = await axios.post(
-                `${BASE_URL}/api/admin/add-admin`,
-                { email, password, role, firstName, lastName },
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
+            // Use axiosInstance
+            const res = await axiosInstance.post(
+                `${API_BASE}/add-admin`,
+                { email, password, role, firstName, lastName }
+                // Removed manual headers
             );
             return res.data;
         } catch (err: any) {
@@ -326,7 +324,7 @@ const adminAuthSlice = createSlice({
             })
             .addCase(fetchAllAdmins.fulfilled, (state) => {
                 state.loading = false;
-               // state.admins = action.payload;
+                // state.admins = action.payload;
             })
             .addCase(fetchAllAdmins.rejected, (state, action: PayloadAction<any>) => {
                 state.loading = false;
@@ -340,7 +338,7 @@ const adminAuthSlice = createSlice({
             })
             .addCase(fetchAdminById.fulfilled, (state) => {
                 state.loading = false;
-               // state.currentAdmin = action.payload;
+                // state.currentAdmin = action.payload;
             })
             .addCase(fetchAdminById.rejected, (state, action: PayloadAction<any>) => {
                 state.loading = false;
@@ -371,7 +369,7 @@ const adminAuthSlice = createSlice({
 
 
             .addCase(updateSelfAdmin.fulfilled, (state) => {
-               // state.currentAdmin = action.payload;
+                // state.currentAdmin = action.payload;
                 state.successMessage = "Admin profile updated successfully";
             })
             .addCase(updateSelfAdmin.rejected, (state, action: PayloadAction<any>) => {

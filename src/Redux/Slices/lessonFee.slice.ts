@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import axiosInstance from '../axiosInstance';
+import axiosInstance from '../axiosInstance'; // Centralized API client
 
 
 interface StudentInfo {
@@ -42,6 +42,7 @@ const initialState: LessonFeeState = {
     error: null,
 };
 
+// --- LOGGING HELPER (Kept as is for debugging) ---
 const log = (type: 'REQ' | 'RES' | 'ERR', action: string, data?: any) => {
     const now = new Date().toLocaleString('en-NG', {
         timeZone: 'Africa/Lagos',
@@ -57,19 +58,24 @@ const log = (type: 'REQ' | 'RES' | 'ERR', action: string, data?: any) => {
     const prefix = `[${now}] [NG] FEE SLICE`;
     const color = type === 'REQ' ? '\x1b[36m' : type === 'RES' ? '\x1b[32m' : '\x1b[31m';
     const reset = '\x1b[0m';
-    // Using a distinct color for this slice (e.g., magenta)
     console.log(`\x1b[35m${prefix}\x1b[0m ${color}[${type}] ${action}${reset}`, data || '');
 };
 
 // --- ASYNC THUNKS ---
 
-export const fetchLessonFeesByUser = createAsyncThunk(
+/**
+ * Fetches lesson fee history relevant to the currently logged-in user (student or parent).
+ */
+export const fetchLessonFeesByUser = createAsyncThunk<
+    LessonFeeModel[], // Return type
+    void, // Argument type
+    { rejectValue: string }
+>(
     'lessonFee/fetchByUser',
     async (_, { rejectWithValue }) => {
         log('REQ', 'Fetching lesson fees by user');
         try {
-            // Assuming endpoint is '/api/class/lesson-fees/by-user' based on standard practices, 
-            // but using the exact path you provided:
+            // Use axiosInstance to fetch data
             const response = await axiosInstance.get('/api/class/class/lesson-fees/lesson-fees');
             log('RES', 'Fetched lesson fees', { count: response.data.data.length });
             return response.data.data as LessonFeeModel[];

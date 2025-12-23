@@ -16,8 +16,7 @@ import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../../Redux/store";
 import { fetchClassesByUser } from "../../../Redux/Slices/class.slice";
-
-// Soft color palette for subject badges
+import { useNavigate } from "react-router-dom";
 const SUBJECT_COLORS = [
   "bg-blue-100 text-blue-700",
   "bg-purple-100 text-purple-700",
@@ -60,7 +59,7 @@ export default function ClassesMain() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("all");
-
+const navigate = useNavigate()
   /* ---------- Fetch Classes ---------- */
   useEffect(() => {
     setLoading(true);
@@ -335,8 +334,23 @@ export default function ClassesMain() {
                       <div className="mt-6">
                         <button
                           onClick={() => {
-                            toast.success(
-                              `Joined "${capitalizeFirst(cls.title)}"`
+                            console.log(cls, "cls");
+
+                            const storedUser = JSON.parse(
+                              localStorage.getItem("user") || "{}"
+                            );
+
+                            if (!storedUser?._id) {
+                              console.error("User not found in localStorage");
+                              return;
+                            }
+
+                            const classId = cls._id;
+                            const classTitle = encodeURIComponent(cls.title);
+                      
+
+                            navigate(
+                              `/webrtc/${classId}/${classTitle}`
                             );
                           }}
                           disabled={status === "finished"}

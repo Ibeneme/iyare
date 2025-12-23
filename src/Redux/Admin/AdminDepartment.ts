@@ -1,8 +1,10 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import axios from 'axios';
-import { BASE_URL } from '../baseurl';
+// --- Change 1: Import the configured axiosInstance ---
+import axiosInstance from '../axiosInstance'; // **Ensure this path is correct**
 
-const API_BASE = `${BASE_URL}/api/departments`;
+// BASE_URL is no longer needed here as it's configured in axiosInstance
+// const API_BASE = `${BASE_URL}/api/departments`;
+const API_BASE = `/api/departments`; // Use the relative path
 
 // 📦 Define core types for data models and thunk arguments
 interface Course {
@@ -11,23 +13,23 @@ interface Course {
     // ... other course properties
 }
 
-interface Department {
+export interface Department {
     _id: string;
     name: string;
     courses: Course[];
 }
 
-interface UpdateDepartmentParams {
+export interface UpdateDepartmentParams {
     id: string;
     name: string;
     courseIds: string[];
 }
 
-interface CreateDepartmentParams {
+export interface CreateDepartmentParams {
     name: string;
 }
 
-interface DeleteDepartmentResult {
+export interface DeleteDepartmentResult {
     id: string;
     message: string;
 }
@@ -40,9 +42,11 @@ interface AdminDepartmentState {
     successMessage: string | null;
 }
 
-// 🔄 Async Thunks
+// 🔄 Async Thunks (Refactored to use axiosInstance)
 
-// Fetch all departments
+/**
+ * Fetch all departments
+ */
 export const fetchDepartments = createAsyncThunk<
     Department[],
     void,
@@ -51,10 +55,8 @@ export const fetchDepartments = createAsyncThunk<
     'adminDepartment/fetchDepartments',
     async (_, { rejectWithValue }) => {
         try {
-            const token = localStorage.getItem('yareadmintoken');
-            const res = await axios.get(API_BASE, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            // Use axiosInstance: token and base URL handled by interceptors
+            const res = await axiosInstance.get<{ departments: Department[] }>(API_BASE);
             return res.data.departments;
         } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || err.message);
@@ -62,7 +64,9 @@ export const fetchDepartments = createAsyncThunk<
     }
 );
 
-// Fetch single department by id
+/**
+ * Fetch single department by id
+ */
 export const fetchDepartmentById = createAsyncThunk<
     Department,
     string,
@@ -71,10 +75,8 @@ export const fetchDepartmentById = createAsyncThunk<
     'adminDepartment/fetchDepartmentById',
     async (id, { rejectWithValue }) => {
         try {
-            const token = localStorage.getItem('yareadmintoken');
-            const res = await axios.get(`${API_BASE}/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            // Use axiosInstance
+            const res = await axiosInstance.get<{ department: Department }>(`${API_BASE}/${id}`);
             return res.data.department;
         } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || err.message);
@@ -82,7 +84,9 @@ export const fetchDepartmentById = createAsyncThunk<
     }
 );
 
-// Create department
+/**
+ * Create department
+ */
 export const createDepartment = createAsyncThunk<
     Department,
     CreateDepartmentParams,
@@ -91,13 +95,10 @@ export const createDepartment = createAsyncThunk<
     'adminDepartment/createDepartment',
     async ({ name }, { rejectWithValue }) => {
         try {
-            const token = localStorage.getItem('yareadmintoken');
-            const res = await axios.post(
+            // Use axiosInstance
+            const res = await axiosInstance.post<{ department: Department }>(
                 API_BASE,
-                { name },
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
+                { name }
             );
             return res.data.department;
         } catch (err: any) {
@@ -106,7 +107,9 @@ export const createDepartment = createAsyncThunk<
     }
 );
 
-// Update department
+/**
+ * Update department
+ */
 export const updateDepartment = createAsyncThunk<
     Department,
     UpdateDepartmentParams,
@@ -115,13 +118,10 @@ export const updateDepartment = createAsyncThunk<
     'adminDepartment/updateDepartment',
     async ({ id, name, courseIds }, { rejectWithValue }) => {
         try {
-            const token = localStorage.getItem('yareadmintoken');
-            const res = await axios.put(
+            // Use axiosInstance
+            const res = await axiosInstance.put<{ department: Department }>(
                 `${API_BASE}/${id}`,
-                { name, courseIds },
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
+                { name, courseIds }
             );
             return res.data.department;
         } catch (err: any) {
@@ -130,7 +130,9 @@ export const updateDepartment = createAsyncThunk<
     }
 );
 
-// Delete department
+/**
+ * Delete department
+ */
 export const deleteDepartment = createAsyncThunk<
     DeleteDepartmentResult,
     string,
@@ -139,10 +141,8 @@ export const deleteDepartment = createAsyncThunk<
     'adminDepartment/deleteDepartment',
     async (id, { rejectWithValue }) => {
         try {
-            const token = localStorage.getItem('yareadmintoken');
-            const res = await axios.delete(`${API_BASE}/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            // Use axiosInstance
+            const res = await axiosInstance.delete<{ message: string }>(`${API_BASE}/${id}`);
             return { id, message: res.data.message };
         } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || err.message);

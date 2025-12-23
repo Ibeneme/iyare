@@ -1,13 +1,13 @@
 // src/store/api/accountsSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import axiosInstance from '../axiosInstance';
+import axiosInstance from '../axiosInstance'; // Centralized API client
 
 interface User {
     _id: string;
     firstName: string;
     lastName: string;
     email?: string;
-    [key: string]: any;
+    [key: string]: any; // Allows for dynamic user properties (e.g., role, children, etc.)
 }
 
 interface AccountsState {
@@ -26,8 +26,15 @@ const initialState: AccountsState = {
 
 // -------------------- ASYNC THUNKS --------------------
 
-// GET user details
-export const fetchUser = createAsyncThunk(
+/**
+ * GET user details of the currently authenticated user.
+ * Assumes axiosInstance handles the Authorization token via interceptors.
+ */
+export const fetchUser = createAsyncThunk<
+    any, // Expected fulfilled payload: { userType: string, data: User[] }
+    void,
+    { rejectValue: string }
+>(
     'accounts/fetchUser',
     async (_, { rejectWithValue }) => {
         try {
@@ -39,8 +46,15 @@ export const fetchUser = createAsyncThunk(
     }
 );
 
-// UPDATE user details
-export const updateUser = createAsyncThunk(
+/**
+ * UPDATE user details for the currently authenticated user.
+ * Assumes axiosInstance handles the Authorization token.
+ */
+export const updateUser = createAsyncThunk<
+    any, // Expected fulfilled payload: { userType: string, data: User }
+    Partial<User>, // Data to update
+    { rejectValue: string }
+>(
     'accounts/updateUser',
     async (updateData: Partial<User>, { rejectWithValue }) => {
         try {
@@ -57,6 +71,9 @@ const accountsSlice = createSlice({
     name: 'accounts',
     initialState,
     reducers: {
+        /**
+         * Clears all non-initial state data (useful for logout).
+         */
         clearAccountsState: (state) => {
             state.userType = null;
             state.data = [];
@@ -72,6 +89,7 @@ const accountsSlice = createSlice({
         });
         builder.addCase(fetchUser.fulfilled, (state, action: PayloadAction<any>) => {
             state.loading = false;
+            // Assuming the payload structure is { userType: string, data: User[] }
             state.userType = action.payload.userType;
             state.data = action.payload.data;
         });
@@ -87,8 +105,10 @@ const accountsSlice = createSlice({
         });
         builder.addCase(updateUser.fulfilled, (state, action: PayloadAction<any>) => {
             state.loading = false;
+            // Assuming the payload structure is { userType: string, data: User }
             state.userType = action.payload.userType;
-            state.data = [action.payload.data]; // updated user returned as array for consistency
+            // Store the updated single user object inside the 'data' array for consistency
+            state.data = Array.isArray(action.payload.data) ? action.payload.data : [action.payload.data];
         });
         builder.addCase(updateUser.rejected, (state, action: PayloadAction<any>) => {
             state.loading = false;

@@ -407,7 +407,32 @@ export default function ClassCalendar() {
                     }}
                     className="p-4 bg-gray-50 rounded-lg border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center hover:bg-green-100 transition duration-150 cursor-pointer"
                   >
-                    <div className="mb-2 md:mb-0 md:w-1/3">
+                    <div
+                      className="mb-2 md:mb-0 md:w-1/3"
+                      onClick={() => {
+                        console.log(cls, "cls");
+
+                        const storedUser = JSON.parse(
+                          localStorage.getItem("user") || "{}"
+                        );
+
+                        if (!storedUser?._id) {
+                          console.error("User not found in localStorage");
+                          return;
+                        }
+
+                        const classId = cls._id;
+                        const classTitle = encodeURIComponent(cls.title);
+
+                        navigate(`/webrtc/${classId}/${classTitle}`);
+                      }}
+                      disabled={status === "finished"}
+                      className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg font-medium transition text-sm ${
+                        status === "finished"
+                          ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                          : "bg-gray-700 text-white hover:bg-gray-800"
+                      }`}
+                    >
                       <div className="flex items-center gap-2 text-xl font-extrabold text-gray-800">
                         <Clock className="w-5 h-5 text-green-500" />
                         {cls.time}

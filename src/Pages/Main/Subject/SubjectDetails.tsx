@@ -189,7 +189,7 @@ export default function SubjectDetails() {
 
     dispatch(fetchSubjectById(id))
       .unwrap()
-      .then((data: RawSubject) => {
+      .then((data: any) => {
         setSubject(data);
         setSubjectLoading(false);
       })

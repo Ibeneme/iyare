@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import axios from 'axios';
-import { BASE_URL } from '../baseurl';
+// --- Change 1: Import the centralized axios instance ---
+import axiosInstance from '../axiosInstance';
+
+// --- Removed imports: axios, BASE_URL ---
 
 export interface StudentChild {
     _id: string;
@@ -38,8 +40,6 @@ export interface StudentChild {
         createdAt?: Date | string;
         updatedAt?: Date | string;
     }
-
-    // Add any other fields as needed
 }
 
 
@@ -59,32 +59,23 @@ const initialState: ParentChildrenState = {
     children: [],
 };
 
-// Helper to get token
-const getToken = () => {
-    try {
-        return localStorage.getItem("token");
-    } catch (err) {
-        console.error("Token retrieval error:", err);
-        return null;
-    }
-};
+// --- Removed: getToken helper function ---
 
-// --- Thunk to fetch children ---
+// API Path
+const API_CHILDREN_PATH = `/api/admin-classes/children/children`;
+
+
+// --- Thunk to fetch children (Refactored) ---
 export const fetchParentChildren = createAsyncThunk<
     { parentId: string; parentName: string; children: StudentChild[] },
     void,
     { rejectValue: string }
 >('parentChildren/fetchParentChildren', async (_, { rejectWithValue }) => {
     try {
-        const token = getToken();
-        if (!token) return rejectWithValue("No token found. Please log in.");
+        // Use axiosInstance: token and base URL are handled by interceptors
+        const response = await axiosInstance.get(API_CHILDREN_PATH);
 
-        const response = await axios.get(`${BASE_URL}/api/admin-classes/children/children`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-
+        // Assuming response.data structure matches the fulfilled type
         return response.data;
     } catch (err: any) {
         console.error("❌ API error:", err);

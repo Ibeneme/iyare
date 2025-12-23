@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import axiosInstance from "../axiosInstance";
+import axiosInstance from "../axiosInstance"; // Centralized API client
 
 // ======================
 // TYPES
@@ -8,7 +8,7 @@ export interface Grade {
     _id: string;
     title: string;
     description?: string;
-    subjectIds?: any[];
+    subjectIds?: any[]; // Array of subject IDs or possibly Subject objects
     createdAt?: string;
 }
 
@@ -22,7 +22,7 @@ export interface Subject {
 export interface GradeState {
     grades: Grade[];
     selectedGrade: Grade | null;
-    subjects: Subject[];
+    subjects: Subject[]; // Subjects associated with the selected grade
     loading: boolean;
     error: string | null;
 }
@@ -35,89 +35,98 @@ const initialState: GradeState = {
     error: null,
 };
 
-// DELETE GRADE
-export const deleteGrade = createAsyncThunk(
-    "grades/delete",
-    async (id: string, thunkAPI) => {
-        try {
-            const res = await axiosInstance.delete(`/api/admin/grades/${id}`);
-            return res.data.data; // deleted grade object
-        } catch (err: any) {
-            return thunkAPI.rejectWithValue("Failed to delete grade");
-        }
-    }
-);
+// ======================
+// ASYNC THUNKS (CRUD Operations)
+// ======================
 
-
-export const createGrade = createAsyncThunk(
-    "grades/create",
-    async (data: Partial<Grade>, thunkAPI) => {
-        try {
-            const res = await axiosInstance.post("/api/admin/grades", data);
-            return res.data.data;
-        } catch (err: any) {
-            return thunkAPI.rejectWithValue(
-                err.response?.data?.message || "Failed to create grade"
-            );
-        }
+// CREATE GRADE
+export const createGrade = createAsyncThunk<
+    Grade, // Return type
+    Partial<Grade>, // Argument type
+    { rejectValue: string }
+>("grades/create", async (data, thunkAPI) => {
+    try {
+        const res = await axiosInstance.post("/api/admin/grades", data);
+        return res.data.data;
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue(
+            err.response?.data?.message || "Failed to create grade"
+        );
     }
-);
+});
 
 // FETCH ALL GRADES
-export const fetchGrades = createAsyncThunk(
-    "grades/getAll",
-    async (_, thunkAPI) => {
-        try {
-            const res = await axiosInstance.get("/api/admin/grades");
-            return res.data.data;
-        } catch (err: any) {
-            return thunkAPI.rejectWithValue("Failed to fetch grades");
-        }
+export const fetchGrades = createAsyncThunk<
+    Grade[],
+    void,
+    { rejectValue: string }
+>("grades/getAll", async (_, thunkAPI) => {
+    try {
+        const res = await axiosInstance.get("/api/admin/grades");
+        return res.data.data; // Array of Grade objects
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue("Failed to fetch grades");
     }
-);
+});
 
 // FETCH SINGLE GRADE
-export const fetchGradeById = createAsyncThunk(
-    "grades/getById",
-    async (id: string, thunkAPI) => {
-        try {
-            const res = await axiosInstance.get(`/api/admin/grades/${id}`);
-            return res.data.data;
-        } catch (err: any) {
-            return thunkAPI.rejectWithValue("Failed to fetch grade");
-        }
+export const fetchGradeById = createAsyncThunk<
+    Grade,
+    string, // Grade ID
+    { rejectValue: string }
+>("grades/getById", async (id: string, thunkAPI) => {
+    try {
+        const res = await axiosInstance.get(`/api/admin/grades/${id}`);
+        return res.data.data; // Single Grade object
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue("Failed to fetch grade");
     }
-);
+});
+
+// UPDATE GRADE
+export const updateGrade = createAsyncThunk<
+    Grade, // Return type
+    { id: string; data: Partial<Grade> }, // Argument type
+    { rejectValue: string }
+>("grades/update", async ({ id, data }, thunkAPI) => {
+    try {
+        const res = await axiosInstance.put(`/api/admin/grades/${id}`, data);
+        return res.data.data; // updated grade object
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue(
+            err.response?.data?.message || "Failed to update grade"
+        );
+    }
+});
+
+// DELETE GRADE
+export const deleteGrade = createAsyncThunk<
+    Grade, // Return the deleted grade object to easily filter the state
+    string, // Grade ID
+    { rejectValue: string }
+>("grades/delete", async (id: string, thunkAPI) => {
+    try {
+        const res = await axiosInstance.delete(`/api/admin/grades/${id}`);
+        return res.data.data; // deleted grade object
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue("Failed to delete grade");
+    }
+});
 
 // FETCH SUBJECTS FOR A GRADE
-export const fetchSubjectsByGrade = createAsyncThunk(
-    "grades/getSubjects",
-    async (gradeId: string, thunkAPI) => {
-        try {
-            const res = await axiosInstance.get(`/api/grades/grades/subjects/${gradeId}`);
-            return res.data.data;
-        } catch (err: any) {
-            return thunkAPI.rejectWithValue("Failed to fetch subjects for grade");
-        }
+export const fetchSubjectsByGrade = createAsyncThunk<
+    Subject[],
+    string, // Grade ID
+    { rejectValue: string }
+>("grades/getSubjects", async (gradeId: string, thunkAPI) => {
+    try {
+        const res = await axiosInstance.get(`/api/grades/grades/subjects/${gradeId}`);
+        return res.data.data; // Array of Subject objects
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue("Failed to fetch subjects for grade");
     }
-);
+});
 
-export const updateGrade = createAsyncThunk(
-    "grades/update",
-    async (
-        { id, data }: { id: string; data: Partial<Grade> },
-        thunkAPI
-    ) => {
-        try {
-            const res = await axiosInstance.put(`/api/admin/grades/${id}`, data);
-            return res.data.data; // updated grade object
-        } catch (err: any) {
-            return thunkAPI.rejectWithValue(
-                err.response?.data?.message || "Failed to update grade"
-            );
-        }
-    }
-);
 
 // ======================
 // SLICE
@@ -133,6 +142,7 @@ const gradeSlice = createSlice({
             // CREATE GRADE
             .addCase(createGrade.pending, (state) => {
                 state.loading = true;
+                state.error = null;
             })
             .addCase(createGrade.fulfilled, (state, action: PayloadAction<Grade>) => {
                 state.loading = false;
@@ -146,6 +156,7 @@ const gradeSlice = createSlice({
             // GET ALL GRADES
             .addCase(fetchGrades.pending, (state) => {
                 state.loading = true;
+                state.error = null;
             })
             .addCase(fetchGrades.fulfilled, (state, action: PayloadAction<Grade[]>) => {
                 state.loading = false;
@@ -159,6 +170,7 @@ const gradeSlice = createSlice({
             // GET GRADE BY ID
             .addCase(fetchGradeById.pending, (state) => {
                 state.loading = true;
+                state.error = null;
             })
             .addCase(fetchGradeById.fulfilled, (state, action: PayloadAction<Grade>) => {
                 state.loading = false;
@@ -173,6 +185,7 @@ const gradeSlice = createSlice({
             // DELETE GRADE
             .addCase(deleteGrade.pending, (state) => {
                 state.loading = true;
+                state.error = null;
             })
             .addCase(deleteGrade.fulfilled, (state, action: PayloadAction<Grade>) => {
                 state.loading = false;
@@ -190,9 +203,11 @@ const gradeSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload as string;
             })
+
             // UPDATE GRADE
             .addCase(updateGrade.pending, (state) => {
                 state.loading = true;
+                state.error = null;
             })
             .addCase(updateGrade.fulfilled, (state, action: PayloadAction<Grade>) => {
                 state.loading = false;
@@ -211,9 +226,11 @@ const gradeSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload as string;
             })
+
             // GET SUBJECTS FOR GRADE
             .addCase(fetchSubjectsByGrade.pending, (state) => {
                 state.loading = true;
+                state.error = null;
             })
             .addCase(fetchSubjectsByGrade.fulfilled, (state, action: PayloadAction<Subject[]>) => {
                 state.loading = false;
