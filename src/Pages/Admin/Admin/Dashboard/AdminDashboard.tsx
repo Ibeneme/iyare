@@ -406,9 +406,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
     }
   };
 
-  /* ------------------------------------------------------------------ */
-  /* Render */
-  /* ------------------------------------------------------------------ */
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
       {isLoading ? (
@@ -420,7 +417,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
         </div>
       ) : (
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
               <div className="w-10 h-10 bg-green-700 rounded-full flex items-center justify-center text-yellow-300">
@@ -433,7 +429,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
             </p>
           </div>
 
-          {/* Filter Tabs */}
           <div className="flex flex-wrap gap-2 mb-6">
             {filterOptions[userType]?.map((f) => (
               <button
@@ -450,7 +445,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
             ))}
           </div>
 
-          {/* Add Button */}
           {userRole === "admin" &&
             (userType === "teacher" || userType === "admin") && (
               <button
@@ -462,7 +456,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
               </button>
             )}
 
-          {/* Table */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -549,23 +542,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
             </div>
           </div>
 
-          {/* ─────────────────────────────── ULTRA MODERN MODAL ─────────────────────────────── */}
-          {/* ──────────────────────── ULTRA MODERN FULL-SCREEN MODAL (NO ModalDropdown) ──────────────────────── */}
           {isModalOpen && userRole === "admin" && (
             <>
-              {/* Backdrop */}
               <div
                 className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
                 onClick={() => setIsModalOpen(false)}
               />
-
-              {/* Modal Container */}
               <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
                 <div
                   onClick={(e) => e.stopPropagation()}
                   className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl mx-auto my-8 overflow-hidden animate-in fade-in zoom-in duration-300"
                 >
-                  {/* Gradient Header */}
                   <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 px-8 py-6 text-white relative">
                     <button
                       onClick={() => setIsModalOpen(false)}
@@ -595,12 +582,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                     </p>
                   </div>
 
-                  {/* Form Content */}
                   <form
                     onSubmit={handleSubmitAll}
                     className="p-6 space-y-7 max-h-[75vh] overflow-y-auto"
                   >
-                    {/* ──────────────── Admin Only Fields ──────────────── */}
                     {userType === "admin" && (
                       <>
                         <div className="space-y-5">
@@ -723,12 +708,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                       </>
                     )}
 
-                    {/* ──────────────── Parent / Student / Teacher Fields ──────────────── */}
                     {["parent", "student", "teacher"].includes(userType) && (
                       <div className="space-y-8">
-                        {/* BASIC INFO */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {/* First Name */}
                           <div>
                             <label className="text-[11px] font-semibold text-gray-700 tracking-wider uppercase">
                               First Name
@@ -745,7 +727,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                             />
                           </div>
 
-                          {/* Last Name */}
                           <div>
                             <label className="text-[11px] font-semibold text-gray-700 tracking-wider uppercase">
                               Last Name
@@ -763,7 +744,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                           </div>
                         </div>
 
-                        {/* Email */}
                         <div>
                           <label className="text-[11px] font-semibold text-gray-700 tracking-wider uppercase">
                             Email Address
@@ -780,7 +760,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                           />
                         </div>
 
-                        {/* Phone Number */}
                         <div>
                           <label className="text-[11px] font-semibold text-gray-700 tracking-wider uppercase">
                             Phone Number
@@ -797,7 +776,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                           />
                         </div>
 
-                        {/* STUDENT → Parent Select */}
                         {userType === "student" && (
                           <div>
                             <label className="text-[11px] font-semibold text-gray-700 tracking-wider uppercase">
@@ -820,10 +798,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                           </div>
                         )}
 
-                        {/* TEACHER UI */}
                         {userType === "teacher" && (
                           <>
-                            {/* GRADES */}
                             <div>
                               <div className="flex items-center justify-between mb-4">
                                 <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
@@ -906,7 +882,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                               )}
                             </div>
 
-                            {/* SUBJECTS */}
                             {selectedGradeIds.length > 0 && (
                               <div className="space-y-5">
                                 <div className="flex items-center justify-between mb-3">
@@ -1000,7 +975,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                         )}
                       </div>
                     )}
-                    {/* Action Buttons */}
+
                     <div className="flex gap-4 pt-6 border-t border-gray-100">
                       <button
                         type="submit"
@@ -1023,22 +998,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
             </>
           )}
 
-          {/* ──────────────────────── GORGEOUS CONFIRMATION MODAL WITH BLUR & ANIMATION ──────────────────────── */}
           {confirmModal && (
             <>
-              {/* Backdrop with Blur */}
               <div
                 className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 transition-all duration-300"
                 onClick={() => setConfirmModal(null)}
               />
 
-              {/* Modal */}
               <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                 <div
                   onClick={(e) => e.stopPropagation()}
                   className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-300 ease-out"
                 >
-                  {/* Gradient Header */}
                   <div
                     className={`px-8 py-10 text-white text-center relative overflow-hidden
           ${
@@ -1068,7 +1039,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                       <br /> <br />
                     </div>
 
-                    {/* Decorative Wave */}
                     <svg
                       className="absolute bottom-0 left-0 w-full"
                       viewBox="0 0 1440 320"
@@ -1081,7 +1051,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                     </svg>
                   </div>
 
-                  {/* Body */}
                   <div className="p-8 bg-white">
                     <div className="text-center mb-8">
                       <p className="text-gray-700 text-lg leading-relaxed">
@@ -1104,7 +1073,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                       </p>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex gap-4">
                       <button
                         onClick={() => setConfirmModal(null)}

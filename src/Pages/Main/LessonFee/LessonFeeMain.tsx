@@ -114,25 +114,38 @@ export default function LessonFeesMain() {
       : "bg-red-100 text-red-700",
   });
 
-  // Search filter
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return lessonFees;
+    if (!searchQuery.trim()) {
+      return [...lessonFees].reverse();
+    }
 
     const q = searchQuery.toLowerCase();
-    return lessonFees.filter((fee: any) => {
-      const { name } = getStudentDisplay(fee.studentId);
-      const plan = fee.planName?.toLowerCase() || "";
-      const ref = fee.reference?.toLowerCase() || "";
-      const amount = fee.amount.toString();
 
-      return (
-        name.toLowerCase().includes(q) ||
-        plan.includes(q) ||
-        ref.includes(q) ||
-        amount.includes(q)
-      );
-    });
+    return lessonFees
+      .filter((fee: any) => {
+        const { name } = getStudentDisplay(fee.studentId);
+        const plan = fee.planName?.toLowerCase() || "";
+        const ref = fee.reference?.toLowerCase() || "";
+        const amount = fee.amount.toString();
+
+        return (
+          name.toLowerCase().includes(q) ||
+          plan.includes(q) ||
+          ref.includes(q) ||
+          amount.includes(q)
+        );
+      })
+      .reverse();
   }, [lessonFees, searchQuery]);
+
+  const userType = (() => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      return user?.userType;
+    } catch {
+      return null;
+    }
+  })();
 
   return (
     <>
@@ -307,12 +320,14 @@ export default function LessonFeesMain() {
                           </p>
                         )}
 
-                        <button
-                          onClick={() => renew(fee)}
-                          className="mt-5 w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-xl hover:from-blue-700 hover:to-blue-800 transition"
-                        >
-                          Renew Plan
-                        </button>
+                        {(userType === "student" || userType === "teacher") && (
+                          <button
+                            onClick={() => renew(fee)}
+                            className="mt-5 w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-xl hover:from-blue-700 hover:to-blue-800 transition"
+                          >
+                            Renew Plan
+                          </button>
+                        )}
                       </motion.div>
                     );
                   })}

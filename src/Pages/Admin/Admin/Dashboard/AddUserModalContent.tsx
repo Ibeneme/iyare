@@ -26,7 +26,6 @@ const AddUserModalContent: React.FC<AddUserModalContentProps> = ({
     : "";
 
   console.log(departments, userType, "departmentss");
-  // New state for department name and description
   const [newDepartment, setNewDepartment] = useState({
     name: "",
     description: "",

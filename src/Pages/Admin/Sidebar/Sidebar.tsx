@@ -37,7 +37,6 @@ const Sidebar: React.FC = () => {
   const location = useLocation();
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  // Get role from localStorage
   useEffect(() => {
     const role = localStorage.getItem("userType");
     setUserRole(role || null);
@@ -47,12 +46,10 @@ const Sidebar: React.FC = () => {
     setActiveCollapse((prev) => (prev === title ? null : title));
   };
 
-  // Dynamic gradient & bg based on role
   const getRoleStyles = () => {
     switch (userRole) {
       case "student":
         return {
-          //  bg: "bg-[#023009]",
           bg: "bg-gray-900",
           border: "border-[#FFD000]",
           textHover: "hover:text-[#FFD000]",
@@ -62,7 +59,6 @@ const Sidebar: React.FC = () => {
         };
       case "teacher":
         return {
-          // bg: "bg-[#023009]",
           bg: "bg-gray-900",
           border: "border-[#FFD000]",
           textHover: "hover:text-[#FFD000]",
@@ -78,17 +74,9 @@ const Sidebar: React.FC = () => {
           activeText: "text-[#FFD000]",
           activeShadow: "shadow-[#FFD000]",
           iconActive: "text-[#FFD000]",
-
-          // bg: "bg-[#350854]",
-          // border: "border-[#FFD000]",
-          // textHover: "hover:text-[#FFD000]",
-          // activeText: "text-[#FFD000]",
-          // activeShadow: "shadow-[#FFD000]",
-          // iconActive: "text-[#FFD000]",
         };
       case "admins":
         return {
-          //  bg: "bg-[#121212]",
           border: "border-[#FFD000]",
           textHover: "hover:text-[#FFD000]",
           activeText: "text-[#FFD000]",
@@ -145,33 +133,6 @@ const Sidebar: React.FC = () => {
       type: "link",
       allowedRoles: ["parent", "student", "admin"],
     },
-
-    // { grade-manager
-    //   title: "Classes",
-    //   icon: LayoutDashboard,
-    //   path: "/classes",
-    //   type: "collapsible",
-    //   allowedRoles: ["admin", "teacher", "student", "parent"],
-    //   children: [
-    //     {
-    //       title: "Your Classes",
-    //       icon: ArrowUpCircle,
-    //       path: "/classes/dashboard/all",
-    //       type: "link",
-    //       allowedRoles: ["teacher", "student", "parent"],
-    //     },
-    //     {
-    //       title: "All Classes",
-    //       icon: ClipboardList,
-    //       path: "/classes/dashboard/all",
-    //       type: "link",
-    //       allowedRoles: ["admin"],
-    //     },
-    //   ],
-    // },
-
-    //timetable
-
     {
       title: "Updates",
       icon: ClipboardList,
@@ -300,14 +261,6 @@ const Sidebar: React.FC = () => {
         },
       ],
     },
-    // {
-    //   title: "Awards",
-    //   icon: Trophy,
-    //   path: "/awards",
-    //   type: "link",
-    //   allowedRoles: ["admin", "teacher", "student"],
-    // },
-
     {
       title: "Reports",
       icon: FileText,
@@ -317,16 +270,16 @@ const Sidebar: React.FC = () => {
     },
 
     {
-      title: "Settings",
-      icon: Settings,
-      path: "/settings",
+      title: "Guide",
+      icon: FaGuilded,
+      path: "/guide-parents",
       type: "link",
       allowedRoles: ["admin", "teacher", "student", "parent"],
     },
     {
-      title: "Guide",
-      icon: FaGuilded,
-      path: "/guide-parents",
+      title: "Settings",
+      icon: Settings,
+      path: "/settings",
       type: "link",
       allowedRoles: ["admin", "teacher", "student", "parent"],
     },
@@ -354,19 +307,12 @@ const Sidebar: React.FC = () => {
 
   return (
     <div className="flex">
-      {/* Desktop Sidebar */}
       <motion.div
         initial={{ x: -300 }}
         animate={{ x: 0 }}
         className={`hidden md:flex fixed inset-y-0 left-0 w-72 ${styles.bg} backdrop-blur-xl border-r ${styles.border} text-white flex-col gap-2 p-5  z-50`}
       >
         <div className="mb-6  z-20">
-          {/* <h1 className="text-[24px] font-bold text-[#FFD000] p-2">
-            Hi,{" "}
-            {userRole
-              ? userRole.charAt(0).toUpperCase() + userRole.slice(1)
-              : ""}
-          </h1> */}
           <div className="p-3 bg-[#FFD00021] rounded-[64px] flex items-center justify-center gap-2">
             <BookOpen className="text-[#FFD000] w-4 h-4" />
             <h1 className="text-[14px] font-bold text-[#FFD000]">
@@ -465,7 +411,6 @@ const Sidebar: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* Mobile Bottom Nav */}
       <BottomNav
         filteredSidebarData={filteredSidebarData}
         location={location}
@@ -475,7 +420,6 @@ const Sidebar: React.FC = () => {
   );
 };
 
-// Mobile Bottom Nav with Role-Based Colors
 export const BottomNav: React.FC<{
   filteredSidebarData: SidebarItem[];
   location: ReturnType<typeof useLocation>;
@@ -511,7 +455,6 @@ export const BottomNav: React.FC<{
 
   return (
     <>
-      {/* Dashboard Button */}
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsModalOpen((prev) => !prev)}
@@ -524,7 +467,6 @@ export const BottomNav: React.FC<{
         )}
       </motion.button>
 
-      {/* Modal */}
       <AnimatePresence>
         {isModalOpen && (
           <>

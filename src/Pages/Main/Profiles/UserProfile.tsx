@@ -139,7 +139,7 @@ Thank you.
   };
 
   const goToSubject = (subjectId: string) => {
-    navigate(`/c/${subjectId}`);
+    navigate(`/subjects/${subjectId}`);
   };
 
   useEffect(() => {
