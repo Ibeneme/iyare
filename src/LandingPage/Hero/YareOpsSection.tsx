@@ -1,5 +1,5 @@
 import React from "react";
-import { motion , Variants} from "framer-motion";
+import { motion } from "framer-motion";
 import { Zap, Sparkles, ShieldCheck } from "lucide-react";
 
 const YareOpsSection: React.FC = () => {
@@ -8,14 +8,6 @@ const YareOpsSection: React.FC = () => {
     animate: { transition: { staggerChildren: 0.2 } },
   };
 
-  const letterVars: Variants = {
-    initial: { opacity: 0, x: -20 },
-    visible: { 
-      opacity: 1, 
-      x: 0, 
-      transition: { duration: 0.6, ease: "easeOut" } 
-    }
-  };
   return (
     <section className="relative bg-[#023009] py-24 md:py-32 overflow-hidden selection:bg-[#ffd000] selection:text-[#023009]">
       {/* Dynamic Background Elements */}
@@ -65,7 +57,6 @@ const YareOpsSection: React.FC = () => {
             ].map((item, i) => (
               <motion.h2
                 key={i}
-                variants={letterVars}
                 className="text-6xl md:text-8xl font-black text-white tracking-tighter leading-none flex items-baseline gap-4 italic group"
               >
                 <span className="text-[#ffd000] drop-shadow-[0_0_15px_rgba(255,208,0,0.3)] group-hover:scale-110 transition-transform inline-block">
