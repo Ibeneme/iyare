@@ -200,7 +200,7 @@ export default function UserProfile() {
               </p>
             </div>
 
-            {type === "admin" && (
+            {type === "parent" && (
               <div className="flex gap-3">
                 <button
                   onClick={() => navigate(`/user-updates`)}
