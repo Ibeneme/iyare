@@ -1,15 +1,14 @@
-// src/pages/LessonFeesMain.tsx
 import { useEffect, useState, useMemo } from "react";
 import {
   Loader2,
   Search,
   CreditCard,
   Copy,
-  Check,
   AlertCircle,
   Circle,
-  Clock,
   UserX,
+  ChevronRight,
+  TrendingUp,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -47,29 +46,25 @@ export default function LessonFeesMain() {
   useEffect(() => {
     dispatch(fetchLessonFeesByUser());
   }, [dispatch]);
-
-  // Helper: Get student name safely
+  console.log(copiedRef);
   const getStudentDisplay = (
     student: StudentInfo | string | null | undefined
   ) => {
     if (!student || student === null) {
-      return { name: "Student deleted or doesn't exist", deleted: true };
+      return { name: "Record Deleted", deleted: true };
     }
     if (typeof student === "string") {
       return { name: "Unknown Student", deleted: false };
     }
-
     const fullName = `${student.firstName} ${student.lastName}`.trim();
-    return {
-      name: fullName || "Unknown Student",
-      deleted: false,
-    };
+    return { name: fullName || "Unknown Student", deleted: false };
   };
 
   const formatNGN = (amt: number) =>
     new Intl.NumberFormat("en-NG", {
       style: "currency",
       currency: "NGN",
+      minimumFractionDigits: 0,
     }).format(amt);
 
   const formatDate = (d: string) =>
@@ -98,7 +93,7 @@ export default function LessonFeesMain() {
     const userType = localStorage.getItem("userType");
     if (userType === "admin") {
       if (!fee?.studentId) {
-        toast.error("Cannot view details – student no longer exists");
+        toast.error("Student no longer exists");
       } else {
         navigate(`/user-details/student/${fee?.studentId?._id}`);
       }
@@ -108,31 +103,23 @@ export default function LessonFeesMain() {
   };
 
   const getStatusBadge = (paid: PaidInfo) => ({
-    text: paid.isPaid ? "Paid" : "Not Paid",
+    text: paid.isPaid ? "Paid" : "Pending",
     color: paid.isPaid
-      ? "bg-green-100 text-green-700"
-      : "bg-red-100 text-red-700",
+      ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+      : "bg-amber-100 text-amber-700 border-amber-200",
   });
 
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return [...lessonFees].reverse();
-    }
-
+    if (!searchQuery.trim()) return [...lessonFees].reverse();
     const q = searchQuery.toLowerCase();
-
     return lessonFees
       .filter((fee: any) => {
         const { name } = getStudentDisplay(fee.studentId);
-        const plan = fee.planName?.toLowerCase() || "";
-        const ref = fee.reference?.toLowerCase() || "";
-        const amount = fee.amount.toString();
-
         return (
           name.toLowerCase().includes(q) ||
-          plan.includes(q) ||
-          ref.includes(q) ||
-          amount.includes(q)
+          (fee.planName?.toLowerCase() || "").includes(q) ||
+          (fee.reference?.toLowerCase() || "").includes(q) ||
+          fee.amount.toString().includes(q)
         );
       })
       .reverse();
@@ -148,312 +135,323 @@ export default function LessonFeesMain() {
   })();
 
   return (
-    <>
-      {/* Fullscreen Loader */}
+    <div className="min-h-screen bg-[#fcfdfc] font-sans">
       <AnimatePresence>
         {loading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="min-h-[100%] py-48  bg-white flex flex-col items-center justify-center gap-6 z-50"
+            className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[100]"
           >
-            <Loader2 className="w-16 h-16 animate-spin text-gray-700" />
-            <p className="text-lg font-medium text-gray-700">
-              Loading lesson fees...
+            <Loader2 className="w-12 h-12 animate-spin text-[#064e3b] mb-4" />
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#064e3b]">
+              Auditing Financials...
             </p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
       {!loading && (
-        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-          <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="mb-8 mt-12">
-              <div className="bg-yellow-200 rounded-full p-4 mb-4 inline-flex">
-                <CreditCard className="w-8 h-8 text-yellow-900" />
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
+          {/* Header Card */}
+          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100  mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mt-10">
+            <div>
+              <div className="bg-yellow-400 p-3 rounded-2xl inline-flex items-center justify-center  shadow-yellow-400/20 mb-4">
+                <TrendingUp className="w-6 h-6 text-[#064e3b]" />
               </div>
-              <h1 className="text-4xl font-black text-gray-900">Lesson Fees</h1>
-              <p className="text-lg text-gray-600 mt-2">
-                View payment history and renew lesson access. All prices in
-                Naira.
+              <h1 className="text-4xl md:text-5xl font-black text-[#064e3b] tracking-tighter">
+                Finance & Billing
+              </h1>
+              <p className="text-slate-500 font-bold mt-2">
+                Manage lesson access and review transaction history.
               </p>
             </div>
-
-            {/* Search */}
-            <div className="mb-8">
-              <div className="relative max-w-md">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
-                  type="text"
-                  placeholder="Search by name, plan, reference, amount..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:border-yellow-400 focus:outline-none transition"
-                />
-              </div>
-            </div>
-
-            {/* Error State */}
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-5 bg-red-50 border-2 border-red-300 rounded-xl flex items-start gap-3 text-red-700"
-              >
-                <AlertCircle className="w-6 h-6 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-bold">Failed to load fees</p>
-                  <p className="text-sm">{error}</p>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="text-sm underline font-medium mt-2 hover:text-red-800"
-                  >
-                    Retry
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Empty State */}
-            {filtered.length === 0 ? (
-              <div className="text-center py-24">
-                <CreditCard className="w-28 h-28 text-gray-300 mx-auto mb-8" />
-                <h2 className="text-3xl font-black text-gray-900 mb-4">
-                  {searchQuery ? "No Results Found" : "No Lesson Fees Yet"}
-                </h2>
-                <p className="text-lg text-gray-600 max-w-md mx-auto">
-                  {searchQuery
-                    ? `No records match "${searchQuery}"`
-                    : "You haven't purchased any lesson plans yet."}
+            <div className="flex gap-4">
+              <div className="bg-slate-50 px-6 py-4 rounded-2xl border border-slate-100">
+                <p className="text-[10px] font-black uppercase text-slate-400 mb-1">
+                  Total Records
+                </p>
+                <p className="text-2xl font-black text-[#064e3b]">
+                  {filtered.length}
                 </p>
               </div>
-            ) : (
-              <>
-                {/* Mobile Cards (unchanged) */}
-                <div className="md:hidden space-y-4">
-                  {filtered?.map((fee: any) => {
-                    const { name: studentName, deleted } = getStudentDisplay(
-                      fee.studentId
-                    );
-                    const badge = getStatusBadge(fee.paid);
-                    const days = daysLeft(fee.expiresAt);
-                    const expiringSoon = days !== null && days <= 7 && days > 0;
+            </div>
+          </div>
 
-                    return (
-                      <motion.div
-                        key={fee._id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-white rounded-2xl border-2 border-gray-200 p-6"
-                      >
-                        {/* ... mobile card content (unchanged) ... */}
-                        <div className="flex justify-between items-start mb-4">
-                          <span
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold ${badge.color}`}
+          {/* Search Toolbar */}
+          <div className="mb-10 flex flex-col md:flex-row gap-4 items-center">
+            <div className="relative w-full max-w-xl group">
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-[#064e3b] transition-colors" />
+              <input
+                type="text"
+                placeholder="Search by student, reference, or amount..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-14 pr-6 py-5 rounded-[2rem] border border-slate-200 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-400/10 outline-none text-lg font-bold transition-all bg-white"
+              />
+            </div>
+            {error && (
+              <div className="flex items-center gap-2 text-red-600 font-bold text-sm bg-red-50 px-6 py-4 rounded-[2rem] border border-red-100">
+                <AlertCircle size={18} /> Error Loading Data
+              </div>
+            )}
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="text-center py-24 bg-white rounded-[2.5rem] border border-dashed border-slate-200">
+              <CreditCard className="w-20 h-20 text-slate-200 mx-auto mb-6" />
+              <h2 className="text-2xl font-black text-[#064e3b] tracking-tight">
+                No Transactions Found
+              </h2>
+              <p className="text-slate-400 font-bold mt-2">
+                No lesson fee records match your current criteria.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Desktop Table View */}
+              <div className="hidden md:block bg-white rounded-[2.5rem] border border-slate-100  overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50/50 border-b border-slate-100">
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          Student Entity
+                        </th>
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          Subscription Plan
+                        </th>
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">
+                          Amount (NGN)
+                        </th>
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">
+                          Status
+                        </th>
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          Expires
+                        </th>
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {filtered.map((fee: any) => {
+                        const { name: studentName, deleted } =
+                          getStudentDisplay(fee.studentId);
+                        const badge = getStatusBadge(fee.paid);
+                        const days = daysLeft(fee.expiresAt);
+                        const expiringSoon =
+                          days !== null && days <= 7 && days > 0;
+
+                        return (
+                          <motion.tr
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            key={fee._id}
+                            className="hover:bg-slate-50/80 transition-colors group"
                           >
-                            {badge.text}
-                          </span>
-                          {fee.paid.isPaid && (
-                            <span className="text-xs text-gray-500">
-                              via {fee.paid.paymentService}
-                            </span>
+                            <td className="px-8 py-6">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`p-2.5 rounded-xl ${
+                                    deleted
+                                      ? "bg-red-50 text-red-500"
+                                      : "bg-emerald-50 text-[#064e3b]"
+                                  }`}
+                                >
+                                  {deleted ? (
+                                    <UserX size={18} />
+                                  ) : (
+                                    <Circle
+                                      size={10}
+                                      className="fill-current"
+                                    />
+                                  )}
+                                </div>
+                                <div>
+                                  <p
+                                    className={`font-black tracking-tight ${
+                                      deleted
+                                        ? "text-red-600"
+                                        : "text-slate-900"
+                                    }`}
+                                  >
+                                    {studentName}
+                                  </p>
+                                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-1">
+                                    REF: {fee.reference?.substring(0, 8)}...
+                                    <button
+                                      onClick={() => copyRef(fee.reference)}
+                                      className="hover:text-[#064e3b] ml-1"
+                                    >
+                                      <Copy size={10} />
+                                    </button>
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-8 py-6">
+                              <p className="font-bold text-slate-700">
+                                {fee.planName}
+                              </p>
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                {fee.duration} Day Window
+                              </p>
+                            </td>
+                            <td className="px-8 py-6 text-center">
+                              <span className="text-xl font-black text-[#064e3b]">
+                                {formatNGN(fee.amount)}
+                              </span>
+                            </td>
+                            <td className="px-8 py-6 text-center">
+                              <span
+                                className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${badge.color}`}
+                              >
+                                {badge.text}
+                              </span>
+                            </td>
+                            <td className="px-8 py-6">
+                              {fee.expiresAt ? (
+                                <div>
+                                  <p
+                                    className={`font-bold text-sm ${
+                                      expiringSoon
+                                        ? "text-red-600"
+                                        : "text-slate-700"
+                                    }`}
+                                  >
+                                    {formatDate(fee.expiresAt)}
+                                  </p>
+                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                    {days} Days Remaining
+                                  </p>
+                                </div>
+                              ) : (
+                                <span className="text-slate-300">—</span>
+                              )}
+                            </td>
+                            <td className="px-8 py-6">
+                              <button
+                                onClick={() => renew(fee)}
+                                className="p-3 bg-slate-100 text-[#064e3b] rounded-xl hover:bg-yellow-400 transition-all group/btn"
+                              >
+                                <ChevronRight
+                                  size={18}
+                                  className="group-hover/btn:translate-x-1 transition-transform"
+                                />
+                              </button>
+                            </td>
+                          </motion.tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-4">
+                {filtered.map((fee: any) => {
+                  const { name: studentName, deleted } = getStudentDisplay(
+                    fee.studentId
+                  );
+                  const badge = getStatusBadge(fee.paid);
+                  const days = daysLeft(fee.expiresAt);
+
+                  return (
+                    <motion.div
+                      key={fee._id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-white rounded-[2rem] border border-slate-100 p-6 shadow-sm"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <span
+                          className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${badge.color}`}
+                        >
+                          {badge.text}
+                        </span>
+                        <div className="text-right">
+                          <p className="text-[10px] font-black text-slate-300 uppercase">
+                            Amount
+                          </p>
+                          <p className="text-lg font-black text-[#064e3b]">
+                            {formatNGN(fee.amount)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 mb-4">
+                        <div
+                          className={`p-3 rounded-2xl ${
+                            deleted
+                              ? "bg-red-50 text-red-500"
+                              : "bg-emerald-50 text-[#064e3b]"
+                          }`}
+                        >
+                          {deleted ? (
+                            <UserX size={20} />
+                          ) : (
+                            <CreditCard size={20} />
                           )}
                         </div>
-
-                        <div className="flex items-center gap-3">
-                          {deleted && (
-                            <UserX className="w-6 h-6 text-red-500" />
-                          )}
+                        <div>
                           <h3
-                            className={`text-xl font-black ${
-                              deleted ? "text-red-600" : "text-gray-900"
+                            className={`font-black ${
+                              deleted ? "text-red-600" : "text-slate-900"
                             }`}
                           >
                             {studentName}
                           </h3>
-                        </div>
-
-                        <p className="text-sm text-gray-600 mt-1">
-                          {fee.planName} • {fee.duration} days plan
-                        </p>
-
-                        <div className="mt-4 flex items-center justify-between">
-                          <p className="text-2xl font-black text-gray-900">
-                            {formatNGN(fee.amount)}
+                          <p className="text-xs font-bold text-slate-500">
+                            {fee.planName}
                           </p>
-
-                          {fee.reference && (
-                            <button
-                              onClick={() => copyRef(fee.reference)}
-                              className="flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 transition"
-                            >
-                              {copiedRef === fee.reference
-                                ? "Copied"
-                                : "Copy Ref"}
-                              {copiedRef === fee.reference ? (
-                                <Check className="w-4 h-4 text-green-600" />
-                              ) : (
-                                <Copy className="w-4 h-4" />
-                              )}
-                            </button>
-                          )}
                         </div>
+                      </div>
 
-                        {fee.paid.timestamp && (
-                          <p className="text-xs text-gray-500 mt-3">
-                            Paid on {formatDate(fee.paid.timestamp)}
+                      <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase mb-1">
+                            Expires
                           </p>
-                        )}
-
-                        {fee.expiresAt && (
+                          <p className="text-xs font-black text-slate-700">
+                            {fee.expiresAt ? formatDate(fee.expiresAt) : "N/A"}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] font-black text-slate-400 uppercase mb-1">
+                            Remaining
+                          </p>
                           <p
-                            className={`text-sm font-medium mt-3 flex items-center gap-2 ${
-                              expiringSoon ? "text-red-600" : "text-gray-600"
+                            className={`text-xs font-black ${
+                              days !== null && days <= 7
+                                ? "text-red-600"
+                                : "text-slate-700"
                             }`}
                           >
-                            <Clock className="w-4 h-4" />
-                            Expires in {days} day{days === 1 ? "" : "s"} •{" "}
-                            {formatDate(fee.expiresAt)}
+                            {days !== null ? `${days} Days` : "N/A"}
                           </p>
-                        )}
+                        </div>
+                      </div>
 
-                        {(userType === "student" || userType === "teacher") && (
-                          <button
-                            onClick={() => renew(fee)}
-                            className="mt-5 w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-xl hover:from-blue-700 hover:to-blue-800 transition"
-                          >
-                            Renew Plan
-                          </button>
-                        )}
-                      </motion.div>
-                    );
-                  })}
-                </div>
-
-                {/* Desktop Table – now horizontally scrollable */}
-                <div className="hidden md:block bg-white rounded-2xl border border-gray-200 overflow-hidden">
-                  {/* Wrapper with horizontal scroll */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[1200px]">
-                      {" "}
-                      {/* min-w ensures it never collapses */}
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-4 text-left font-bold text-gray-700">
-                            Student
-                          </th>
-                          <th className="px-6 py-4 text-left font-bold text-gray-700">
-                            Plan
-                          </th>
-                          <th className="px-6 py-4 text-left font-bold text-gray-700">
-                            Amount
-                          </th>
-                          <th className="px-6 py-4 text-left font-bold text-gray-700">
-                            Status
-                          </th>
-                          <th className="px-6 py-4 text-left font-bold text-gray-700">
-                            Paid On
-                          </th>
-                          <th className="px-6 py-4 text-left font-bold text-gray-700">
-                            Expires
-                          </th>
-                          <th className="px-6 py-4 text-left font-bold text-gray-700">
-                            Reference
-                          </th>
-                          <th className="px-6 py-4 text-left font-bold text-gray-700">
-                            Action
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {filtered.map((fee: any) => {
-                          const { name: studentName, deleted } =
-                            getStudentDisplay(fee.studentId);
-                          const badge = getStatusBadge(fee.paid);
-                          const days = daysLeft(fee.expiresAt);
-                          const expiringSoon =
-                            days !== null && days <= 7 && days > 0;
-
-                          return (
-                            <tr
-                              key={fee._id}
-                              className="hover:bg-gray-50 transition"
-                            >
-                              <td className="px-6 py-4">
-                                <div className="flex items-center gap-2">
-                                  {deleted && (
-                                    <UserX className="w-5 h-5 text-red-500" />
-                                  )}
-                                  <span
-                                    className={`font-medium ${
-                                      deleted ? "text-red-600" : "text-gray-900"
-                                    }`}
-                                  >
-                                    {studentName}
-                                  </span>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 text-gray-700">
-                                {fee.planName} ({fee.duration} days)
-                              </td>
-                              <td className="px-6 py-4 font-bold text-gray-900">
-                                {formatNGN(fee.amount)}
-                              </td>
-                              <td className="px-6 py-4">
-                                <span
-                                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${badge.color}`}
-                                >
-                                  <Circle className="w-3 h-3 fill-current" />
-                                  {badge.text}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-600">
-                                {fee.paid.timestamp
-                                  ? formatDate(fee.paid.timestamp)
-                                  : "—"}
-                              </td>
-                              <td className="px-6 py-4 text-sm">
-                                {fee.expiresAt ? (
-                                  <span
-                                    className={
-                                      expiringSoon
-                                        ? "text-red-600 font-medium"
-                                        : "text-gray-600"
-                                    }
-                                  >
-                                    {formatDate(fee.expiresAt)} ({days} day
-                                    {days === 1 ? "" : "s"})
-                                  </span>
-                                ) : (
-                                  "—"
-                                )}
-                              </td>
-                              <td className="px-6 py-4 font-mono text-xs text-gray-600">
-                                {fee.reference || "—"}
-                              </td>
-                              <td className="px-6 py-4">
-                                <button
-                                  onClick={() => renew(fee)}
-                                  className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition"
-                                >
-                                  View
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+                      {(userType === "student" || userType === "teacher") && (
+                        <button
+                          onClick={() => renew(fee)}
+                          className="mt-4 w-full py-4 bg-[#064e3b] text-yellow-400 font-black uppercase text-xs tracking-widest rounded-2xl shadow-emerald-900/10 active:scale-[0.98] transition-all"
+                        >
+                          Renew Session
+                        </button>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
-    </>
+    </div>
   );
 }

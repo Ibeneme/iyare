@@ -1,10 +1,8 @@
-// src/pages/SubjectDetails.tsx
 import { useEffect, useState, FormEvent, ChangeEvent } from "react";
 import {
   Loader2,
   ArrowLeft,
   AlertCircle,
-  BookOpen,
   Users,
   GraduationCap,
   Calendar,
@@ -44,7 +42,6 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { getUserType } from "../../../utils/userType";
 
-// Raw subject directly from the backend (before normalisation)
 interface RawSubject {
   _id: string;
   name: string;
@@ -54,33 +51,27 @@ interface RawSubject {
   createdAt: string;
   updatedAt: string;
   __v?: number;
-
-  // Populated references
   gradeLevel: Array<{
     _id: string;
     title: string;
     description?: string;
   }>;
-
   grades: Array<{
     _id: string;
     title: string;
     description?: string;
   }>;
-
   teachers: Array<{
     _id: string;
     firstName: string;
     lastName: string;
     email: string;
   }>;
-
   children: Array<{
     _id: string;
     firstName: string;
     lastName: string;
   }>;
-
   classes: Array<{
     _id: string;
     title: string;
@@ -115,23 +106,15 @@ const resourceIcons = {
   announcement: Megaphone,
 };
 
-const resourceColors = {
-  assignment: "bg-blue-100 text-blue-700",
-  note: "bg-purple-100 text-purple-700",
-  announcement: "bg-orange-100 text-orange-700",
-};
-
 export default function SubjectDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
-  /* ---------- Subject ---------- */
   const [subject, setSubject] = useState<RawSubject | null>(null);
   const [subjectLoading, setSubjectLoading] = useState(true);
   const [subjectError, setSubjectError] = useState<string | null>(null);
 
-  /* ---------- Classes ---------- */
   const [classes, setClasses] = useState<any[]>([]);
   const [classesLoading, setClassesLoading] = useState(true);
   const [classesError, setClassesError] = useState<string | null>(null);
@@ -152,7 +135,6 @@ export default function SubjectDetails() {
   const [isDeleteClassOpen, setIsDeleteClassOpen] = useState(false);
   const [deletingClass, setDeletingClass] = useState(false);
 
-  /* ---------- Resources ---------- */
   const [activeTab, setActiveTab] = useState<ResourceType>("assignment");
   const [resources, setResources] = useState<any[]>([]);
   const [resourcesLoading, setResourcesLoading] = useState(true);
@@ -172,21 +154,18 @@ export default function SubjectDetails() {
   const [isDeleteResourceOpen, setIsDeleteResourceOpen] = useState(false);
   const [deletingResource, setDeletingResource] = useState(false);
 
-  /* ---------- Delete Subject ---------- */
   const [isDeleteSubjectOpen, setIsDeleteSubjectOpen] = useState(false);
   const [deletingSubject, setDeletingSubject] = useState(false);
 
-  /* ---------- Fetch Subject ---------- */
+  console.log(resourceSubmitted, classSubmitted);
   useEffect(() => {
     if (!id) {
       setSubjectError("Invalid subject ID");
       setSubjectLoading(false);
       return;
     }
-
     setSubjectLoading(true);
     setSubjectError(null);
-
     dispatch(fetchSubjectById(id))
       .unwrap()
       .then((data: any) => {
@@ -201,13 +180,10 @@ export default function SubjectDetails() {
       });
   }, [id, dispatch]);
 
-  /* ---------- Fetch Classes ---------- */
   useEffect(() => {
     if (!id) return;
-
     setClassesLoading(true);
     setClassesError(null);
-
     dispatch(fetchClasses(id))
       .unwrap()
       .then((data: any[]) => {
@@ -222,13 +198,10 @@ export default function SubjectDetails() {
       });
   }, [id, dispatch]);
 
-  /* ---------- Fetch Resources ---------- */
   useEffect(() => {
     if (!id) return;
-
     setResourcesLoading(true);
     setResourcesError(null);
-
     dispatch(fetchResources({ type: activeTab, subjectId: id }))
       .unwrap()
       .then((data: any[]) => {
@@ -241,14 +214,10 @@ export default function SubjectDetails() {
         toast.error(msg);
         setResourcesLoading(false);
       });
-
     return () => {
       dispatch(clearResources());
     };
   }, [id, activeTab, dispatch]);
-
-  /* ---------- Handlers ---------- */
-  //const openDeleteSubject = () => setIsDeleteSubjectOpen(true);
 
   const closeDeleteSubject = () => setIsDeleteSubjectOpen(false);
   const confirmDeleteSubject = async () => {
@@ -266,7 +235,6 @@ export default function SubjectDetails() {
     }
   };
 
-  /* ---------- Class Modals ---------- */
   const openAddClass = () => {
     setClassForm({ title: "", date: "", time: "", duration: 60 });
     setClassSubmitted(false);
@@ -301,7 +269,6 @@ export default function SubjectDetails() {
     e.preventDefault();
     setClassSubmitted(true);
     if (!classForm.title || !classForm.date || !classForm.time) return;
-
     setClassSaving(true);
     const payload = {
       title: classForm.title.trim(),
@@ -309,7 +276,6 @@ export default function SubjectDetails() {
       time: classForm.time,
       duration: Number(classForm.duration),
     };
-
     try {
       if (editingClass) {
         const result = await dispatch(
@@ -358,7 +324,6 @@ export default function SubjectDetails() {
     }
   };
 
-  /* ---------- Resource Modals ---------- */
   const openAddResource = () => {
     setResourceForm({ title: "", description: "" });
     setResourceSubmitted(false);
@@ -388,7 +353,6 @@ export default function SubjectDetails() {
     e.preventDefault();
     setResourceSubmitted(true);
     if (!resourceForm.title) return;
-
     setResourceSaving(true);
     const payload = {
       type: activeTab,
@@ -396,7 +360,6 @@ export default function SubjectDetails() {
       title: resourceForm.title.trim(),
       description: resourceForm.description.trim() || undefined,
     };
-
     try {
       if (editingResource) {
         const result = await dispatch(
@@ -445,260 +408,217 @@ export default function SubjectDetails() {
     }
   };
 
-  /* ---------- Derived ---------- */
+  const type = getUserType();
   const gradeTitle = subject?.gradeLevel?.[0]?.title ?? "—";
   const isActive = subject?.isActive;
 
-  const type = getUserType();
   return (
-    <>
-      {/* Full Page Loader */}
+    <div className="min-h-screen bg-[#f8faf7] p-4 md:p-8">
+      {/* Loading Overlay */}
       <AnimatePresence>
         {(subjectLoading || classesLoading || resourcesLoading) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-white flex flex-col items-center justify-center gap-6 z-50 p-4"
+            className="fixed inset-0 z-[100] bg-white/80 backdrop-blur-md flex flex-col items-center justify-center gap-4"
           >
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="w-16 h-16 animate-spin text-gray-900 " />
-              <p className="text-lg font-medium text-gray-700">Loading...</p>
-            </div>
+            <Loader2 className="w-12 h-12 text-emerald-900 animate-spin" />
+            <p className="text-emerald-900 font-black uppercase tracking-widest text-xs">
+              Synchronizing Curriculum...
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
-      {!subjectLoading && !classesLoading && !resourcesLoading && (
-        <div className="min-h-screen bg-[#ffffff] p-4 md:p-6">
-          <div className="max-w-5xl mx-auto">
-            {/* Back Button */}
-            <button
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-gray-900  font-medium hover:text-gray-900 /70 transition mb-6"
+      <div className="max-w-7xl mx-auto">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-emerald-800 hover:text-emerald-600 transition-all mb-6 font-bold group"
+        >
+          <ArrowLeft
+            size={20}
+            className="group-hover:-translate-x-1 transition-transform"
+          />
+          Back to List
+        </button>
+
+        {/* Errors */}
+        <AnimatePresence>
+          {(subjectError || classesError || resourcesError) && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-6 bg-red-50 border border-red-100 p-4 rounded-3xl flex items-center justify-between"
             >
-              <ArrowLeft className="w-5 h-5" />
-              Back to Subjects
-            </button>
-
-            {/* Errors */}
-            <AnimatePresence>
-              {(subjectError || classesError || resourcesError) && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="mb-6 p-4 bg-red-50 border-2 border-red-300 rounded-xl flex items-start gap-3 text-red-700"
-                >
-                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="font-medium">
-                      {subjectError || classesError || resourcesError}
-                    </p>
-                    <button
-                      onClick={() => window.location.reload()}
-                      className="text-sm underline font-medium mt-2 hover:text-red-800"
-                    >
-                      Retry
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Subject Card */}
-            {!subjectError && subject && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-3xl border-4 border-[#ffd000] p-8 shadow-md mb-8"
+              <div className="flex items-center gap-3 text-red-700 font-bold">
+                <AlertCircle />
+                <p>{subjectError || classesError || resourcesError}</p>
+              </div>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-red-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest"
               >
-                {/* Header */}
-                <div className="flex justify-between items-start mb-8">
-                  <div>
-                    <h1 className="text-4xl font-black text-gray-900  mb-2">
-                      {subject.name}
-                    </h1>
-                    <p className="text-xl font-mono text-gray-900 /70">
-                      {subject.code}
-                    </p>
-                  </div>
-                  <div
-                    className={`px-4 py-2 rounded-full font-bold text-sm ${
+                Retry
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Subject Header Card */}
+        {!subjectError && subject && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-emerald-900 rounded-[3rem] p-8 md:p-12 shadow-2xl relative overflow-hidden text-white mb-8"
+          >
+            <div className="absolute top-0 right-0 w-96 h-96 bg-yellow-400/10 rounded-full -mr-32 -mt-32 blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="px-4 py-1.5 bg-yellow-400 text-emerald-950 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-yellow-400/20">
+                    {subject.code}
+                  </span>
+                  <span
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase border ${
                       isActive
-                        ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-600"
+                        ? "bg-emerald-800/50 text-emerald-300 border-emerald-700"
+                        : "bg-red-900/50 text-red-300 border-red-800"
                     }`}
                   >
+                    <div
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        isActive ? "bg-emerald-400 animate-pulse" : "bg-red-400"
+                      }`}
+                    />
                     {isActive ? "Active" : "Inactive"}
-                  </div>
+                  </span>
                 </div>
+                <h1 className="text-4xl md:text-6xl font-black tracking-tighter mb-4">
+                  {subject.name}
+                </h1>
+                <p className="text-emerald-100/70 font-medium max-w-2xl leading-relaxed text-lg italic">
+                  {subject.description || "No course overview provided."}
+                </p>
+              </div>
 
-                {/* Description */}
-                {subject.description && (
-                  <div className="mb-8 p-5 bg-[#ffd000]/10 rounded-2xl border-2 border-[#ffd000]/30">
-                    <p className="text-gray-900 /80 leading-relaxed">
-                      {subject.description}
-                    </p>
-                  </div>
-                )}
+              <div className="flex flex-wrap gap-4">
+                <StatCard
+                  icon={<GraduationCap />}
+                  label="Grade"
+                  value={gradeTitle}
+                />
+                <StatCard
+                  icon={<Users />}
+                  label="Staff"
+                  value={String(subject.teachers.length)}
+                />
+              </div>
+            </div>
 
-                {/* Info Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 bg-[#ffd000]/20 rounded-xl">
-                      <GraduationCap className="w-6 h-6 text-gray-900 " />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900 ">
-                        Grade Level
-                      </p>
-                      <p className="text-lg">{gradeTitle}</p>
-                    </div>
-                  </div>
+            <div className="mt-12 flex flex-wrap gap-6 pt-8 border-t border-white/10 text-emerald-200/50 font-bold text-xs uppercase tracking-widest">
+              <div className="flex items-center gap-2">
+                <Calendar size={14} /> Created:{" "}
+                {new Date(subject.createdAt).toLocaleDateString()}
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar size={14} /> Updated:{" "}
+                {new Date(subject.updatedAt).toLocaleDateString()}
+              </div>
+              {type === "admin" && (
+                <button
+                  onClick={() => setIsDeleteSubjectOpen(true)}
+                  className="ml-auto text-red-400 hover:text-red-200 transition-colors flex items-center gap-2 group"
+                >
+                  <Trash2
+                    size={14}
+                    className="group-hover:scale-110 transition-transform"
+                  />{" "}
+                  Permanent Delete
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
 
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 bg-[#ffd000]/20 rounded-xl">
-                      <Users className="w-6 h-6 text-gray-900 " />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900 ">
-                        Teachers
-                      </p>
-                      <p className="text-lg">{subject.teachers.length}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 bg-[#ffd000]/20 rounded-xl">
-                      <BookOpen className="w-6 h-6 text-gray-900 " />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900 ">
-                        Students
-                      </p>
-                      <p className="text-lg">{subject.children.length}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 bg-[#ffd000]/20 rounded-xl">
-                      <ToggleLeft className="w-6 h-6 text-gray-900 " />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900 ">Status</p>
-                      <p className="text-lg">
-                        {isActive ? "Active" : "Inactive"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Timestamps */}
-                <div className="flex flex-wrap gap-6 text-sm text-gray-900 /60 border-t-2 border-[#ffd000]/30 pt-6">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    <span>
-                      Created:{" "}
-                      {new Date(subject.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    <span>
-                      Updated:{" "}
-                      {new Date(subject.updatedAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3 mt-8">
-                  {/* <button
-                    onClick={() => navigate(`/subjects/edit/${id}`)}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#ffd000] text-gray-900  rounded-xl font-bold hover:bg-[#ffd000]/90 transition"
-                  >
-                    <Edit2 className="w-5 h-5" />
-                    Edit Subject
-                  </button> */}
-                  {/* <button
-                    onClick={openDeleteSubject}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-red-100 text-red-700 rounded-xl font-bold hover:bg-red-200 transition"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                    Delete Subject
-                  </button> */}
-                </div>
-              </motion.div>
-            )}
-
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Main Content Area */}
+          <div className="lg:col-span-8 space-y-8">
             {/* Classes Section */}
-            <div className="bg-white rounded-3xl border-4 border-[#ffd000] p-8 shadow-md mb-8">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-black text-gray-900 ">
-                  Classes ({classes.length})
+            <section className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-sm border border-emerald-50">
+              <div className="flex items-center justify-between mb-10">
+                <h2 className="text-2xl font-black text-emerald-950 flex items-center gap-4">
+                  <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-700">
+                    <Clock size={24} />
+                  </div>
+                  Course Schedule{" "}
+                  <span className="text-emerald-300 ml-2">
+                    ({classes.length})
+                  </span>
                 </h2>
                 {type === "admin" && (
                   <button
                     onClick={openAddClass}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-900  text-yellow-400 rounded-xl font-bold hover:bg-gray-900 /90 transition"
+                    className="bg-emerald-900 text-yellow-400 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-800 transition-all shadow-lg shadow-emerald-900/10"
                   >
-                    <Plus className="w-5 h-5" />
-                    Add Class
+                    <Plus size={18} /> New Session
                   </button>
                 )}
               </div>
 
               {classes.length === 0 ? (
-                <p className="text-gray-900 /60 text-center py-8">
-                  No classes scheduled for this subject yet.
-                </p>
+                <EmptyState
+                  icon={<Calendar size={48} />}
+                  message="No classes scheduled for this subject yet."
+                />
               ) : (
                 <div className="space-y-4">
                   {classes.map((cls) => (
                     <motion.div
                       key={cls._id}
                       layout
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center justify-between p-4 bg-[#ffd000]/5 rounded-xl border border-[#ffd000]/30"
+                      className="group bg-[#fcfdfc] hover:bg-white border border-emerald-50 hover:border-yellow-400 p-6 rounded-[2rem] flex flex-col md:flex-row justify-between items-center gap-6 transition-all hover:shadow-xl hover:shadow-emerald-900/5"
                     >
-                      <div>
-                        <h4 className="font-bold text-gray-900 ">
-                          {cls.title}
-                        </h4>
-                        <div className="flex items-center gap-4 text-sm text-gray-900 /70 mt-1">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {new Date(cls.date).toLocaleDateString()}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {cls.time} ({cls.duration} mins)
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <User className="w-4 h-4" />
-                            {cls.teacherId?.firstName
-                              ? `${cls.teacherId.firstName} ${cls.teacherId.lastName}`
-                              : "No teacher"}
-                          </span>
+                      <div className="flex items-center gap-6 w-full">
+                        <div className="h-14 w-14 bg-white rounded-2xl flex items-center justify-center text-emerald-900 shadow-sm border border-emerald-100 group-hover:bg-yellow-400 group-hover:border-yellow-400 transition-all">
+                          <Calendar size={24} />
+                        </div>
+                        <div>
+                          <h4 className="font-black text-emerald-950 text-xl mb-2">
+                            {cls.title}
+                          </h4>
+                          <div className="flex flex-wrap gap-4 text-[10px] font-black text-emerald-800/40 uppercase tracking-widest">
+                            <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 rounded-lg">
+                              <Calendar size={12} />{" "}
+                              {new Date(cls.date).toLocaleDateString()}
+                            </span>
+                            <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 rounded-lg">
+                              <Clock size={12} /> {cls.time} ({cls.duration}m)
+                            </span>
+                            <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 rounded-lg">
+                              <User size={12} />{" "}
+                              {cls.teacherId
+                                ? `${cls.teacherId.firstName} ${cls.teacherId.lastName}`
+                                : "Pending Staff"}
+                            </span>
+                          </div>
                         </div>
                       </div>
-
                       {type === "admin" && (
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 w-full md:w-auto opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => openEditClass(cls)}
-                            className="text-gray-900  hover:text-[#ffd000]"
+                            className="flex-1 md:flex-none p-4 bg-white text-emerald-700 rounded-2xl border border-emerald-100 hover:bg-emerald-900 hover:text-yellow-400 transition-all shadow-sm"
                           >
-                            <Edit2 className="w-5 h-5" />
+                            <Edit2 size={16} />
                           </button>
                           <button
                             onClick={() => openDeleteClass(cls._id)}
-                            className="text-red-600 hover:text-red-800"
+                            className="flex-1 md:flex-none p-4 bg-white text-red-500 rounded-2xl border border-emerald-100 hover:bg-red-600 hover:text-white transition-all shadow-sm"
                           >
-                            <Trash2 className="w-5 h-5" />
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       )}
@@ -706,481 +626,484 @@ export default function SubjectDetails() {
                   ))}
                 </div>
               )}
-            </div>
+            </section>
 
             {/* Resources Section */}
-            <div className="bg-white rounded-3xl border-4 border-[#ffd000] p-8 shadow-md">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-black text-gray-900 ">
-                  Resources
+            <section className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-sm border border-emerald-50">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-10">
+                <h2 className="text-2xl font-black text-emerald-950 flex items-center gap-4">
+                  <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-700">
+                    <ClipboardList size={24} />
+                  </div>
+                  Academic Portal
                 </h2>
-
-                {type === "admin" && (
-                  <button
-                    onClick={openAddResource}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-900  text-yellow-400 rounded-xl font-bold hover:bg-gray-900 /90 transition"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Add {activeTab}
-                  </button>
-                )}
+                <div className="flex bg-emerald-50 p-1.5 rounded-[1.8rem] border border-emerald-100 overflow-x-auto no-scrollbar">
+                  {(
+                    ["assignment", "note", "announcement"] as ResourceType[]
+                  ).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setActiveTab(t)}
+                      className={`px-6 py-2.5 rounded-[1.2rem] text-[10px] font-black uppercase tracking-[0.15em] transition-all whitespace-nowrap ${
+                        activeTab === t
+                          ? "bg-emerald-900 text-yellow-400 shadow-xl shadow-emerald-900/20"
+                          : "text-emerald-800/60 hover:text-emerald-900"
+                      }`}
+                    >
+                      {t}s
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* Tabs */}
-              <div className="flex gap-2 mb-6 border-b border-[#ffd000]/30">
-                {(["assignment", "note", "announcement"] as ResourceType[]).map(
-                  (type) => {
-                    const Icon = resourceIcons[type];
-                    return (
-                      <button
-                        key={type}
-                        onClick={() => setActiveTab(type)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-t-xl font-bold transition ${
-                          activeTab === type
-                            ? "bg-[#ffd000] text-gray-900 "
-                            : "text-gray-900 /60 hover:text-gray-900 "
-                        }`}
-                      >
-                        <Icon className="w-5 h-5" />
-                        {type.charAt(0).toUpperCase() + type.slice(1)}s
-                      </button>
-                    );
-                  }
-                )}
-              </div>
+              {type === "admin" && (
+                <button
+                  onClick={openAddResource}
+                  className="w-full mb-8 py-5 border-2 border-dashed border-emerald-100 rounded-[2rem] text-emerald-800/40 font-black uppercase tracking-widest text-xs hover:border-yellow-400 hover:text-emerald-900 transition-all flex items-center justify-center gap-2 group"
+                >
+                  <Plus
+                    size={18}
+                    className="group-hover:rotate-90 transition-transform"
+                  />
+                  Add New {activeTab}
+                </button>
+              )}
 
-              {/* Resource List */}
               {resources.length === 0 ? (
-                <p className="text-gray-900 /60 text-center py-8">
-                  No {activeTab}s yet.
-                </p>
+                <EmptyState
+                  icon={<FileText size={48} />}
+                  message={`The ${activeTab} gallery is currently empty.`}
+                />
               ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {resources.map((res) => {
                     const Icon = resourceIcons[activeTab];
                     return (
                       <motion.div
                         key={res._id}
                         layout
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-4 bg-white rounded-xl border-2 border-[#ffd000]/30 flex items-start justify-between"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="group p-6 bg-[#fcfdfc] border border-emerald-50 rounded-[2.2rem] hover:border-yellow-400 hover:bg-white hover:shadow-xl hover:shadow-emerald-900/5 transition-all"
                       >
-                        <div className="flex items-start gap-3">
-                          <div
-                            className={`p-2 rounded-lg ${resourceColors[activeTab]}`}
-                          >
-                            <Icon className="w-5 h-5" />
+                        <div className="flex justify-between items-start mb-6">
+                          <div className="p-4 bg-white rounded-2xl text-emerald-900 shadow-sm border border-emerald-100 group-hover:bg-yellow-400 transition-colors">
+                            <Icon size={24} />
                           </div>
-                          <div>
-                            <h4 className="font-bold text-gray-900 ">
-                              {res.title}
-                            </h4>
-                            {res.description && (
-                              <p className="text-sm text-gray-900 /70 mt-1">
-                                {res.description}
-                              </p>
-                            )}
-                            <p className="text-xs text-gray-900 /50 mt-2">
-                              {new Date(res.createdAt).toLocaleDateString()}
+                          <div className="text-[10px] font-black text-emerald-300 uppercase tracking-tighter text-right">
+                            <p className="text-emerald-950/20 mb-1">
+                              Uploaded On
                             </p>
+                            {new Date(res.createdAt).toLocaleDateString()}
                           </div>
                         </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => openEditResource(res)}
-                            className="text-gray-900  hover:text-[#ffd000]"
-                          >
-                            <Edit2 className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => openDeleteResource(res._id)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
+                        <h4 className="font-black text-emerald-950 text-xl mb-3">
+                          {res.title}
+                        </h4>
+                        <p className="text-sm text-emerald-800/60 font-medium leading-relaxed mb-6 line-clamp-3">
+                          {res.description ||
+                            "No specific details or instructions provided."}
+                        </p>
+
+                        {type === "admin" && (
+                          <div className="flex gap-4 pt-6 border-t border-emerald-50">
+                            <button
+                              onClick={() => openEditResource(res)}
+                              className="text-[10px] font-black uppercase tracking-widest text-emerald-700 hover:text-emerald-950 transition-colors"
+                            >
+                              Edit Entry
+                            </button>
+                            <button
+                              onClick={() => openDeleteResource(res._id)}
+                              className="text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-600 transition-colors"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
                       </motion.div>
                     );
                   })}
                 </div>
               )}
+            </section>
+          </div>
+
+          {/* Right Sidebar */}
+          <div className="lg:col-span-4 space-y-6">
+            <aside className="bg-emerald-950 rounded-[3rem] p-8 md:p-10 text-white shadow-2xl relative overflow-hidden h-fit">
+              <div className="absolute bottom-0 right-0 w-48 h-48 bg-yellow-400/5 rounded-full -mb-20 -mr-20" />
+              <h3 className="text-xl font-black mb-10 text-yellow-400 flex items-center gap-3">
+                <div className="h-2 w-2 bg-yellow-400 rounded-full animate-pulse" />
+                Curriculum Stats
+              </h3>
+
+              <div className="space-y-8">
+                <SideStat
+                  label="Total Students"
+                  value={String(subject?.children?.length || 0)}
+                  icon={<Users size={16} />}
+                />
+                <SideStat
+                  label="Faculty Members"
+                  value={String(subject?.teachers?.length || 0)}
+                  icon={<GraduationCap size={16} />}
+                />
+                <SideStat
+                  label="Subject Reference"
+                  value={subject?.code || "N/A"}
+                  icon={<ToggleLeft size={16} />}
+                  mono
+                />
+
+                <div className="pt-8 border-t border-white/10">
+                  <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-2">
+                    Subject Status
+                  </p>
+                  <p className="text-2xl font-black text-emerald-50">
+                    {isActive ? "Active Course" : "On Hold"}
+                  </p>
+                </div>
+              </div>
+            </aside>
+
+            <div className="bg-yellow-400 rounded-[3rem] p-10 text-emerald-950 shadow-xl shadow-yellow-400/10">
+              <div className="p-4 bg-emerald-950 rounded-2xl text-yellow-400 w-fit mb-6">
+                <Megaphone size={24} />
+              </div>
+              <h4 className="font-black text-2xl mb-3 tracking-tighter">
+                Staff Broadcast
+              </h4>
+              <p className="text-emerald-900/60 font-bold leading-relaxed mb-8">
+                Need to update the curriculum? Add announcements or lecture
+                notes to keep your students informed.
+              </p>
+              {type === "admin" && (
+                <button
+                  onClick={openAddResource}
+                  className="w-full bg-emerald-950 text-yellow-400 py-5 rounded-[1.8rem] font-black text-xs uppercase tracking-widest hover:bg-emerald-900 transition-all shadow-xl shadow-emerald-950/20"
+                >
+                  Quick Upload
+                </button>
+              )}
             </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* ========== MODALS ========== */}
-      {/* Delete Subject */}
+      {/* MODALS */}
       <AnimatePresence>
+        {/* Delete Subject Modal */}
         {isDeleteSubjectOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-            onClick={closeDeleteSubject}
-          >
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="bg-white rounded-3xl border-4 border-red-500 p-8 max-w-sm w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <AlertCircle className="w-8 h-8 text-red-600" />
-                <h3 className="text-xl font-black text-gray-900 ">
-                  Delete Subject?
-                </h3>
+          <Modal onClose={closeDeleteSubject}>
+            <div className="text-center">
+              <div className="h-20 w-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <AlertCircle size={40} />
               </div>
-              <p className="text-sm text-gray-900 /80 mb-6">
-                This will <strong>permanently delete</strong> the subject and
-                all its data.
+              <h3 className="text-2xl font-black text-emerald-950 mb-4 tracking-tighter">
+                Terminate Subject?
+              </h3>
+              <p className="text-emerald-800/60 font-medium mb-10 leading-relaxed px-4">
+                This will{" "}
+                <strong className="text-red-600">permanently erase</strong> the
+                subject and all associated resources. This action cannot be
+                reversed.
               </p>
-              <div className="flex gap-3">
+              <div className="flex gap-4">
                 <button
                   onClick={confirmDeleteSubject}
                   disabled={deletingSubject}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition disabled:opacity-70"
+                  className="flex-1 bg-red-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 hover:bg-red-700 disabled:opacity-50"
                 >
                   {deletingSubject ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="animate-spin" />
                   ) : (
-                    <Trash2 className="w-5 h-5" />
-                  )}
-                  Delete
+                    <Trash2 size={18} />
+                  )}{" "}
+                  Confirm Delete
                 </button>
                 <button
                   onClick={closeDeleteSubject}
                   disabled={deletingSubject}
-                  className="flex-1 py-3 border-2 border-gray-400 text-gray-700 rounded-xl font-bold hover:bg-gray-100 transition"
+                  className="flex-1 bg-emerald-50 text-emerald-950 py-4 rounded-2xl font-black uppercase tracking-widest text-xs"
                 >
                   Cancel
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </Modal>
         )}
-      </AnimatePresence>
 
-      {/* Add/Edit Class */}
-      <AnimatePresence>
+        {/* Add/Edit Class Modal */}
         {(isAddClassOpen || isEditClassOpen) && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-            onClick={isAddClassOpen ? closeAddClass : closeEditClass}
-          >
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="bg-white rounded-3xl border-4 border-[#ffd000] p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-black text-gray-900 ">
-                  {isEditClassOpen ? "Edit Class" : "Add New Class"}
-                </h2>
-                <button
-                  onClick={isAddClassOpen ? closeAddClass : closeEditClass}
-                  className="text-gray-500 hover:text-gray-700"
+          <Modal onClose={isAddClassOpen ? closeAddClass : closeEditClass}>
+            <div className="flex justify-between items-center mb-10">
+              <h2 className="text-3xl font-black text-emerald-950 tracking-tighter">
+                {isEditClassOpen ? "Edit Session" : "Schedule Class"}
+              </h2>
+              <button
+                onClick={isAddClassOpen ? closeAddClass : closeEditClass}
+                className="text-emerald-300 hover:text-emerald-950"
+              >
+                <X />
+              </button>
+            </div>
+            <form onSubmit={handleSaveClass} className="space-y-6">
+              <InputGroup
+                label="Class Title"
+                name="title"
+                value={classForm.title}
+                onChange={handleClassChange}
+                required
+                placeholder="e.g. Advanced Vector Math"
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <InputGroup
+                  label="Date"
+                  name="date"
+                  type="date"
+                  value={classForm.date}
+                  onChange={handleClassChange}
+                  required
+                />
+                <InputGroup
+                  label="Start Time"
+                  name="time"
+                  type="time"
+                  value={classForm.time}
+                  onChange={handleClassChange}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-emerald-800/40">
+                  Duration
+                </label>
+                <select
+                  name="duration"
+                  value={classForm.duration}
+                  onChange={handleClassChange}
+                  className="w-full bg-emerald-50 border-2 border-transparent focus:border-yellow-400 rounded-2xl p-4 font-bold outline-none transition-all appearance-none text-emerald-950"
                 >
-                  <X className="w-6 h-6" />
-                </button>
+                  {[30, 45, 60, 90, 120].map((m) => (
+                    <option key={m} value={m}>
+                      {m} minutes
+                    </option>
+                  ))}
+                </select>
               </div>
-
-              <form onSubmit={handleSaveClass} className="space-y-5">
-                <div>
-                  <label className="block text-sm font-bold text-gray-900  mb-1">
-                    Class Title <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    value={classForm.title}
-                    onChange={handleClassChange}
-                    required
-                    className="w-full px-4 py-2.5 border-2 border-[#ffd000]/50 rounded-xl focus:border-[#ffd000] focus:outline-none"
-                  />
-                  {classSubmitted && !classForm.title && (
-                    <p className="text-red-600 text-xs mt-1">Required</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-gray-900  mb-1">
-                    Date <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={classForm.date}
-                    onChange={handleClassChange}
-                    required
-                    className="w-full px-4 py-2.5 border-2 border-[#ffd000]/50 rounded-xl focus:border-[#ffd000] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-gray-900  mb-1">
-                    Time <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="time"
-                    name="time"
-                    value={classForm.time}
-                    onChange={handleClassChange}
-                    required
-                    className="w-full px-4 py-2.5 border-2 border-[#ffd000]/50 rounded-xl focus:border-[#ffd000] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-gray-900  mb-1">
-                    Duration (minutes)
-                  </label>
-                  <select
-                    name="duration"
-                    value={classForm.duration}
-                    onChange={handleClassChange}
-                    className="w-full px-4 py-2.5 border-2 border-[#ffd000]/50 rounded-xl focus:border-[#ffd000] focus:outline-none"
-                  >
-                    {[30, 45, 60, 90, 120].map((m) => (
-                      <option key={m} value={m}>
-                        {m} minutes
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="submit"
-                    disabled={classSaving}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900  text-yellow-400 rounded-xl font-bold hover:bg-gray-900 /90 transition disabled:opacity-70"
-                  >
-                    {classSaving ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <>
-                        <Check className="w-5 h-5" />
-                        {isEditClassOpen ? "Update" : "Create"}
-                      </>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={isAddClassOpen ? closeAddClass : closeEditClass}
-                    className="flex-1 py-3 border-2 border-gray-400 text-gray-700 rounded-xl font-bold hover:bg-gray-100 transition"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
+              <button
+                type="submit"
+                disabled={classSaving}
+                className="w-full bg-emerald-900 text-yellow-400 py-5 rounded-[2rem] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-xl shadow-emerald-900/20 mt-4"
+              >
+                {classSaving ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <Check size={18} />
+                )}{" "}
+                {isEditClassOpen ? "Update Schedule" : "Confirm Schedule"}
+              </button>
+            </form>
+          </Modal>
         )}
-      </AnimatePresence>
 
-      {/* Delete Class */}
-      <AnimatePresence>
-        {isDeleteClassOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-            onClick={closeDeleteClass}
+        {/* Add/Edit Resource Modal */}
+        {(isAddResourceOpen || isEditResourceOpen) && (
+          <Modal
+            onClose={isAddResourceOpen ? closeAddResource : closeEditResource}
           >
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="bg-white rounded-3xl border-4 border-red-500 p-8 max-w-sm w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <AlertCircle className="w-8 h-8 text-red-600" />
-                <h3 className="text-xl font-black text-gray-900 ">
-                  Delete Class?
-                </h3>
+            <div className="flex justify-between items-center mb-10">
+              <h2 className="text-3xl font-black text-emerald-950 tracking-tighter capitalize">
+                {isEditResourceOpen ? "Update" : "Add"} {activeTab}
+              </h2>
+              <button
+                onClick={
+                  isAddResourceOpen ? closeAddResource : closeEditResource
+                }
+                className="text-emerald-300 hover:text-emerald-950"
+              >
+                <X />
+              </button>
+            </div>
+            <form onSubmit={handleSaveResource} className="space-y-6">
+              <InputGroup
+                label="Resource Title"
+                name="title"
+                value={resourceForm.title}
+                onChange={handleResourceChange}
+                required
+                placeholder="e.g. Lecture Notes #04"
+              />
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-emerald-800/40">
+                  Description (Optional)
+                </label>
+                <textarea
+                  name="description"
+                  value={resourceForm.description}
+                  onChange={handleResourceChange}
+                  rows={4}
+                  className="w-full bg-emerald-50 border-2 border-transparent focus:border-yellow-400 rounded-3xl p-5 font-bold outline-none transition-all placeholder:text-emerald-900/20"
+                  placeholder="Provide context or instructions..."
+                />
               </div>
-              <p className="text-sm text-gray-900 /80 mb-6">
-                This action cannot be undone.
+              <button
+                type="submit"
+                disabled={resourceSaving}
+                className="w-full bg-emerald-950 text-yellow-400 py-5 rounded-[2rem] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-xl shadow-emerald-950/20 mt-4"
+              >
+                {resourceSaving ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <Check size={18} />
+                )}{" "}
+                {isEditResourceOpen ? "Save Changes" : `Post ${activeTab}`}
+              </button>
+            </form>
+          </Modal>
+        )}
+
+        {/* Delete Class Confirmation */}
+        {isDeleteClassOpen && (
+          <Modal onClose={closeDeleteClass}>
+            <div className="text-center">
+              <div className="h-16 w-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <AlertCircle size={32} />
+              </div>
+              <h3 className="text-2xl font-black text-emerald-950 mb-3 tracking-tighter">
+                Remove Session?
+              </h3>
+              <p className="text-emerald-800/60 font-medium mb-10">
+                This will remove this class from the student calendar.
               </p>
-              <div className="flex gap-3">
+              <div className="flex gap-4">
                 <button
                   onClick={confirmDeleteClass}
                   disabled={deletingClass}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition disabled:opacity-70"
+                  className="flex-1 bg-red-600 text-white py-4 rounded-2xl font-black uppercase text-xs disabled:opacity-50"
                 >
                   {deletingClass ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="animate-spin mx-auto" />
                   ) : (
-                    <Trash2 className="w-5 h-5" />
+                    "Confirm Delete"
                   )}
-                  Delete
                 </button>
                 <button
                   onClick={closeDeleteClass}
-                  disabled={deletingClass}
-                  className="flex-1 py-3 border-2 border-gray-400 text-gray-700 rounded-xl font-bold hover:bg-gray-100 transition"
+                  className="flex-1 bg-emerald-50 text-emerald-950 py-4 rounded-2xl font-black uppercase text-xs"
                 >
                   Cancel
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </Modal>
         )}
-      </AnimatePresence>
 
-      <AnimatePresence>
-        {(isAddResourceOpen || isEditResourceOpen) && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-            onClick={isAddResourceOpen ? closeAddResource : closeEditResource}
-          >
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="bg-white rounded-3xl border-4 border-[#ffd000] p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-black text-gray-900 ">
-                  {isEditResourceOpen ? "Edit" : "Add"} {activeTab}
-                </h2>
-                <button
-                  onClick={
-                    isAddResourceOpen ? closeAddResource : closeEditResource
-                  }
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              <form onSubmit={handleSaveResource} className="space-y-5">
-                <div>
-                  <label className="block text-sm font-bold text-gray-900  mb-1">
-                    Title <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    value={resourceForm.title}
-                    onChange={handleResourceChange}
-                    required
-                    className="w-full px-4 py-2.5 border-2 border-[#ffd000]/50 rounded-xl focus:border-[#ffd000] focus:outline-none"
-                  />
-                  {resourceSubmitted && !resourceForm.title && (
-                    <p className="text-red-600 text-xs mt-1">Required</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-gray-900  mb-1">
-                    Description (Optional)
-                  </label>
-                  <textarea
-                    name="description"
-                    value={resourceForm.description}
-                    onChange={handleResourceChange}
-                    rows={3}
-                    className="w-full px-4 py-2.5 border-2 border-[#ffd000]/50 rounded-xl focus:border-[#ffd000] focus:outline-none resize-none"
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="submit"
-                    disabled={resourceSaving}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900  text-yellow-400 rounded-xl font-bold hover:bg-gray-900 /90 transition disabled:opacity-70"
-                  >
-                    {resourceSaving ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <>
-                        <Check className="w-5 h-5" />
-                        {isEditResourceOpen ? "Update" : "Create"}
-                      </>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={
-                      isAddResourceOpen ? closeAddResource : closeEditResource
-                    }
-                    className="flex-1 py-3 border-2 border-gray-400 text-gray-700 rounded-xl font-bold hover:bg-gray-100 transition"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Delete Resource */}
-      <AnimatePresence>
+        {/* Delete Resource Confirmation */}
         {isDeleteResourceOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-            onClick={closeDeleteResource}
-          >
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="bg-white rounded-3xl border-4 border-red-500 p-8 max-w-sm w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <AlertCircle className="w-8 h-8 text-red-600" />
-                <h3 className="text-xl font-black text-gray-900 ">
-                  Delete {activeTab}?
-                </h3>
+          <Modal onClose={closeDeleteResource}>
+            <div className="text-center">
+              <div className="h-16 w-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Trash2 size={32} />
               </div>
-              <p className="text-sm text-gray-900 /80 mb-6">
-                This action cannot be undone.
+              <h3 className="text-2xl font-black text-emerald-950 mb-3 tracking-tighter capitalize">
+                Delete {activeTab}?
+              </h3>
+              <p className="text-emerald-800/60 font-medium mb-10 leading-relaxed italic">
+                "Once deleted, students can no longer access this file."
               </p>
-              <div className="flex gap-3">
+              <div className="flex gap-4">
                 <button
                   onClick={confirmDeleteResource}
                   disabled={deletingResource}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition disabled:opacity-70"
+                  className="flex-1 bg-red-600 text-white py-4 rounded-2xl font-black uppercase text-xs"
                 >
                   {deletingResource ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="animate-spin mx-auto" />
                   ) : (
-                    <Trash2 className="w-5 h-5" />
+                    "Delete Now"
                   )}
-                  Delete
                 </button>
                 <button
                   onClick={closeDeleteResource}
-                  disabled={deletingResource}
-                  className="flex-1 py-3 border-2 border-gray-400 text-gray-700 rounded-xl font-bold hover:bg-gray-100 transition"
+                  className="flex-1 bg-emerald-50 text-emerald-950 py-4 rounded-2xl font-black uppercase text-xs"
                 >
                   Cancel
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </Modal>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }
+
+// Sub-components for cleaner code
+const StatCard = ({ icon, label, value }: any) => (
+  <div className="bg-white/10 backdrop-blur-md border border-white/10 p-5 rounded-[2rem] min-w-[140px] shadow-sm">
+    <div className="flex items-center gap-2 text-yellow-400 mb-2 font-black text-[10px] uppercase tracking-widest opacity-80">
+      {icon} {label}
+    </div>
+    <div className="text-2xl font-black tracking-tight">{value}</div>
+  </div>
+);
+
+const SideStat = ({ label, value, icon, mono }: any) => (
+  <div className="group">
+    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+      {icon} {label}
+    </p>
+    <p
+      className={`font-black ${
+        mono
+          ? "font-mono text-yellow-400 bg-emerald-900/40 p-3 rounded-xl inline-block text-sm border border-white/5"
+          : "text-3xl text-emerald-50"
+      }`}
+    >
+      {value}
+    </p>
+  </div>
+);
+
+const EmptyState = ({ icon, message }: any) => (
+  <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-emerald-50 rounded-[3rem] text-center px-6">
+    <div className="text-emerald-100 mb-6">{icon}</div>
+    <p className="text-emerald-800/30 font-bold max-w-[240px] leading-relaxed italic text-lg">
+      {message}
+    </p>
+  </div>
+);
+
+const Modal = ({ children, onClose }: any) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-emerald-950/40 backdrop-blur-sm"
+    onClick={onClose}
+  >
+    <motion.div
+      initial={{ scale: 0.9, y: 20 }}
+      animate={{ scale: 1, y: 0 }}
+      exit={{ scale: 0.9, y: 20 }}
+      className="bg-white rounded-[3.5rem] p-10 md:p-14 w-full max-w-xl shadow-2xl relative"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {children}
+    </motion.div>
+  </motion.div>
+);
+
+const InputGroup = ({ label, ...props }: any) => (
+  <div className="space-y-2">
+    <label className="text-[10px] font-black uppercase tracking-widest text-emerald-800/40 ml-1">
+      {label}
+    </label>
+    <input
+      {...props}
+      className="w-full bg-emerald-50 border-2 border-transparent focus:border-yellow-400 rounded-2xl p-4 font-bold outline-none transition-all placeholder:text-emerald-900/10 text-emerald-950"
+    />
+  </div>
+);

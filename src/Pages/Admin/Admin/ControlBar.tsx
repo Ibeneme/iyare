@@ -130,7 +130,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
               <motion.div
                 key={r.id}
                 initial={{ y: 100, opacity: 0, scale: 0.5 }}
-                animate={{ y: -200, opacity: [1, 1, 0], scale: [1, 1.5, 2] }}
+                animate={{ y: -600, opacity: [1, 1, 0], scale: [1, 1.5, 2] }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 2.2, ease: "easeOut" }}
                 className="absolute text-5xl select-none pointer-events-none drop-shadow-2xl"
@@ -218,11 +218,8 @@ const ControlBar: React.FC<ControlBarProps> = ({
                     initial={{ y: 20, x: "-50%", opacity: 0 }}
                     animate={{ y: 0, x: "-50%", opacity: 1 }}
                     exit={{ y: 20, x: "-50%", opacity: 0 }}
-                    /* 'fixed' positioning ensures it stays centered relative to the screen 
-             width, regardless of where the Smile button sits in the flex row.
-          */
                     className="fixed bottom-40 md:bottom-24 left-1/2 -translate-x-1/2 z-[60] 
-                     flex gap-2 md:gap-2 bg-gray-900/95 backdrop-blur-2xl p-3 md:p-2
+                     flex gap-2 md:gap-2 bg-emerald-950 backdrop-blur-2xl p-3 md:p-2
                      rounded-3xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                   >
                     {reactions.map((e) => (
@@ -240,7 +237,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
                       className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 
                           border-l-[8px] border-l-transparent 
                           border-r-[8px] border-r-transparent 
-                          border-t-[8px] border-t-gray-900/95"
+                          border-t-[8px] border-t-emerald-950 "
                     />
                   </motion.div>
                 </>

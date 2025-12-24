@@ -1,69 +1,103 @@
 import React from "react";
-import "./SettingPrivacyPolicy.css";
+import { ShieldCheck, Eye, Lock, UserCheck, FileText } from "lucide-react";
+import { motion } from "framer-motion";
 
 const SettingPrivacyPolicy: React.FC = () => {
+  const sections = [
+    {
+      icon: <Eye className="w-5 h-5 text-emerald-600" />,
+      title: "Information We Collect",
+      body: "When you use our platform, we collect certain personal information to provide and improve our services. This includes but is not limited to your name, email address, and administrative role. We also collect non-personal information such as usage data, device information, and IP addresses to analyze trends and maintain platform integrity.",
+    },
+    {
+      icon: <UserCheck className="w-5 h-5 text-emerald-600" />,
+      title: "How We Use Your Information",
+      body: "We use the information to operate, maintain, and improve our services. This includes customizing content, sending important updates, and providing support. We do not sell your personal information to third parties. We only share it with your explicit consent or when legally required to do so.",
+    },
+    {
+      icon: <Lock className="w-5 h-5 text-emerald-600" />,
+      title: "Data Security",
+      body: "We employ physical, technical, and administrative measures to protect your information. Our security protocols include data encryption, access controls, and regular audits. While we strive for 100% security, we encourage you to use strong, unique passwords for your account.",
+    },
+  ];
+
   return (
-    <div className="privacy-container">
-      <h2>Privacy & Safety Policy</h2>
-      <p>
-        At Iyare Learning Hub, your privacy and safety are paramount. We are
-        deeply committed to protecting your personal information and ensuring
-        that your experience on our platform is both secure and trustworthy.
-        This policy is designed to be transparent, outlining exactly how we
-        collect, use, and protect your data.
-      </p>
+    <div className="max-w-4xl text-left">
+      {/* Header Section */}
+      <header className="mb-12 space-y-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-[#064e3b] rounded-lg text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+          <ShieldCheck size={12} /> Compliance & Trust
+        </div>
+        <h1 className="text-4xl md:text-5xl font-black text-[#064e3b] tracking-tighter">
+          Privacy & Safety Policy
+        </h1>
+        <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+          <span>Version 2.4.0</span>
+          <span className="w-1 h-1 bg-slate-300 rounded-full" />
+          <span>Last Updated: Dec 2025</span>
+        </div>
+      </header>
 
-      <h3>Information We Collect</h3>
-      <p>
-        When you use our platform, we collect certain personal information to
-        provide and improve our services. This includes but is not limited to
-        your name, email address, and administrative role. We also collect
-        non-personal information such as usage data, device information, and IP
-        addresses to analyze trends, administer the site, and maintain platform
-        integrity. This data helps us understand how our services are used,
-        allowing us to personalize your experience and secure your account.
-      </p>
+      {/* Intro Paragraph */}
+      <div className="mb-12">
+        <p className="text-lg md:text-xl text-slate-600 font-medium leading-relaxed border-l-4 border-yellow-400 pl-6">
+          At Yare Learning Hub, your privacy and safety are paramount. We are
+          deeply committed to protecting your personal information and ensuring
+          that your experience on our platform is secure and trustworthy.
+        </p>
+      </div>
 
-      <h3>How We Use Your Information</h3>
-      <p>
-        We use the information we collect to operate, maintain, and improve our
-        services. This includes customizing the content you see, sending you
-        important updates about your account, and providing customer support. We
-        also use aggregated, anonymized data for research and development to
-        enhance our educational programs and features. We want to be clear: we
-        do not sell your personal information to third parties. We only share it
-        with your explicit consent or when legally required to do so to protect
-        our rights and safety or the safety of others.
-      </p>
+      {/* Principles/Sections Grid */}
+      <div className="space-y-10">
+        {sections.map((section, idx) => (
+          <motion.section
+            key={idx}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.1 }}
+            className="group"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-2.5 bg-emerald-50 rounded-xl group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
+                {section.icon}
+              </div>
+              <h3 className="text-xl font-black text-[#064e3b] tracking-tight italic">
+                {section.title}
+              </h3>
+            </div>
+            <p className="text-slate-500 font-bold leading-loose text-sm pl-14">
+              {section.body}
+            </p>
+          </motion.section>
+        ))}
+      </div>
 
-      <p>
-        Your role information is specifically used to tailor your access to
-        different parts of the platform and to ensure that you receive relevant
-        communications and support. This helps us create a more efficient and
-        secure environment for all users, from learners to administrators.
-      </p>
+      {/* Rights Footer Section */}
+      <div className="mt-16 p-8 bg-slate-50 rounded-[2rem] border border-slate-100">
+        <div className="flex items-start gap-6">
+          <div className="p-4 bg-white rounded-2xl shadow-sm">
+            <FileText className="text-yellow-600 w-6 h-6" />
+          </div>
+          <div>
+            <h4 className="text-lg font-black text-[#064e3b] tracking-tight mb-2">
+              Your Data Rights
+            </h4>
+            <p className="text-sm text-slate-500 font-bold leading-relaxed mb-6">
+              You have the right to access, update, and request the deletion of
+              your personal data. We are committed to empowering you with
+              control over your information and will respond to requests in a
+              timely manner.
+            </p>
+            <button className="text-[10px] font-black uppercase tracking-[0.2em] text-[#064e3b] hover:text-emerald-600 transition-colors flex items-center gap-2">
+              Contact Compliance Officer <span>→</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
-      <h3>Data Security</h3>
-      <p>
-        We take the security of your data seriously. We employ a combination of
-        physical, technical, and administrative measures to protect your
-        information from unauthorized access, alteration, disclosure, or
-        destruction. Our security protocols include data encryption, access
-        controls, and regular security audits to identify and address
-        vulnerabilities. We continuously monitor our systems to ensure they meet
-        the highest standards of data protection. While we strive to protect
-        your personal information, no method of transmission over the internet
-        or electronic storage is 100% secure. We encourage you to also take
-        steps to protect your account, such as using a strong, unique password.
-      </p>
-
-      <h3>Your Rights</h3>
-      <p>
-        You have the right to access, update, and request the deletion of your
-        personal data. If you have any questions about the data we hold, or if
-        you wish to exercise these rights, please contact us directly. We are
-        committed to empowering you with control over your personal information
-        and will respond to your requests in a timely manner.
+      {/* Legal Footer Note */}
+      <p className="mt-12 text-center text-[9px] font-black text-slate-300 uppercase tracking-[0.4em]">
+        Yare Learning Hub • End-to-End Encryption Enabled
       </p>
     </div>
   );

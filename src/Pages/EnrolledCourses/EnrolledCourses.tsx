@@ -1,45 +1,46 @@
-// src/components/EnrolledCourses.tsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { BASE_URL } from "../../Redux/baseurl";
-import { Calendar, Clock, User, BookOpen, AlertCircle } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  User,
+  BookOpen,
+  AlertCircle,
+  Shield,
+  GraduationCap,
+} from "lucide-react";
+import { motion } from "framer-motion";
 
+// --- Types ---
 interface Course {
   _id: string;
   title: string;
 }
-
 interface TeacherOrStudent {
   _id: string;
   name: string;
   email: string;
   courses: Course[];
   classes: any[];
-  certifications?: string[];
 }
-
-interface ParentData {
-  _id: string;
-  children: TeacherOrStudent[];
-}
-
 interface DashboardData {
   teacher?: TeacherOrStudent;
   student?: TeacherOrStudent;
-  parent?: ParentData;
+  parent?: { children: TeacherOrStudent[] };
 }
 
-const getAuthToken = (): string | null => {
-  return localStorage.getItem("token");
-};
+const getAuthToken = () => localStorage.getItem("token");
 
-// Skeleton Loader
+// --- UI Components ---
 const SkeletonCard = () => (
-  <div className="animate-pulse">
-    <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
-    <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-    <div className="h-4 bg-gray-200 rounded w-5/6 mb-2"></div>
-    <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+  <div className="bg-white border border-slate-100 rounded-[2rem] p-6 animate-pulse">
+    <div className="h-4 bg-slate-100 rounded w-1/4 mb-4" />
+    <div className="h-8 bg-slate-100 rounded w-3/4 mb-6" />
+    <div className="space-y-3">
+      <div className="h-4 bg-slate-50 rounded w-full" />
+      <div className="h-4 bg-slate-50 rounded w-5/6" />
+    </div>
   </div>
 );
 
@@ -50,240 +51,216 @@ const EnrolledCourses: React.FC = () => {
 
   useEffect(() => {
     const fetchDashboard = async () => {
-      setLoading(true);
-      setError(null);
       try {
         const token = getAuthToken();
-        if (!token) throw new Error("No auth token found");
-
         const response = await axios.get(
           `${BASE_URL}/api/admin-classes/dashboard`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-
         setData(response.data);
       } catch (err: any) {
-        setError(
-          err.response?.data?.message ||
-            err.message ||
-            "Failed to fetch dashboard"
-        );
+        setError(err.message || "Synchronization Failed");
       } finally {
         setLoading(false);
       }
     };
-
     fetchDashboard();
   }, []);
 
-  // Render Classes
   const renderClasses = (classes: any[]) => {
-    if (!classes || classes.length === 0) {
+    if (!classes?.length)
       return (
-        <div className="text-center py-8 text-gray-500">
-          <BookOpen className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-          <p>No classes scheduled.</p>
+        <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-slate-100 rounded-[2rem] bg-slate-50/30">
+          <BookOpen className="w-8 h-8 text-slate-200 mb-3" />
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+            No active schedules
+          </p>
         </div>
       );
-    }
 
     return (
-      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {classes.map((cls) => {
-          const statusColor =
-            cls.status === "completed"
-              ? "bg-green-100 text-green-800 border-green-300"
-              : cls.status === "cancelled"
-              ? "bg-red-100 text-red-800 border-red-300"
-              : "bg-green-50 text-green-700 border-green-300";
-
-          return (
-            <div
-              key={cls._id}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow"
-            >
-              <div className="flex justify-between items-start mb-3">
-                <h4 className="font-semibold text-gray-900 truncate flex-1">
-                  {cls.title}
-                </h4>
-                <span
-                  className={`px-2 py-1 text-xs font-medium rounded-full border ${statusColor}`}
-                >
-                  {cls.status}
-                </span>
+      <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {classes.map((cls) => (
+          <motion.div
+            key={cls._id}
+            whileHover={{ y: -5 }}
+            className="group bg-white rounded-[2rem] border border-slate-100 p-6 shadow-sm hover:border-[#064e3b]/20 transition-all duration-300"
+          >
+            <div className="flex justify-between items-start mb-6">
+              <div className="p-3 bg-emerald-50 rounded-2xl text-[#064e3b]">
+                <GraduationCap size={20} />
               </div>
+              <span
+                className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-lg border ${
+                  cls.status === "completed"
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                    : cls.status === "cancelled"
+                    ? "bg-red-50 text-red-700 border-red-100"
+                    : "bg-yellow-50 text-yellow-700 border-yellow-100"
+                }`}
+              >
+                {cls.status}
+              </span>
+            </div>
 
-              <div className="space-y-2 text-sm text-gray-600">
-                <p className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-green-600" />
-                  {cls.courseId?.title ||
-                    cls.courseId?.name ||
-                    "Unknown Course"}
-                </p>
+            <h4 className="text-lg font-black text-[#064e3b] tracking-tight mb-4 italic truncate">
+              {cls.title}
+            </h4>
 
-                <p className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-gray-600" />
-                  {cls.teacherId
-                    ? `${cls.teacherId.firstName} ${cls.teacherId.lastName}`
-                    : "Teacher N/A"}
-                </p>
-
-                <p className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-green-600" />
+            <div className="space-y-3 pt-4 border-t border-slate-50">
+              <div className="flex items-center gap-3 text-slate-500">
+                <Calendar size={14} className="text-yellow-600" />
+                <span className="text-[11px] font-bold uppercase tracking-tight">
                   {new Date(cls.date).toLocaleDateString("en-US", {
-                    weekday: "short",
                     month: "short",
                     day: "numeric",
+                    weekday: "short",
                   })}
-                </p>
-
-                <p className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-green-700" />
-                  {cls.time || "Time TBD"}
-                </p>
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-slate-500">
+                <Clock size={14} className="text-yellow-600" />
+                <span className="text-[11px] font-bold uppercase tracking-tight">
+                  {cls.time || "TBD"}
+                </span>
               </div>
             </div>
-          );
-        })}
+          </motion.div>
+        ))}
       </div>
     );
   };
 
-  // Render Courses + Classes
   const renderUserSection = (user: TeacherOrStudent, role: string) => (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-green-100">
-      <div className="flex items-center gap-3 mb-5">
-        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center text-white font-bold text-lg">
-          {user.name.charAt(0).toUpperCase()}
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">{user.name}</h2>
-          <p className="text-sm text-gray-600 capitalize">{role}</p>
-        </div>
-      </div>
+    <section className="space-y-8 animate-in fade-in duration-700">
+      {/* User Identity Banner */}
+      <div className="relative overflow-hidden bg-[#064e3b] rounded-[2.5rem] p-8 md:p-12 text-white shadow-2xl shadow-emerald-900/20">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-6">
+            <div className="w-20 h-20 bg-yellow-400 rounded-3xl flex items-center justify-center text-[#064e3b] text-3xl font-black shadow-lg">
+              {user.name.charAt(0)}
+            </div>
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-200/60 block mb-1">
+                Authorized {role}
+              </span>
+              <h2 className="text-3xl md:text-4xl font-black tracking-tighter italic">
+                {user.name}
+              </h2>
+            </div>
+          </div>
 
-      {/* Courses */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-green-600" />
-          Enrolled Courses
-        </h3>
-        {user.courses && user.courses.length > 0 ? (
           <div className="flex flex-wrap gap-2">
-            {user.courses.map((c) => (
+            {user.courses?.map((c) => (
               <span
                 key={c._id}
-                className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full"
+                className="px-4 py-2 bg-white/10 backdrop-blur-md rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/5"
               >
                 {c.title}
               </span>
             ))}
           </div>
-        ) : (
-          <p className="text-gray-500 italic">No courses enrolled.</p>
-        )}
+        </div>
+        <Shield className="absolute -bottom-10 -right-10 w-64 h-64 text-white/5 rotate-12" />
       </div>
 
-      {/* Classes */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-green-600" />
-          Upcoming Classes
-        </h3>
+      {/* Schedule Grid */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between px-2">
+          <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400">
+            Scheduled Curriculum
+          </h3>
+          <div className="h-px flex-1 mx-6 bg-slate-100" />
+        </div>
         {renderClasses(user.classes || [])}
       </div>
-    </div>
+    </section>
   );
 
-  // Loading State
-  if (loading) {
+  if (loading)
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50 p-6">
-        <div className="max-w-7xl mx-auto space-y-8">
-          <div className="h-10 bg-gray-200 rounded w-64 mb-6"></div>
+      <div className="max-w-7xl mx-auto p-8 md:p-12 space-y-12">
+        <div className="space-y-4">
+          <div className="h-4 bg-slate-100 rounded w-24 animate-pulse" />
+          <div className="h-12 bg-slate-100 rounded w-64 animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200"
-            >
-              <SkeletonCard />
-            </div>
+            <SkeletonCard key={i} />
           ))}
         </div>
       </div>
     );
-  }
 
-  // Error State
-  if (error) {
+  if (error)
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-gray-900 mb-2">
-            Oops! Something went wrong
+      <div className="min-h-[60vh] flex items-center justify-center p-6">
+        <div className="text-center space-y-6 max-w-sm">
+          <div className="w-20 h-20 bg-red-50 text-red-500 rounded-[2rem] flex items-center justify-center mx-auto">
+            <AlertCircle size={40} />
+          </div>
+          <h3 className="text-2xl font-black text-[#064e3b] tracking-tighter italic">
+            System Disconnected
           </h3>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <p className="text-sm text-slate-500 font-bold leading-relaxed">
+            {error}
+          </p>
           <button
             onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+            className="w-full py-4 bg-[#064e3b] text-yellow-400 rounded-2xl font-black text-[10px] uppercase tracking-widest"
           >
-            Try Again
+            Re-initialize
           </button>
         </div>
       </div>
     );
-  }
 
   return (
-    <div className="min-h-screen bg-[#f4f4f4] py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
-            My Dashboard
+    <div className="min-h-screen bg-[#fcfdfc] py-12 px-6 lg:px-12">
+      <div className="max-w-7xl mx-auto space-y-20">
+        {/* Page Header */}
+        <header className="space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-[#064e3b] rounded-lg text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+            <Shield size={12} className="text-yellow-600" /> Secure Environment
+          </div>
+          <h1 className="text-5xl md:text-6xl font-black text-[#064e3b] tracking-tighter leading-none">
+            Learning <br className="md:hidden" /> Dashboard
           </h1>
-          <p className="mt-2 text-lg text-gray-600">
-            View your courses, classes, and progress
+          <p className="text-slate-500 font-bold max-w-xl text-sm md:text-base leading-relaxed">
+            Real-time synchronization of your active curriculum, scheduled
+            sessions, and academic progress.
           </p>
-        </div>
+        </header>
 
-        <div className="space-y-8">
-          {/* Teacher */}
-          {data.teacher && renderUserSection(data.teacher, "Teacher")}
+        <div className="space-y-24">
+          {data.teacher && renderUserSection(data.teacher, "Instructor")}
+          {data.student && renderUserSection(data.student, "Scholar")}
+          {data.parent?.children.map((child) => (
+            <div key={child._id} className="space-y-12">
+              <div className="flex items-center gap-4 text-[#064e3b]">
+                <User size={24} />
+                <h2 className="text-2xl font-black tracking-tighter italic">
+                  Dependent: {child.name}
+                </h2>
+              </div>
+              {renderUserSection(child, "Student")}
+            </div>
+          ))}
 
-          {/* Student */}
-          {data.student && renderUserSection(data.student, "Student")}
-
-          {/* Parent */}
-          {data.parent && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <User className="w-7 h-7 text-green-600" />
-                My Children
-              </h2>
-              {data.parent.children.map((child) => (
-                <div key={child._id}>{renderUserSection(child, "Child")}</div>
-              ))}
+          {!data.teacher && !data.student && !data.parent && (
+            <div className="py-32 text-center border-2 border-dashed border-slate-100 rounded-[3rem] bg-white">
+              <BookOpen className="w-16 h-16 text-slate-100 mx-auto mb-6" />
+              <h3 className="text-xl font-black text-[#064e3b] tracking-tight italic">
+                Zero Environment Data
+              </h3>
+              <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-2">
+                Awaiting enrollment confirmation
+              </p>
             </div>
           )}
         </div>
-
-        {/* Empty State */}
-        {!data.teacher && !data.student && !data.parent && (
-          <div className="text-center py-16">
-            <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <BookOpen className="w-12 h-12 text-gray-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">
-              No data available
-            </h3>
-            <p className="text-gray-500">
-              It looks like you don't have any courses or classes yet.
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

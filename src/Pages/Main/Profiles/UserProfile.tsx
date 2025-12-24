@@ -1,21 +1,16 @@
-// src/pages/UserProfile.tsx
 import { useEffect, useState } from "react";
 import {
   Loader2,
   User,
   Mail,
-  // Calendar,
   Shield,
   AlertCircle,
   RefreshCw,
   CheckCircle,
   XCircle,
-  CreditCard,
-  Users,
   Trash2,
   Plus,
   User2Icon,
-  BookOpen,
   ArrowRight,
   Edit3,
 } from "lucide-react";
@@ -27,13 +22,13 @@ import { fetchUser } from "../../../Redux/Slices/accounts.slice";
 import { useNavigate } from "react-router-dom";
 import { getUserType } from "../../../utils/userType";
 
+// ... Interfaces stay the same ...
 interface Subject {
   _id: string;
   name: string;
   code: string;
   description?: string;
 }
-
 interface StudentData {
   _id: string;
   firstName: string;
@@ -50,7 +45,6 @@ interface StudentData {
   createdAt?: string;
   updatedAt?: string;
 }
-
 interface StudentDetail {
   _id: string;
   firstName: string;
@@ -68,6 +62,8 @@ export default function UserProfile() {
   const navigate = useNavigate();
 
   const goToAddStudent = () => navigate("/add-student");
+  const closeCancelModal = () => setCancelStudentId(null);
+  const type = getUserType();
 
   const formatDate = (d?: string) =>
     d
@@ -81,13 +77,10 @@ export default function UserProfile() {
   const getBadge = (value: boolean, yes: string, no: string) => ({
     icon: value ? CheckCircle : XCircle,
     className: value
-      ? "inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 border border-green-300"
-      : "inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700 border border-gray-300",
+      ? "inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100"
+      : "inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg bg-slate-50 text-slate-500 border border-slate-200",
     text: value ? yes : no,
   });
-
-  //const openCancelModal = (id: string) => setCancelStudentId(id);
-  const closeCancelModal = () => setCancelStudentId(null);
 
   const confirmCancelSubscription = () => {
     if (!cancelStudentId) return;
@@ -108,7 +101,6 @@ export default function UserProfile() {
       class: student.class || student.gradeId || "Not Set",
       subjects: student.subjects.map((s) => s._id),
     };
-
     navigate("/pricing-page", {
       state: {
         parentId: student.parentId || student._id,
@@ -121,73 +113,50 @@ export default function UserProfile() {
   const requestDeleteAccount = (student: StudentData) => {
     const subject = encodeURIComponent("Request to Delete Student Account");
     const body = encodeURIComponent(
-      `
-Hello Support,
-
-Please delete this student account:
-
-Name: ${student.firstName} ${student.lastName}
-Email: ${student.email}
-ID: ${student._id}
-
-Thank you.
-    `.trim()
+      `Hello Support,\n\nPlease delete this student account:\n\nName: ${student.firstName} ${student.lastName}\nEmail: ${student.email}\nID: ${student._id}\n\nThank you.`.trim()
     );
-
     window.location.href = `mailto:onyekachiiyare@gmail.com?subject=${subject}&body=${body}`;
     toast.success("Opening email...");
   };
 
-  const goToSubject = (subjectId: string) => {
-    navigate(`/subjects/${subjectId}`);
-  };
+  const goToSubject = (subjectId: string) => navigate(`/subjects/${subjectId}`);
 
   useEffect(() => {
     setLoading(true);
-    setError(null);
-
     dispatch(fetchUser())
       .unwrap()
       .then((res: any) => {
-        if (res.success && Array.isArray(res.data)) {
-          setStudents(res.data);
-        } else {
-          setStudents([]);
-        }
+        if (res.success && Array.isArray(res.data)) setStudents(res.data);
       })
       .catch((err) => {
-        const msg = err?.message || "Failed to load profile";
-        setError(msg);
-        toast.error(msg);
+        setError(err?.message || "Failed to load profile");
       })
       .finally(() => setLoading(false));
   }, [dispatch]);
 
-  const type = getUserType();
-
   if (!loading && students.length === 0) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#fcfdfc] flex items-center justify-center p-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl border border-gray-200 p-10 shadow-lg text-center max-w-md w-full"
+          className="bg-white rounded-[3rem] border border-slate-100 p-12 shadow-2xl shadow-emerald-900/5 text-center max-w-md w-full"
         >
-          <div className="w-16 h-16 bg-yellow-100 text-yellow-900 rounded-full flex items-center justify-center mx-auto mb-6">
-            <User2Icon className="w-10 h-10" />
+          <div className="w-20 h-20 bg-emerald-50 text-[#064e3b] rounded-[2rem] flex items-center justify-center mx-auto mb-8">
+            <User2Icon size={40} />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">
-            No Profile Found
+          <h2 className="text-3xl font-black text-[#064e3b] tracking-tighter mb-4 italic">
+            No Node Found
           </h2>
-          <p className="text-gray-600 mb-8">
-            Add your first student to get started.
+          <p className="text-slate-500 font-bold mb-10 text-sm">
+            Synchronize your first student profile to begin administrative
+            access.
           </p>
           <button
             onClick={goToAddStudent}
-            className="w-full py-3 bg-yellow-100 text-yellow-900 rounded-lg font-medium  flex items-center justify-center gap-2"
+            className="w-full py-5 bg-[#064e3b] text-yellow-400 rounded-2xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-3"
           >
-            <Plus className="w-5 h-5" />
-            Add Student
+            <Plus size={18} /> Add Student Profile
           </button>
         </motion.div>
       </div>
@@ -195,160 +164,149 @@ Thank you.
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-[#fcfdfc] pb-20">
       <AnimatePresence>
         {loading && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="min-h-[100%]  bg-white flex flex-col items-center justify-center gap-5 z-50"
+            className="fixed inset-0 bg-white/80 backdrop-blur-md flex flex-col items-center justify-center gap-6 z-[60]"
           >
-            <Loader2 className="w-14 h-14 animate-spin text-gray-900" />
-            <p className="text-xl font-bold text-gray-900">
-              Loading Profiles...
+            <div className="relative">
+              <Loader2 className="w-16 h-16 animate-spin text-[#064e3b] opacity-20" />
+              <Shield className="absolute inset-0 m-auto w-6 h-6 text-[#064e3b] animate-pulse" />
+            </div>
+            <p className="text-[10px] font-black text-[#064e3b] uppercase tracking-[0.5em]">
+              Synchronizing Profiles
             </p>
           </motion.div>
         )}
       </AnimatePresence>
 
       {!loading && students.length > 0 && (
-        <div className="min-h-screen bg-white">
-          <div className="max-w-5xl mx-auto px-4 py-8 md:px-6">
-            {/* Header */}
-            <div className="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-              <div>
-                <div className="w-14 h-14 bg-yellow-100 text-yellow-900 rounded-full flex items-center justify-center mb-4">
-                  <User2Icon className="w-8 h-8" />
-                </div>
-                <h1 className="text-4xl font-black text-gray-900">Profiles</h1>
-                <p className="text-gray-600 mt-1">
-                  Managing {students.length} student account
-                  {students.length > 1 ? "s" : ""}
-                </p>
+        <div className="max-w-6xl mx-auto px-6 py-12">
+          {/* Page Header */}
+          <header className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-[#064e3b] rounded-lg text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+                <Shield size={12} className="text-yellow-600" /> Administrative
+                Access
               </div>
-
-              {type === "admin" && (
-                <div style={{ display: "flex", gap: 4 }}>
-                  <button
-                    onClick={() => navigate(`/user-updates`)}
-                    className="px-5 py-2.5 border-gray-900 text-gray-900 rounded-lg  font-medium text-sm flex items-center gap-2"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                    Edit Profile
-                  </button>
-
-                  <button
-                    onClick={goToAddStudent}
-                    className="inline-flex items-center gap-2 px-5 py-3 border-gray-900 text-gray-900 rounded-lg  font-medium"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Add Student
-                  </button>
-                </div>
-              )}
+              <h1 className="text-5xl md:text-6xl font-black text-[#064e3b] tracking-tighter leading-none">
+                Profiles
+              </h1>
+              <p className="text-slate-500 font-bold text-sm tracking-tight">
+                Managing {students.length} active node
+                {students.length > 1 ? "s" : ""} in the Iyare Hub environment.
+              </p>
             </div>
 
-            {error && (
-              <div className="mb-8 p-5 bg-red-50 border border-red-300 rounded-lg flex items-center gap-3">
-                <AlertCircle className="w-8 h-8 text-red-600" />
-                <div>
-                  <p className="font-bold text-red-800">{error}</p>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="text-sm underline text-red-700 hover:text-red-800 flex items-center gap-1 mt-2"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    Retry
-                  </button>
-                </div>
+            {type === "admin" && (
+              <div className="flex gap-3">
+                <button
+                  onClick={() => navigate(`/user-updates`)}
+                  className="px-6 py-4 bg-white border border-slate-100 text-[#064e3b] rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2"
+                >
+                  <Edit3 size={14} /> Edit Data
+                </button>
+                <button
+                  onClick={goToAddStudent}
+                  className="px-6 py-4 bg-[#064e3b] text-yellow-400 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-emerald-900/10 flex items-center gap-2 transition-transform active:scale-95"
+                >
+                  <Plus size={16} /> Add Profile
+                </button>
               </div>
             )}
+          </header>
 
-            {/* Student Cards */}
-            <div className="space-y-8">
-              {students.map((student) => (
-                <motion.div
-                  key={student._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-xl border border-gray-200 overflow-hidden"
-                >
-                  {/* Header */}
-                  <div className=" p-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 text-gray-900 h-14 bg-gray-100 rounded-full flex items-center justify-center">
-                        <User className="w-8 h-8" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold">
-                          {student.firstName} {student.lastName}
-                        </h3>
-                        <p className="text-sm opacity-90">
-                          Joined {formatDate(student.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+          {error && (
+            <div className="mb-10 p-6 bg-red-50 border border-red-100 rounded-[2rem] flex items-center gap-4">
+              <AlertCircle className="w-6 h-6 text-red-600" />
+              <div className="flex-1">
+                <p className="text-sm font-black text-red-900 tracking-tight italic">
+                  {error}
+                </p>
+              </div>
+              <button
+                onClick={() => window.location.reload()}
+                className="p-2 text-red-600 hover:rotate-180 transition-transform duration-500"
+              >
+                <RefreshCw size={20} />
+              </button>
+            </div>
+          )}
 
-                  <div className="p-6 space-y-6">
-                    {/* Basic Info */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-sm">
-                      <div className="flex items-center gap-3">
-                        <Mail className="w-5 h-5 text-gray-500" />
+          {/* Student Cards */}
+          <div className="space-y-12">
+            {students.map((student) => (
+              <motion.div
+                key={student._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-[3rem] border border-slate-100 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-emerald-900/5 transition-all duration-500 group"
+              >
+                {/* Visual Identity Strip */}
+                <div className="h-2 bg-emerald-600 w-full group-hover:bg-yellow-400 transition-colors duration-500" />
+
+                <div className="p-8 md:p-12">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                    {/* Left: User Avatar & Meta */}
+                    <div className="lg:col-span-4 space-y-6">
+                      <div className="flex items-center gap-6">
+                        <div className="w-20 h-20 bg-[#064e3b] rounded-[1.8rem] flex items-center justify-center text-yellow-400 shadow-lg rotate-3 group-hover:rotate-0 transition-transform">
+                          <User size={36} />
+                        </div>
                         <div>
-                          <p className="text-gray-500">Email</p>
-                          <p className="font-medium text-gray-900">
-                            {student.email}
+                          <h3 className="text-2xl font-black text-[#064e3b] tracking-tighter italic">
+                            {student.firstName} <br /> {student.lastName}
+                          </h3>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
+                            Joined {formatDate(student.createdAt)}
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <Users className="w-5 h-5 text-gray-500" />
-                        <div>
-                          <p className="text-gray-500">Account Type</p>
-                          <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                      <div className="space-y-4 pt-6">
+                        <div className="flex items-center justify-between py-3 border-b border-slate-50">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
+                            Auth Status
+                          </span>
+                          <span className="text-[10px] font-black uppercase text-[#064e3b] tracking-widest bg-emerald-50 px-2 py-1 rounded">
                             Student
                           </span>
                         </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <CreditCard className="w-5 h-5 text-gray-500" />
-                        <div>
-                          <p className="text-gray-500">Lesson Fee</p>
-                          {(() => {
-                            const b = getBadge(
-                              student.isPaid,
-                              "Paid",
-                              "Unpaid"
-                            );
-                            const Icon = b.icon;
-                            return (
-                              <span className={b.className}>
-                                <Icon className="w-3.5 h-3.5" />
-                                {b.text}
-                              </span>
-                            );
-                          })()}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <Shield className="w-5 h-5 text-gray-500" />
-                        <div>
-                          <p className="text-gray-500">Subscription</p>
+                        <div className="flex items-center justify-between py-3 border-b border-slate-50">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
+                            Subscription
+                          </span>
                           {(() => {
                             const b = getBadge(
                               student.isSubscribed,
                               "Active",
-                              "Inactive"
+                              "Offline"
                             );
                             const Icon = b.icon;
                             return (
                               <span className={b.className}>
-                                <Icon className="w-3.5 h-3.5" />
+                                <Icon size={12} />
+                                {b.text}
+                              </span>
+                            );
+                          })()}
+                        </div>
+                        <div className="flex items-center justify-between py-3">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
+                            Account Fee
+                          </span>
+                          {(() => {
+                            const b = getBadge(
+                              student.isPaid,
+                              "Settled",
+                              "Outstanding"
+                            );
+                            const Icon = b.icon;
+                            return (
+                              <span className={b.className}>
+                                <Icon size={12} />
                                 {b.text}
                               </span>
                             );
@@ -357,131 +315,140 @@ Thank you.
                       </div>
                     </div>
 
-                    {/* Subjects Section */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <BookOpen className="w-5 h-5 text-gray-600" />
-                        <h4 className="font-bold text-gray-900">
-                          Subjects Enrolled
-                        </h4>
-                        <span className="text-sm text-gray-500">
-                          ({student.subjects.length})
-                        </span>
+                    {/* Right: Detailed Info & Subjects */}
+                    <div className="lg:col-span-8 space-y-10">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                            Email Node
+                          </label>
+                          <p className="text-sm font-bold text-[#064e3b] flex items-center gap-2">
+                            <Mail size={14} className="text-yellow-600" />{" "}
+                            {student.email}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                            Identification
+                          </label>
+                          <p className="text-sm font-bold text-[#064e3b] flex items-center gap-2 uppercase tracking-tighter">
+                            ID: {student._id.slice(-8)}
+                          </p>
+                        </div>
                       </div>
 
-                      {student.subjects.length === 0 ? (
-                        <p className="text-gray-500 italic">
-                          No subjects assigned yet.
-                        </p>
-                      ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {student.subjects.map((subject) => (
-                            <button
-                              key={subject._id}
-                              onClick={() => goToSubject(subject._id)}
-                              className="group flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-400 hover:bg-gray-100 transition"
-                            >
-                              <div className="text-left">
-                                <p className="font-bold text-gray-900">
-                                  {subject.name}
-                                </p>
-                                <p className="text-xs text-gray-600 mt-1">
-                                  {subject.code}
-                                </p>
-                              </div>
-                              <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-900 transition" />
-                            </button>
-                          ))}
+                      <div>
+                        <div className="flex items-center justify-between mb-6">
+                          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
+                            Enrolled Curriculum ({student.subjects.length})
+                          </h4>
+                          <div className="h-px flex-1 ml-6 bg-slate-50" />
                         </div>
-                      )}
-                    </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
-                      {/* {student.isSubscribed ? (
-                        <button
-                          onClick={() => openCancelModal(student._id)}
-                          className="px-5 py-2.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium text-sm border border-red-300 flex items-center gap-2"
-                        >
-                          <XCircle className="w-4 h-4" />
-                          Cancel Subscription
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => subscribeAgain(student)}
-                          className="px-5 py-2.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-medium text-sm border border-green-300 flex items-center gap-2"
-                        >
-                          <CheckCircle className="w-4 h-4" />
-                          Subscribe Again
-                        </button>
-                      )} */}
-                      {!student.isSubscribed && (
-                        <button
-                          onClick={() => subscribeAgain(student)}
-                          className="px-5 py-2.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-medium text-sm border border-green-300 flex items-center gap-2"
-                        >
-                          <CheckCircle className="w-4 h-4" />
-                          Subscribe Again
-                        </button>
-                      )}
+                        {student.subjects.length === 0 ? (
+                          <div className="p-8 border-2 border-dashed border-slate-50 rounded-[2rem] text-center">
+                            <p className="text-xs font-black text-slate-300 uppercase tracking-widest">
+                              No Curriculum Synchronized
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {student.subjects.map((subject) => (
+                              <button
+                                key={subject._id}
+                                onClick={() => goToSubject(subject._id)}
+                                className="group/btn flex items-center justify-between p-5 bg-[#fcfdfc] rounded-[1.5rem] border border-slate-100 hover:border-[#064e3b] hover:bg-white transition-all text-left"
+                              >
+                                <div>
+                                  <p className="text-sm font-black text-[#064e3b] italic tracking-tight">
+                                    {subject.name}
+                                  </p>
+                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
+                                    {subject.code}
+                                  </p>
+                                </div>
+                                <ArrowRight className="w-5 h-5 text-slate-200 group-hover/btn:text-yellow-600 group-hover/btn:translate-x-1 transition-all" />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
 
-                      {type === "parent" && (
-                        <button
-                          onClick={() => requestDeleteAccount(student)}
-                          className="px-5 py-2.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium text-sm border border-red-300 flex items-center gap-2"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Request Delete
-                        </button>
-                      )}
+                      {/* Action Row */}
+                      <div className="flex flex-wrap items-center gap-4 pt-8 border-t border-slate-50">
+                        {!student.isSubscribed && (
+                          <button
+                            onClick={() => subscribeAgain(student)}
+                            className="px-8 py-4 bg-[#064e3b] text-yellow-400 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-900/10 flex items-center gap-3 hover:brightness-110 transition-all"
+                          >
+                            <CheckCircle size={16} /> Re-Authorize Subscription
+                          </button>
+                        )}
+                        {type === "parent" && (
+                          <button
+                            onClick={() => requestDeleteAccount(student)}
+                            className="px-8 py-4 bg-red-50 text-red-600 border border-red-100 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-100 transition-all flex items-center gap-3"
+                          >
+                            <Trash2 size={16} /> Decommission Profile
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </motion.div>
-              ))}
-            </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Cancel Modal */}
+      {/* Cancel Modal (Same styling as logout/report) */}
       <AnimatePresence>
         {cancelStudentId && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-[#064e3b]/40 backdrop-blur-sm flex items-center justify-center p-6 z-[100]"
             onClick={closeCancelModal}
           >
             <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl"
+              className="bg-white rounded-[3rem] p-12 max-w-md w-full shadow-2xl text-center space-y-8"
             >
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Cancel Subscription?
-              </h3>
-              <p className="text-gray-600 mb-6">Access will end immediately.</p>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={closeCancelModal}
-                  className="px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
-                >
-                  Keep Active
-                </button>
+              <div className="w-20 h-20 bg-red-50 text-red-600 rounded-[2rem] flex items-center justify-center mx-auto">
+                <XCircle size={40} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-3xl font-black text-[#064e3b] tracking-tighter italic">
+                  Terminate Sub?
+                </h3>
+                <p className="text-slate-500 font-bold text-sm">
+                  Administrative access will be revoked immediately for this
+                  node.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 pt-4">
                 <button
                   onClick={confirmCancelSubscription}
-                  className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+                  className="w-full py-5 bg-red-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest"
                 >
-                  Cancel Now
+                  Confirm Termination
+                </button>
+                <button
+                  onClick={closeCancelModal}
+                  className="w-full py-5 bg-slate-100 text-slate-400 rounded-2xl font-black text-[11px] uppercase tracking-widest"
+                >
+                  Maintain Access
                 </button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }

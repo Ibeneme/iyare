@@ -335,121 +335,110 @@ const GuideModal: React.FC = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 md:p-8"
       >
-        {/* Main Modal Container: Removed borders and simplified shadow */}
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className={`relative w-full max-w-lg md:max-w-3xl rounded-3xl bg-gray-900 shadow-2xl`}
-          style={{
-            // Internal, subtle glow for premium feel without hard borders
-            boxShadow: `0 0 50px -10px ${config.accentHex}40, 0 20px 25px -5px rgba(0, 0, 0, 0.4)`,
-          }}
+          initial={{ y: 20, opacity: 0, scale: 0.98 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          exit={{ y: 20, opacity: 0, scale: 0.98 }}
+          className="relative w-full max-w-4xl bg-[#0a0a0a] rounded-[2.5rem] overflow-hidden border border-white/10"
         >
-          {/* Accent Header Line (Instead of top border) */}
-          <div
-            className="h-1.5 w-full rounded-t-3xl"
+          {/* Subtle Accent Glow */}
+          <div 
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 blur-[100px] opacity-50"
             style={{ backgroundColor: config.accentHex }}
           />
 
-          {/* Close Button - Now slightly lower due to accent line */}
-          <button
-            onClick={handleClose}
-            className="absolute top-5 right-5 z-10 rounded-full bg-white/10 p-2 text-gray-300 hover:bg-white/20 hover:text-white transition"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          <div className="p-6 md:p-10">
-            <motion.div
-              key={currentStep}
-              initial={{ x: 300, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -300, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 280, damping: 30 }}
+          {/* Top Navigation */}
+          <div className="flex justify-between items-center p-8 pb-0">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: config.accentHex }} />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30">
+                {userType} Guide • {currentStep + 1}/{totalSteps}
+              </span>
+            </div>
+            <button
+              onClick={handleClose}
+              className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl text-white/40 transition-all active:scale-90"
             >
-              <div className="flex items-start gap-6 mb-8">
-                {/* Icon Container - Retained subtle accent background */}
-                <div
-                  className="p-4 rounded-xl flex-shrink-0"
-                  style={{
-                    backgroundColor: `${config.accentHex}1A`, // Light accent background
-                  }}
-                >
-                  <current.icon
-                    className={`w-8 h-8 md:w-10 md:h-10 ${config.accentClass}`}
-                  />
-                </div>
-                <div>
-                  <h2 className="text-2xl md:text-4xl font-extrabold text-white mt-0.5">
-                    {current.title}
-                  </h2>
-                  <div className="text-sm font-semibold text-gray-500 mt-1 capitalize">
-                    Role: **{userType}**
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="p-8 md:p-16 pt-10">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentStep}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="grid grid-cols-1 md:grid-cols-12 gap-12 items-center"
+              >
+                {/* Left: Icon Visualization */}
+                <div className="md:col-span-4 flex justify-start">
+                  <div className="relative group">
+                    <div 
+                      className="absolute inset-0 blur-3xl opacity-20 transition-opacity group-hover:opacity-40"
+                      style={{ backgroundColor: config.accentHex }}
+                    />
+                    <div className="relative w-32 h-32 md:w-44 md:h-44 bg-white/5 rounded-[2rem] flex items-center justify-center border border-white/10">
+                      <current.icon 
+                        size={56} 
+                        style={{ color: config.accentHex }} 
+                        strokeWidth={1.5}
+                      />
+                    </div>
                   </div>
                 </div>
+
+                {/* Right: Content Block */}
+                <div className="md:col-span-8 text-left">
+                  <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter leading-none mb-6">
+                    {current.title}
+                  </h2>
+                  <p className="text-lg text-white/50 font-medium leading-relaxed max-w-md">
+                    {current.body}
+                  </p>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Footer Controls */}
+            <div className="mt-16 flex flex-col md:flex-row items-center justify-between gap-8 pt-10 border-t border-white/5">
+              
+              {/* Modern Pagination Dots */}
+              <div className="flex gap-2">
+                {steps.map((_, i) => (
+                  <div 
+                    key={i}
+                    className="h-1 rounded-full transition-all duration-500"
+                    style={{ 
+                      width: i === currentStep ? '32px' : '8px',
+                      backgroundColor: i === currentStep ? config.accentHex : 'rgba(255,255,255,0.1)'
+                    }}
+                  />
+                ))}
               </div>
 
-              {/* Body Text */}
-              <p className="text-base md:text-lg text-gray-300 leading-relaxed max-w-xl mx-auto">
-                {current.body}
-              </p>
-            </motion.div>
-
-            {/* Progress Bar & Step Counter */}
-            <div className="my-8 md:my-10">
-              <div className="relative h-1.5 w-full bg-gray-700 rounded-full mb-3">
-                <motion.div
-                  className="absolute top-0 left-0 h-1.5 rounded-full"
-                  style={{ backgroundColor: config.accentHex }}
-                  initial={{ width: 0 }}
-                  animate={{
-                    width: `${((currentStep + 1) / totalSteps) * 100}%`,
-                  }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
-                />
-              </div>
-
-              {/* Step counter */}
-              <div className="flex justify-between items-center text-sm text-gray-400 font-medium">
-                <span>
-                  Step **{currentStep + 1}** of **{totalSteps}**
-                </span>
-                <span className={config.accentClass}>{current.title}</span>
-              </div>
-            </div>
-
-            {/* Navigation */}
-            <div className="flex justify-between items-center pt-2">
-              <button
-                onClick={prev}
-                disabled={currentStep === 0}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition disabled:text-gray-700 disabled:bg-gray-800 disabled:cursor-not-allowed`}
-                style={
-                  currentStep !== 0
-                    ? {
-                        color: config.accentHex,
-                        backgroundColor: `${config.accentHex}1A`,
-                      }
-                    : {}
-                }
-              >
-                <ChevronLeft className="w-5 h-5" />
-                Previous
-              </button>
-
-              <button
-                onClick={next}
-                className={`px-8 py-3 font-bold rounded-xl shadow-xl transition duration-200 ease-out transform hover:scale-[1.03] active:scale-95 ${config.buttonClass}`}
-              >
-                {isLastStep ? "Complete Tour & Get Started" : "Next Step"}
-                {!isLastStep && (
-                  <ChevronRight className="w-5 h-5 inline ml-2" />
+              <div className="flex items-center gap-4 w-full md:w-auto">
+                {currentStep > 0 && (
+                  <button
+                    onClick={prev}
+                    className="flex items-center justify-center w-14 h-14 rounded-2xl bg-white/5 text-white/50 hover:bg-white/10 transition-all"
+                  >
+                    <ChevronLeft size={24} />
+                  </button>
                 )}
-              </button>
+
+                <button
+                  onClick={next}
+                  className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all hover:brightness-110 active:scale-95 shadow-2xl ${config.buttonClass}`}
+                  style={{ backgroundColor: config.accentHex, color: '#000' }}
+                >
+                  {isLastStep ? "Finish Tour" : "Continue"}
+                  {!isLastStep && <ChevronRight size={18} />}
+                </button>
+              </div>
             </div>
           </div>
         </motion.div>

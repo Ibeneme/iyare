@@ -451,7 +451,7 @@ const VideoChat: React.FC = () => {
     }
   };
   return (
-    <div className="bg-[#020803] text-white h-screen max-h-screen flex flex-col relative overflow-hidden font-sans">
+    <div className="bg-emerald-950 text-white h-screen max-h-screen flex flex-col relative overflow-hidden font-sans">
       {!isConnected ? (
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="bg-green-950/20 p-12 rounded-[48px] border border-green-800/30 w-full max-w-md shadow-2xl backdrop-blur-2xl text-center">

@@ -18,7 +18,7 @@ import axios from "axios";
 import { BASE_URL } from "../../../../Redux/baseurl";
 import suspendImage from "../../../../assets/images/admin/suspend.png";
 import removeImage from "../../../../assets/images/admin/removeImage.png";
-import { Loader2 } from "lucide-react";
+import { Loader2,User } from "lucide-react";
 
 const GRADES_API = `${BASE_URL}/api/grades/grades`;
 
@@ -417,121 +417,143 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
         </div>
       ) : (
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-700 rounded-full flex items-center justify-center text-yellow-300">
-                <FaUserPlus className="w-5 h-5" />
+          <div className="mb-10 mt-6">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-14 h-14 bg-[#064e3b] rounded-2xl flex items-center justify-center text-yellow-400 shadow-lg shadow-emerald-900/20">
+                <FaUserPlus className="w-6 h-6" />
               </div>
-              {getTitle()}
-            </h1>
-            <p className="mt-2 text-gray-600 max-w-3xl">
-              Browse through a comprehensive list of all registered {userType}s.
-            </p>
+              <div>
+                <h1 className="text-4xl font-black text-[#064e3b] tracking-tighter">
+                  {getTitle()}
+                </h1>
+                <p className="text-slate-500 font-bold text-sm">
+                  Directory of all registered {userType}s in the Yare Height
+                  system.
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 mb-6">
-            {filterOptions[userType]?.map((f) => (
-              <button
-                key={f}
-                onClick={() => navigate(`/${userType}/dashboard/${f}`)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  filter === f
-                    ? "bg-green-700 text-yellow-300 shadow-md"
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
-              >
-                {formatFilterText(f)}
-              </button>
-            ))}
+          {/* Filters and Actions Bar */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div className="flex flex-wrap gap-2 p-1.5 bg-white rounded-2xl border border-slate-100 shadow-sm">
+              {filterOptions[userType]?.map((f) => (
+                <button
+                  key={f}
+                  onClick={() => navigate(`/${userType}/dashboard/${f}`)}
+                  className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                    filter === f
+                      ? "bg-yellow-400 text-[#064e3b] shadow-md shadow-yellow-400/20"
+                      : "bg-transparent text-slate-400 hover:text-[#064e3b] hover:bg-slate-50"
+                  }`}
+                >
+                  {formatFilterText(f)}
+                </button>
+              ))}
+            </div>
+
+            {userRole === "admin" &&
+              (userType === "teacher" || userType === "admin") && (
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="inline-flex items-center gap-3 bg-[#064e3b] text-yellow-400 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-800 transition-all shadow-xl shadow-emerald-900/20 active:scale-95"
+                >
+                  <FaUserPlus /> Add {userType}
+                </button>
+              )}
           </div>
 
-          {userRole === "admin" &&
-            (userType === "teacher" || userType === "admin") && (
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="mb-6 inline-flex items-center gap-2 bg-green-700 text-yellow-300 px-5 py-3 rounded-lg font-medium hover:bg-green-800 transition-all shadow-sm"
-              >
-                <FaUserPlus /> Add{" "}
-                {userType.charAt(0).toUpperCase() + userType.slice(1)}
-              </button>
-            )}
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          {/* Table Section */}
+          <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <thead>
+                  <tr className="bg-slate-50/50 border-b border-slate-100">
+                    <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">
                       Name
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      Email
+                    <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      Email Address
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">
                       Status
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th className="px-8 py-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-slate-50">
                   {filterData.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan={4}
-                        className="px-6 py-12 text-center text-gray-500"
-                      >
-                        No {userType}s found
+                      <td colSpan={4} className="px-8 py-20 text-center">
+                        <div className="flex flex-col items-center gap-3 opacity-20">
+                          <User size={48} className="text-[#064e3b]" />
+                          <p className="font-black text-xs uppercase tracking-widest">
+                            No {userType}s Found
+                          </p>
+                        </div>
                       </td>
                     </tr>
                   ) : (
                     filterData.map((user: any) => (
                       <tr
                         key={user._id}
-                        className="hover:bg-gray-50 transition-colors"
+                        className="group hover:bg-emerald-50/30 transition-colors cursor-pointer"
                         onClick={() => handleViewDetails(user._id)}
                       >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {user.name ||
-                            `${user.firstName || ""} ${
-                              user.lastName || ""
-                            }`.trim() ||
-                            "—"}
+                        <td className="px-8 py-5 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-[#064e3b] font-black border border-emerald-100">
+                              {user.firstName?.[0] || user.name?.[0] || "?"}
+                            </div>
+                            <span className="font-black text-[#064e3b] text-base tracking-tight">
+                              {user.name ||
+                                `${user.firstName || ""} ${
+                                  user.lastName || ""
+                                }`.trim() ||
+                                "—"}
+                            </span>
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-8 py-5 whitespace-nowrap text-sm font-bold text-slate-500">
                           {user.email || "—"}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-8 py-5 whitespace-nowrap">
                           <span
-                            className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest ${
                               user.isSuspended
-                                ? "bg-red-100 text-red-800"
-                                : "bg-green-100 text-green-800"
+                                ? "bg-red-50 text-red-600 border border-red-100"
+                                : "bg-emerald-50 text-emerald-600 border border-emerald-100"
                             }`}
                           >
+                            <div
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                user.isSuspended
+                                  ? "bg-red-600"
+                                  : "bg-emerald-600"
+                              }`}
+                            />
                             {user.isSuspended ? "Suspended" : "Active"}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex items-center gap-2">
-                            {userType === "teacher" ||
-                              (userType === "admin" && (
-                                <button
-                                  onClick={() => handleRemoveAdminClick(user)}
-                                  className="p-2 rounded-lg bg-yellow-100 text-green-700 hover:bg-yellow-200"
-                                  title="Remove"
-                                >
-                                  <FaTrashAlt className="w-4 h-4" />
-                                </button>
-                              ))}
-                            <button
-                              onClick={() => handleViewDetails(user._id)}
-                              className="p-2 rounded-lg bg-green-700 text-yellow-300 hover:bg-green-800"
-                              title="View Details"
-                            >
+                        <td className="px-8 py-5 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {(userType === "teacher" ||
+                              userType === "admin") && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveAdminClick(user);
+                                }}
+                                className="p-3 rounded-xl text-slate-300 hover:text-red-600 hover:bg-red-50 transition-all"
+                              >
+                                <FaTrashAlt className="w-4 h-4" />
+                              </button>
+                            )}
+                            <div className="p-3 rounded-xl text-[#064e3b] group-hover:bg-yellow-400 transition-all">
                               <FaChevronRight className="w-4 h-4" />
-                            </button>
+                            </div>
                           </div>
                         </td>
                       </tr>
@@ -1073,6 +1095,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                       </p>
                     </div>
 
+                    {/* Action Buttons */}
                     <div className="flex gap-4">
                       <button
                         onClick={() => setConfirmModal(null)}

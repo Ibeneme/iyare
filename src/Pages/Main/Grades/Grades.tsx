@@ -1,4 +1,3 @@
-// src/pages/admin/GradesManagement.tsx
 import React, { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -8,11 +7,13 @@ import {
   BookOpen,
   Loader2,
   X,
-  Check,
+  User,
+  // Check,
   Lock,
   Layers,
   Search,
   AlertTriangle,
+  ChevronRight,
 } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../../Redux/store";
@@ -26,21 +27,16 @@ import {
 import { useToast } from "../../../Context/ToastProvider";
 import { getUserType } from "../../../utils/userType";
 
-// --- Assuming ToastType is defined elsewhere (e.g., in Context/ToastProvider.tsx) ---
 type ToastType = "success" | "error" | "info" | "warning";
 
-/**
- * @interface ToastContextType
- * Defines the structure for the Toast Context or Hook.
- */
 export interface ToastContextType {
   addToast: (type: ToastType, message: string) => void;
 }
-// ---------------------------------------------------------------------------------
 
-// Define the primary color variables for easy adjustment
-const PRIMARY_COLOR = "#0077B6"; // Ocean Blue
-const PRIMARY_LIGHT = "#0077B61A"; // 10% opacity for light backgrounds
+// // PREMIUM COLOR PALETTE
+// const PRIMARY_COLOR = "#064e3b"; // Deep Emerald
+// const ACCENT_COLOR = "#fbbf24"; // Amber/Gold
+// const PRIMARY_LIGHT = "#064e3b0a"; // Ultra-light emerald for backgrounds
 
 interface Grade {
   _id: string;
@@ -62,7 +58,6 @@ const GradesManagement: React.FC = () => {
   const userType = getUserType();
   const isAdmin = userType === "admin";
 
-  // Local state only — NO useSelector
   const [grades, setGrades] = useState<Grade[]>([]);
   const [subjectsCache, setSubjectsCache] = useState<Record<string, Subject[]>>(
     {}
@@ -79,7 +74,6 @@ const GradesManagement: React.FC = () => {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-  // Load all grades
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -87,7 +81,7 @@ const GradesManagement: React.FC = () => {
         const result = await dispatch(fetchGrades()).unwrap();
         setGrades(result || []);
       } catch {
-        addToast("error", "Failed to load grades"); // Updated to use type/message
+        addToast("error", "Failed to load grades");
       } finally {
         setLoading(false);
       }
@@ -95,14 +89,13 @@ const GradesManagement: React.FC = () => {
     load();
   }, [dispatch]);
 
-  // Load subjects for a grade (cached)
   const loadSubjects = async (gradeId: string) => {
     if (subjectsCache[gradeId]) return;
     try {
       const result = await dispatch(fetchSubjectsByGrade(gradeId)).unwrap();
       setSubjectsCache((p) => ({ ...p, [gradeId]: result || [] }));
     } catch {
-      addToast("error", "Failed to load subjects"); // Updated to use type/message
+      addToast("error", "Failed to load subjects");
     }
   };
 
@@ -126,23 +119,21 @@ const GradesManagement: React.FC = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim()) return addToast("error", "Title is required"); // Updated to use type/message
-
+    if (!formData.title.trim()) return addToast("error", "Title is required");
     try {
       const newGrade = await dispatch(createGrade(formData)).unwrap();
       setGrades((p) => [...p, newGrade]);
-      addToast("success", "Grade created!"); // Updated to use type/message
+      addToast("success", "Grade created!");
       setIsAddOpen(false);
       setFormData({ title: "", description: "" });
     } catch {
-      addToast("error", "Failed to create grade"); // Updated to use type/message
+      addToast("error", "Failed to create grade");
     }
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedGrade || !formData.title.trim()) return;
-
     try {
       const updated = await dispatch(
         updateGrade({ id: selectedGrade._id, data: formData })
@@ -150,10 +141,10 @@ const GradesManagement: React.FC = () => {
       setGrades((p) =>
         p.map((g) => (g._id === selectedGrade._id ? updated : g))
       );
-      addToast("success", "Grade updated!"); // Updated to use type/message
+      addToast("success", "Grade updated!");
       setIsEditOpen(false);
     } catch {
-      addToast("error", "Failed to update grade"); // Updated to use type/message
+      addToast("error", "Failed to update grade");
     }
   };
 
@@ -166,15 +157,14 @@ const GradesManagement: React.FC = () => {
         const { [selectedGrade._id]: _, ...rest } = p;
         return rest;
       });
-      addToast("success", "Grade deleted"); // Updated to use type/message
+      addToast("success", "Grade deleted");
       setIsDeleteOpen(false);
       setSelectedGrade(null);
     } catch {
-      addToast("error", "Failed to delete grade"); // Updated to use type/message
+      addToast("error", "Failed to delete grade");
     }
   };
 
-  // Filtered grades
   const filteredGrades = useMemo(() => {
     if (!searchQuery.trim()) return grades;
     const q = searchQuery.toLowerCase();
@@ -185,7 +175,6 @@ const GradesManagement: React.FC = () => {
     );
   }, [grades, searchQuery]);
 
-  // Current subjects (from cache)
   const currentSubjects = selectedGrade
     ? subjectsCache[selectedGrade._id] || []
     : [];
@@ -202,79 +191,70 @@ const GradesManagement: React.FC = () => {
     subjectsCache[gradeId]?.length || 0;
 
   return (
-    <>
-      <section className="relative bg-white min-h-screen py-10 md:py-16 overflow-hidden">
-        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6">
+    <div className="min-h-screen bg-[#fcfdfc] font-sans">
+      <section className="relative py-10 md:py-16">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
           {/* Header Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-10"
+            className="mb-12"
           >
-            <div className="mb-6 mt-4">
-              {/* Icon replaced yellow with blue accent */}
-              <div
-                className="rounded-full p-3 mb-3 inline-flex items-center justify-center"
-                style={{ backgroundColor: PRIMARY_LIGHT }}
-              >
-                <Layers className="w-6 h-6" style={{ color: PRIMARY_COLOR }} />
+            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div>
+                <div className="bg-yellow-400 p-3 rounded-2xl inline-flex items-center justify-center shadow-lg shadow-yellow-400/20 mb-4">
+                  <Layers className="w-6 h-6 text-[#064e3b]" />
+                </div>
+                <h1 className="text-4xl md:text-5xl font-black text-[#064e3b] tracking-tighter">
+                  Academic Grades
+                </h1>
+                <p className="text-slate-500 font-bold mt-2">
+                  Organize and manage institutional academic levels.
+                </p>
               </div>
-              <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">
-                Manage Grade Levels
-              </h1>
-              <p className="text-gray-600 text-base max-w-3xl">
-                Define and organize academic levels within your institution.
-              </p>
+
+              {isAdmin && (
+                <button
+                  onClick={() => {
+                    setFormData({ title: "", description: "" });
+                    setIsAddOpen(true);
+                  }}
+                  className="px-8 py-4 bg-[#064e3b] text-yellow-400 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-900/20 hover:bg-slate-900 transition-all flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" /> Add New Level
+                </button>
+              )}
             </div>
           </motion.div>
 
-          {/* Controls: Search & Add */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
-            {/* Search Input (Simplified styling) */}
-            <div className="relative w-full sm:w-80">
-              {/* Simplified vertical alignment */}
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          {/* Search Bar */}
+          <div className="mb-10 flex justify-center">
+            <div className="relative w-full max-w-2xl group">
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-[#064e3b] transition-colors" />
               <input
                 type="text"
-                placeholder="Search grades..."
+                placeholder="Search levels (e.g. 'Grade 10' or 'Advanced')..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:border-[#0077B6] focus:ring-1 focus:ring-[#0077B6]/50 outline-none text-sm transition-colors"
+                className="w-full pl-14 pr-6 py-5 rounded-[2rem] border border-slate-200 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-400/10 outline-none text-lg font-bold transition-all bg-white shadow-sm"
               />
             </div>
-            {isAdmin && (
-              <button
-                onClick={() => {
-                  setFormData({ title: "", description: "" });
-                  setIsAddOpen(true);
-                }}
-                className="px-5 py-3 rounded-lg font-semibold text-sm flex items-center gap-2 transition-all"
-                style={{ backgroundColor: PRIMARY_COLOR, color: "white" }}
-              >
-                <Plus className="w-4 h-4" /> Add New Grade
-              </button>
-            )}
           </div>
 
-          {/* Content */}
+          {/* Grid Content */}
           {loading ? (
-            <div className="flex justify-center py-32">
-              <Loader2
-                className="w-10 h-10 animate-spin"
-                style={{ color: PRIMARY_COLOR }}
-              />
+            <div className="flex flex-col items-center justify-center py-32">
+              <Loader2 className="w-12 h-12 animate-spin text-[#064e3b] mb-4" />
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#064e3b]">
+                Fetching levels...
+              </p>
             </div>
           ) : filteredGrades.length === 0 ? (
-            <div className="text-center py-20 bg-gray-50 rounded-xl border border-gray-200">
-              <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-gray-700">
-                No Grades Found
+            <div className="text-center py-20 bg-white rounded-[2.5rem] border border-dashed border-slate-200">
+              <BookOpen className="w-16 h-16 text-slate-200 mx-auto mb-4" />
+              <h3 className="text-xl font-black text-slate-400 uppercase tracking-widest">
+                No Levels Found
               </h3>
-              <p className="text-gray-500 mt-2">
-                {isAdmin
-                  ? "Click 'Add New Grade' to begin."
-                  : "Check back later."}
-              </p>
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -282,77 +262,58 @@ const GradesManagement: React.FC = () => {
                 {filteredGrades.map((grade, i) => (
                   <motion.div
                     key={grade._id}
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: i * 0.05 }}
-                    className="bg-white rounded-xl border border-gray-200 hover:border-[#0077B6] hover:shadow-lg transition-all duration-300 group relative overflow-hidden"
+                    className="bg-white rounded-[2rem] border border-slate-100 p-6 hover:border-yellow-400 hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-300 group relative flex flex-col"
                   >
-                    <div className="p-5 flex flex-col justify-between h-full">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-extrabold text-gray-900 mb-2">
-                          {grade.title}
-                        </h3>
-                        {grade.description && (
-                          <p className="text-sm text-gray-600 line-clamp-2">
-                            {grade.description}
-                          </p>
-                        )}
+                    <div className="mb-6 flex justify-between items-start">
+                      <div className="bg-slate-50 p-3 rounded-2xl text-[#064e3b] group-hover:bg-yellow-400 group-hover:text-emerald-900 transition-colors">
+                        <Layers size={20} />
                       </div>
 
-                      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-gray-500">
-                          {getSubjectCount(grade._id)} subjects
-                        </span>
-
-                        <button
-                          onClick={() => openView(grade)}
-                          className="text-sm font-semibold text-[#0077B6] flex items-center gap-1 hover:gap-2 transition-all"
-                        >
-                          View Details
-                        </button>
-                      </div>
+                      {isAdmin ? (
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => openEdit(grade)}
+                            className="p-2 hover:bg-emerald-50 text-emerald-700 rounded-lg"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            onClick={() => openDelete(grade)}
+                            className="p-2 hover:bg-red-50 text-red-600 rounded-lg"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <Lock size={14} className="text-slate-300" />
+                      )}
                     </div>
 
-                    {/* Action Buttons (Admin) */}
-                    {isAdmin && (
-                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openView(grade);
-                          }}
-                          className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition"
-                        >
-                          <BookOpen className="w-4 h-4 text-gray-700" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEdit(grade);
-                          }}
-                          className="p-2 bg-blue-50 hover:bg-blue-100 rounded-full transition"
-                        >
-                          <Edit2 className="w-4 h-4 text-blue-600" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openDelete(grade);
-                          }}
-                          className="p-2 bg-red-50 hover:bg-red-100 rounded-full transition"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </button>
+                    <h3 className="text-xl font-black text-[#064e3b] mb-2">
+                      {grade.title}
+                    </h3>
+                    <p className="text-slate-500 text-sm font-bold line-clamp-2 flex-grow">
+                      {grade.description ||
+                        "No description provided for this academic level."}
+                    </p>
+
+                    <div className="mt-8 pt-5 border-t border-slate-50 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
+                        <span className="text-[10px] font-black uppercase text-slate-400">
+                          {getSubjectCount(grade._id)} Subjects
+                        </span>
                       </div>
-                    )}
-                    {/* Lock Icon (Non-Admin) */}
-                    {!isAdmin && (
-                      <div className="absolute top-4 right-4">
-                        <div className="p-2 bg-gray-100 rounded-full">
-                          <Lock className="w-4 h-4 text-gray-500" />
-                        </div>
-                      </div>
-                    )}
+                      <button
+                        onClick={() => openView(grade)}
+                        className="text-[10px] font-black uppercase tracking-widest text-[#064e3b] flex items-center gap-1 group-hover:translate-x-1 transition-transform"
+                      >
+                        Details <ChevronRight size={12} />
+                      </button>
+                    </div>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -361,64 +322,21 @@ const GradesManagement: React.FC = () => {
         </div>
       </section>
 
-      {/* MODALS: All modals refactored with cleaner styling and new color */}
+      {/* MODALS REFACTORED TO PREMIUM STYLE */}
       <Modal
-        title="Add New Grade"
+        title="Add Level"
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
       >
-        <form onSubmit={handleCreate} className="space-y-5">
+        <form onSubmit={handleCreate} className="space-y-6">
           <Input
-            label="Title"
+            label="Level Title"
             value={formData.title}
             onChange={(e: any) =>
               setFormData((p) => ({ ...p, title: e.target.value }))
             }
             required
-            primaryColor={PRIMARY_COLOR}
-          />
-          <Textarea
-            label="Description (Optional)"
-            rows={3}
-            value={formData.description}
-            onChange={(e: any) =>
-              setFormData((p) => ({ ...p, description: e.target.value }))
-            }
-            primaryColor={PRIMARY_COLOR}
-          />
-          <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              className="flex-1 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 hover:opacity-90"
-              style={{ backgroundColor: PRIMARY_COLOR }}
-            >
-              <Check className="w-4 h-4" /> Create Grade
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsAddOpen(false)}
-              className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      <Modal
-        title="Edit Grade"
-        isOpen={isEditOpen}
-        onClose={() => setIsEditOpen(false)}
-      >
-        <form onSubmit={handleUpdate} className="space-y-5">
-          <Input
-            label="Title"
-            value={formData.title}
-            onChange={(e: any) =>
-              setFormData((p) => ({ ...p, title: e.target.value }))
-            }
-            required
-            primaryColor={PRIMARY_COLOR}
+            placeholder="e.g. Grade 10"
           />
           <Textarea
             label="Description"
@@ -427,20 +345,19 @@ const GradesManagement: React.FC = () => {
             onChange={(e: any) =>
               setFormData((p) => ({ ...p, description: e.target.value }))
             }
-            primaryColor={PRIMARY_COLOR}
+            placeholder="Briefly describe this academic tier..."
           />
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3">
             <button
               type="submit"
-              className="flex-1 text-white py-3 rounded-lg font-semibold hover:opacity-90 transition flex items-center justify-center gap-2"
-              style={{ backgroundColor: PRIMARY_COLOR }}
+              className="flex-1 bg-[#064e3b] text-yellow-400 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-900 transition-all shadow-lg"
             >
-              <Check className="w-4 h-4" /> Update Grade
+              Create Level
             </button>
             <button
               type="button"
-              onClick={() => setIsEditOpen(false)}
-              className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
+              onClick={() => setIsAddOpen(false)}
+              className="flex-1 bg-slate-100 text-slate-400 py-4 rounded-2xl font-black uppercase text-xs tracking-widest"
             >
               Cancel
             </button>
@@ -449,32 +366,72 @@ const GradesManagement: React.FC = () => {
       </Modal>
 
       <Modal
-        title="Delete Grade?"
+        title="Edit Level"
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+      >
+        <form onSubmit={handleUpdate} className="space-y-6">
+          <Input
+            label="Level Title"
+            value={formData.title}
+            onChange={(e: any) =>
+              setFormData((p) => ({ ...p, title: e.target.value }))
+            }
+            required
+          />
+          <Textarea
+            label="Description"
+            rows={3}
+            value={formData.description}
+            onChange={(e: any) =>
+              setFormData((p) => ({ ...p, description: e.target.value }))
+            }
+          />
+          <div className="flex gap-3">
+            <button
+              type="submit"
+              className="flex-1 bg-[#064e3b] text-yellow-400 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg"
+            >
+              Save Changes
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsEditOpen(false)}
+              className="flex-1 bg-slate-100 text-slate-400 py-4 rounded-2xl font-black uppercase text-xs tracking-widest"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        title="Delete Confirmation"
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
       >
-        <div className="text-center py-4">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle className="w-8 h-8 text-red-600" />
+        <div className="text-center py-6">
+          <div className="w-20 h-20 bg-red-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+            <AlertTriangle className="w-10 h-10 text-red-600" />
           </div>
-          <h3 className="text-xl font-extrabold text-gray-900">
-            Delete "{selectedGrade?.title}"?
+          <h3 className="text-2xl font-black text-[#064e3b]">
+            Delete {selectedGrade?.title}?
           </h3>
-          <p className="text-gray-600 mt-2">
-            This action cannot be undone. All related data will be removed.
+          <p className="text-slate-500 font-bold mt-2">
+            This is permanent. All associated data will be purged.
           </p>
-          <div className="flex gap-3 mt-6">
+          <div className="flex gap-3 mt-10">
             <button
               onClick={handleDelete}
-              className="flex-1 bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition"
+              className="flex-1 bg-red-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-red-200"
             >
-              Yes, Delete
+              Yes, Purge
             </button>
             <button
               onClick={() => setIsDeleteOpen(false)}
-              className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
+              className="flex-1 bg-slate-100 text-slate-400 py-4 rounded-2xl font-black uppercase text-xs tracking-widest"
             >
-              Cancel
+              Keep It
             </button>
           </div>
         </div>
@@ -485,142 +442,106 @@ const GradesManagement: React.FC = () => {
         isOpen={isViewOpen}
         onClose={() => setIsViewOpen(false)}
       >
-        <div className="space-y-5">
-          <div className="relative">
-            {/* Simplified search bar styling */}
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <div className="space-y-6">
+          <div className="relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search subjects by name or code..."
+              placeholder="Search subjects..."
               value={subjectSearch}
               onChange={(e) => setSubjectSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:border-[#0077B6] outline-none text-sm transition-colors"
+              className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 outline-none text-sm font-bold bg-slate-50 focus:bg-white focus:border-yellow-400 transition-all"
             />
           </div>
 
-          {filteredSubjects.length === 0 ? (
-            <p className="text-center text-gray-500 py-10 border border-dashed border-gray-200 rounded-lg">
-              No subjects found for this grade.
-            </p>
-          ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-              {filteredSubjects.map((subject) => (
+          <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+            {filteredSubjects.length === 0 ? (
+              <p className="text-center text-slate-400 font-bold py-10 border-2 border-dashed border-slate-100 rounded-[2rem]">
+                Empty curriculum.
+              </p>
+            ) : (
+              filteredSubjects.map((subject) => (
                 <div
                   key={subject._id}
-                  className="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:bg-white hover:shadow-sm transition"
+                  className="bg-white border border-slate-100 rounded-2xl p-5 hover:border-yellow-400 transition-colors shadow-sm"
                 >
-                  <div className="flex justify-between items-start mb-1">
-                    <h4 className="font-bold text-gray-900 text-base">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-black text-[#064e3b] text-lg">
                       {subject.name}
                     </h4>
-                    <span className="text-xs font-semibold text-gray-600 bg-gray-200 px-2 py-0.5 rounded-full ml-4 flex-shrink-0">
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-emerald-950 text-yellow-400 px-3 py-1 rounded-lg">
                       {subject.code}
                     </span>
                   </div>
                   {subject.description && (
-                    <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                    <p className="text-slate-500 text-xs font-bold leading-relaxed">
                       {subject.description}
                     </p>
                   )}
-                  {subject.teachers?.length ? (
-                    <p className="text-xs text-gray-500 mt-2">
-                      <span className="font-medium text-gray-700">
-                        Teachers:
-                      </span>{" "}
-                      {subject.teachers
-                        .map((t) => `${t.firstName} ${t.lastName}`)
-                        .join(", ")}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-gray-500 mt-2">
-                      No teachers assigned.
-                    </p>
-                  )}
+                  <div className="mt-4 flex items-center gap-2 text-[10px] font-black uppercase text-slate-400">
+                    <User size={12} className="text-yellow-500" />
+                    {subject.teachers?.length
+                      ? subject.teachers
+                          .map((t) => `${t.firstName} ${t.lastName}`)
+                          .join(", ")
+                      : "Unassigned"}
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
         </div>
       </Modal>
-    </>
+    </div>
   );
 };
 
-// --- Reusable Modal and Input Components (Refactored) ---
-
-const Modal: React.FC<{
-  title: string;
-  isOpen: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
-}> = ({ title, isOpen, onClose, children }) => {
+// HELPER COMPONENTS
+const Modal = ({ title, isOpen, onClose, children }: any) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-emerald-950/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white rounded-xl w-full max-w-lg md:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden flex flex-col shadow-2xl border border-white/20"
       >
-        <div className="p-5 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Layers className="w-5 h-5 text-gray-700" />
-            <h2 className="text-xl font-extrabold text-gray-900">{title}</h2>
-          </div>
+        <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between">
+          <h2 className="text-xl font-black text-[#064e3b] tracking-tight">
+            {title}
+          </h2>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-gray-200 rounded-full transition"
+            className="p-2 hover:bg-slate-100 rounded-full transition"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X size={20} className="text-slate-400" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-6">{children}</div>
+        <div className="p-8">{children}</div>
       </motion.div>
     </div>
   );
 };
 
-// Input Component (Accepts primaryColor prop for dynamic focus)
-const Input = ({ label, primaryColor, ...props }: any) => (
-  <div>
-    <label className="block text-gray-800 font-semibold text-sm mb-1">
+const Input = ({ label, ...props }: any) => (
+  <div className="space-y-1.5">
+    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[#064e3b]/60 ml-1">
       {label}
     </label>
     <input
-      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 outline-none text-sm transition-colors"
-      style={{ focusBorderColor: primaryColor }}
-      onFocus={(e) => {
-        e.currentTarget.style.borderColor = primaryColor;
-        e.currentTarget.style.boxShadow = `0 0 0 1px ${primaryColor}`;
-      }}
-      onBlur={(e) => {
-        e.currentTarget.style.borderColor = "#D1D5DB"; // gray-300
-        e.currentTarget.style.boxShadow = "none";
-      }}
+      className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none text-sm font-bold bg-slate-50 focus:bg-white focus:border-yellow-400 focus:ring-4 focus:ring-yellow-400/5 transition-all"
       {...props}
     />
   </div>
 );
 
-// Textarea Component (Accepts primaryColor prop for dynamic focus)
-const Textarea = ({ label, primaryColor, ...props }: any) => (
-  <div>
-    <label className="block text-gray-800 font-semibold text-sm mb-1">
+const Textarea = ({ label, ...props }: any) => (
+  <div className="space-y-1.5">
+    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[#064e3b]/60 ml-1">
       {label}
     </label>
     <textarea
-      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 outline-none text-sm resize-none transition-colors"
-      style={{ focusBorderColor: primaryColor }}
-      onFocus={(e) => {
-        e.currentTarget.style.borderColor = primaryColor;
-        e.currentTarget.style.boxShadow = `0 0 0 1px ${primaryColor}`;
-      }}
-      onBlur={(e) => {
-        e.currentTarget.style.borderColor = "#D1D5DB"; // gray-300
-        e.currentTarget.style.boxShadow = "none";
-      }}
+      className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none text-sm font-bold bg-slate-50 focus:bg-white focus:border-yellow-400 focus:ring-4 focus:ring-yellow-400/5 transition-all resize-none"
       {...props}
     />
   </div>

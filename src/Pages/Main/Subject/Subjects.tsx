@@ -9,7 +9,6 @@ import React, {
 import {
   Loader2,
   Plus,
-  Edit2,
   Trash2,
   X,
   Check,
@@ -121,6 +120,7 @@ export default function SubjectsManager() {
 
   /* ---------- Load Subjects ---------- */
   const loadSubjects = useCallback(() => {
+    console.log(submitted);
     setLoading(true);
     setError(null);
     dispatch(fetchSubjects())
@@ -387,185 +387,164 @@ export default function SubjectsManager() {
 
   return (
     <>
-      {/* Full-Page Loader */}
-      {/* Replaced green with the new primary color (Teal) */}
       {(loading || loadingGrades || loadingTeachers) && (
-        <div className="fixed inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm z-50">
-          <Loader2 className="w-12 h-12 animate-spin text-[#008080]" />
-          <p className="mt-3 text-[#008080] text-sm font-semibold">
-            Loading data...
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 flex flex-col items-center justify-center bg-white/90 backdrop-blur-md z-[100]"
+        >
+          <Loader2 className="w-16 h-16 animate-spin text-emerald-900 mb-4" />
+          <p className="text-emerald-900 font-black uppercase tracking-[0.3em] text-xs">
+            Accessing Subject Database...
           </p>
-        </div>
+        </motion.div>
       )}
-
-      {/* Main UI */}
       {!loading && !loadingGrades && !loadingTeachers && (
-        <div className="min-h-screen bg-white p-4 md:p-8">
+        <div className="min-h-screen bg-[#f8faf7] p-4 md:p-10">
           <div className="max-w-7xl mx-auto">
-            {/* Header Section */}
-            <div className="mb-10 mt-6">
-              <div className="bg-[#008080]/10 rounded-full p-3 mb-3 inline-flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-[#008080]" />
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
+              <div className="space-y-4">
+                <div className="bg-yellow-400 p-3 rounded-2xl inline-flex items-center justify-center shadow-lg shadow-yellow-400/20">
+                  <BookOpen className="w-6 h-6 text-emerald-950" />
+                </div>
+                <h1 className="text-4xl md:text-6xl font-black text-emerald-950 tracking-tighter">
+                  Academic Subjects
+                </h1>
+                <p className="text-emerald-800/60 font-medium text-lg max-w-2xl italic">
+                  Manage your curriculum, track faculty assignments, and monitor
+                  student enrollment across all departments.
+                </p>
               </div>
-              <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">
-                Subjects
-              </h1>
-              <p className="text-gray-600 text-base max-w-3xl">
-                View and manage all academic subjects, grades, and assigned
-                staff/students.
-              </p>
+              {type === "admin" && (
+                <button
+                  onClick={() => openAddEdit()}
+                  className="bg-emerald-900 text-yellow-400 px-8 py-4 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:bg-emerald-800 transition-all shadow-xl shadow-emerald-900/10 group"
+                >
+                  <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />{" "}
+                  New Subject
+                </button>
+              )}
             </div>
-
-            {/* Filters and Actions */}
-            <div className="flex flex-col lg:flex-row gap-4 mb-10 items-start lg:items-center">
-              {/* Search Input (Cleaner Border/Focus) */}
-              <div className="relative flex-1 lg:max-w-sm w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <div className="flex flex-col lg:flex-row gap-4 mb-12 bg-white p-4 rounded-[2.5rem] shadow-sm border border-[#66666612]">
+              <div className="relative flex-1">
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666]" />
                 <input
                   type="text"
                   placeholder="Search by name, code, or grade..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10 pr-4 py-2.5 w-full border border-gray-300 rounded-lg focus:border-[#008080] focus:ring-1 focus:ring-[#008080]/50 focus:outline-none text-sm transition-colors"
+                  className="pl-12 pr-6 py-4 w-full bg-[#66666608] border-2 border-transparent rounded-3xl focus:border-yellow-400 focus:bg-white focus:outline-none text-sm font-bold transition-all placeholder:text-[#666]"
                 />
               </div>
-
-              {/* Grade Filter (Cleaner Border/Focus) */}
-              <div className="relative flex-1 lg:max-w-xs w-full">
-                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <div className="relative flex-1 lg:max-w-xs">
+                <Filter className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666]" />
                 <select
                   value={selectedGrade}
                   onChange={(e) => setSelectedGrade(e.target.value)}
-                  className="pl-10 pr-8 py-2.5 w-full border border-gray-300 rounded-lg focus:border-[#008080] focus:ring-1 focus:ring-[#008080]/50 focus:outline-none text-sm appearance-none bg-white transition-colors"
+                  className="pl-12 pr-10 py-4 w-full bg-[#66666608] border-2 border-transparent rounded-3xl focus:border-yellow-400 focus:bg-white focus:outline-none text-sm font-bold appearance-none transition-all text-emerald-950"
                 >
-                  <option value="">All Grades</option>
+                  <option value="">All Academic Grades</option>
                   {grades.map((g) => (
                     <option key={g._id} value={g._id}>
                       {g.title}
                     </option>
                   ))}
                 </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg
-                    className="w-4 h-4 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
+                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-[#666]">
+                  <ChevronDown size={18} />
                 </div>
               </div>
-
-              <div className="flex gap-3 w-full lg:w-auto">
-                {/* Clear Filters Button (Subtle styling) */}
-                {(search || selectedGrade) && (
-                  <button
-                    onClick={resetFilters}
-                    className="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition text-sm flex-shrink-0"
-                  >
-                    Clear Filters
-                  </button>
-                )}
-
-                {/* Add Subject Button (Teal accent) */}
-                {type === "admin" && (
-                  <button
-                    onClick={() => openAddEdit()}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-[#008080] text-white rounded-lg font-semibold hover:bg-[#008080]/90 transition text-sm flex-shrink-0"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Subject
-                  </button>
-                )}
-              </div>
+              {(search || selectedGrade) && (
+                <button
+                  onClick={resetFilters}
+                  className="px-6 py-4 text-red-500 font-black text-xs uppercase tracking-widest hover:bg-red-50 rounded-3xl transition-colors"
+                >
+                  Reset
+                </button>
+              )}
             </div>
-
-            {/* Subjects Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <AnimatePresence>
                 {filteredSubjects.map((subject) => (
                   <motion.div
                     key={subject._id}
                     layout
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.98 }}
-                    className="bg-white rounded-xl border border-gray-200 p-6 cursor-pointer hover:shadow-lg hover:border-[#00C8C8] transition-all duration-300"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
                     onClick={() => openDetails(subject)}
+                    className="group bg-white rounded-[2.8rem] border border-[#66666612] p-8 cursor-pointer hover:shadow-2xl hover:shadow-emerald-900/5 hover:border-yellow-400 transition-all duration-500 relative overflow-hidden"
                   >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-xl font-bold text-gray-900 truncate mb-1">
-                          {subject.name}
-                        </h3>
-                        <p className="text-xs text-gray-500 font-mono">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-[#66666612] rounded-bl-[3rem] -mr-8 -mt-8 group-hover:bg-yellow-400 transition-colors duration-500" />
+                    <div className="relative z-10 mb-6">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-[10px] font-black text-[#666] uppercase tracking-[0.2em]">
                           {subject.code}
+                        </span>
+                        <div
+                          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                            subject.isActive
+                              ? "bg-[#66666612] text-emerald-600"
+                              : "bg-red-50 text-red-600"
+                          }`}
+                        >
+                          <div
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              subject.isActive
+                                ? "bg-[#66666612]0 animate-pulse"
+                                : "bg-red-500"
+                            }`}
+                          />
+                          {subject.isActive ? "Live" : "Hold"}
+                        </div>
+                      </div>
+                      <h3 className="text-2xl font-black text-emerald-950 leading-tight group-hover:text-emerald-900 transition-colors">
+                        {subject.name}
+                      </h3>
+                    </div>
+                    <p className="text-sm text-emerald-800/60 font-medium mb-8 line-clamp-2 italic leading-relaxed">
+                      {subject.description ||
+                        "No course description has been drafted for this subject."}
+                    </p>
+                    <div className="grid grid-cols-2 gap-4 mb-8 pt-6 ">
+                      <div>
+                        <p className="text-[9px] font-black text-[#666] uppercase tracking-widest mb-1">
+                          Grade Level
+                        </p>
+                        <p className="text-xs font-black text-emerald-950 uppercase">
+                          {subject.gradeLevelTitle}
                         </p>
                       </div>
-                      <span
-                        className={`px-3 py-1 text-xs font-semibold rounded-full ml-4 flex-shrink-0 ${
-                          subject.isActive
-                            ? "bg-green-50 text-green-700"
-                            : "bg-red-50 text-red-700"
-                        }`}
-                      >
-                        {subject.isActive ? "Active" : "Inactive"}
-                      </span>
+                      <div>
+                        <p className="text-[9px] font-black text-[#666] uppercase tracking-widest mb-1">
+                          Community
+                        </p>
+                        <p className="text-xs font-black text-emerald-950 uppercase">
+                          {subject.teachers.length} Staff |{" "}
+                          {subject.children.length} Std
+                        </p>
+                      </div>
                     </div>
-
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-3">
-                      {subject.description ||
-                        "No description available for this subject."}
-                    </p>
-
-                    <div className="text-xs text-gray-500 space-y-1 mb-5 pt-3 border-t border-gray-100">
-                      <p>
-                        <span className="font-semibold text-gray-700">
-                          Grade:
-                        </span>{" "}
-                        {subject.gradeLevelTitle}
-                      </p>
-                      <p>
-                        <span className="font-semibold text-gray-700">
-                          Teachers:
-                        </span>{" "}
-                        {subject.teachers.length} |{" "}
-                        <span className="font-semibold text-gray-700">
-                          Students:
-                        </span>{" "}
-                        {subject.children.length}
-                      </p>
-                    </div>
-
                     {type === "admin" && (
-                      <div className="flex gap-3">
-                        {/* Edit Button (Teal accent) */}
+                      <div className="flex gap-3 relative z-10">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             openAddEdit(subject);
                           }}
-                          className="flex-1 flex items-center justify-center gap-1 py-2 bg-[#00C8C8]/10 text-[#008080] rounded-lg font-semibold hover:bg-[#00C8C8]/20 transition text-sm"
+                          className="flex-1 py-3 bg-[#66666612] text-emerald-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-900 hover:text-yellow-400 transition-all"
                         >
-                          <Edit2 className="w-4 h-4" />
                           Edit
                         </button>
-                        {/* Delete Button (Red accent) */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             openDeleteConfirm(subject._id);
                           }}
-                          className="flex-1 flex items-center justify-center gap-1 py-2 bg-red-50 text-red-600 rounded-lg font-semibold hover:bg-red-100 transition text-sm"
+                          className="px-4 py-3 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all"
                         >
-                          <Trash2 className="w-4 h-4" />
-                          Delete
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     )}
@@ -573,36 +552,30 @@ export default function SubjectsManager() {
                 ))}
               </AnimatePresence>
             </div>
-
-            {/* Empty State */}
             {!filteredSubjects.length && (
-              <motion.div className="flex flex-col items-center justify-center py-24 text-center">
-                <motion.div
-                  animate={{ y: [0, -10, 0], rotate: [0, 3, -3, 0] }}
-                  transition={{ duration: 4, repeat: Infinity }}
-                  className="mb-8"
-                >
-                  <div className="relative">
-                    {/* Subtle, matching icon background */}
-                    <div className="absolute inset-0 bg-[#008080]/10 blur-2xl rounded-full w-24 h-24 mx-auto" />
-                    <BookOpen className="w-20 h-20 text-[#008080] relative z-10" />
-                  </div>
-                </motion.div>
-                <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col items-center justify-center py-32 text-center"
+              >
+                <div className="relative mb-8">
+                  <div className="absolute inset-0 bg-yellow-400/20 blur-3xl rounded-full w-32 h-32 mx-auto" />
+                  <BookOpen className="w-24 h-24 text-green relative z-10" />
+                </div>
+                <h2 className="text-3xl font-black text-emerald-950 mb-3 tracking-tighter">
                   {search || selectedGrade
-                    ? "No Results Found"
-                    : "No Subjects Yet"}
+                    ? "No Matches Found"
+                    : "Curriculum Empty"}
                 </h2>
-                <p className="text-gray-600 text-lg max-w-md">
+                <p className="text-emerald-800/40 font-bold max-w-sm italic mb-8">
                   {getEmptyMessage()}
                 </p>
                 {type === "admin" && (
                   <button
                     onClick={() => openAddEdit()}
-                    className="mt-6 flex items-center gap-2 px-6 py-3 bg-[#008080] text-white rounded-xl font-semibold hover:bg-[#008080]/90 transition text-base"
+                    className="bg-emerald-950 text-yellow-400 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-900/20"
                   >
-                    <Plus className="w-5 h-5" />
-                    Create New Subject
+                    Add Your First Subject
                   </button>
                 )}
               </motion.div>
@@ -610,100 +583,100 @@ export default function SubjectsManager() {
           </div>
         </div>
       )}
-
-      {/* Details Modal */}
       <AnimatePresence>
         {isDetailsOpen && selectedSubject && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50"
             onClick={closeDetails}
+            className="fixed inset-0 bg-emerald-950/40 backdrop-blur-md flex items-center justify-center p-4 z-[110]"
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl border-2 border-[#008080]/50 p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-[3.5rem] p-10 md:p-14 max-w-2xl w-full shadow-2xl relative overflow-hidden"
             >
-              <div className="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-[#66666612] rounded-full -mr-20 -mt-20" />
+              <div className="flex justify-between items-start mb-10 relative z-10">
                 <div>
-                  <h2 className="text-3xl font-extrabold text-gray-900">
+                  <span className="px-3 py-1 bg-yellow-400 text-emerald-950 rounded-lg text-[10px] font-black uppercase tracking-widest mb-3 inline-block shadow-sm">
+                    {selectedSubject.code}
+                  </span>
+                  <h2 className="text-4xl font-black text-emerald-950 tracking-tighter">
                     {selectedSubject.name}
                   </h2>
-                  <p className="text-base font-mono text-gray-500 mt-1">
-                    Code: {selectedSubject.code}
-                  </p>
                 </div>
                 <button
                   onClick={closeDetails}
-                  className="text-gray-400 hover:text-gray-700 transition"
+                  className="p-3 hover:bg-[#66666612] rounded-2xl transition-colors text-[#666]"
                 >
-                  <X className="w-6 h-6" />
+                  <X />
                 </button>
               </div>
-
-              <div className="space-y-5 text-gray-700">
+              <div className="space-y-8 relative z-10">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900 mb-1">
-                    Description
+                  <p className="text-[10px] font-black text-[#666] uppercase tracking-widest mb-3">
+                    Course Overview
                   </p>
-                  <p className="text-base">
-                    {selectedSubject.description || "No description provided."}
+                  <p className="text-emerald-800/70 font-medium leading-relaxed italic text-lg">
+                    {selectedSubject.description ||
+                      "Detailed syllabus information is currently pending upload."}
                   </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4 border-y border-gray-100 py-4">
+                <div className="grid grid-cols-2 gap-8 py-8 border-y border-[#66666612]">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-1">
-                      Grade Level
+                    <p className="text-[10px] font-black text-[#666] uppercase tracking-widest mb-1">
+                      Academic Level
                     </p>
-                    <p className="text-base font-medium">
+                    <p className="text-xl font-black text-emerald-950 uppercase">
                       {selectedSubject.gradeLevelTitle}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-1">
-                      Status
+                    <p className="text-[10px] font-black text-[#666] uppercase tracking-widest mb-1">
+                      Registry Status
                     </p>
                     <span
-                      className={`inline-block px-3 py-0.5 text-sm font-semibold rounded-full ${
+                      className={`inline-block text-sm font-black uppercase ${
                         selectedSubject.isActive
-                          ? "bg-green-50 text-green-700"
-                          : "bg-red-50 text-red-700"
+                          ? "text-emerald-600"
+                          : "text-red-500"
                       }`}
                     >
-                      {selectedSubject.isActive ? "Active" : "Inactive"}
+                      {selectedSubject.isActive
+                        ? "Active Enrollment"
+                        : "Registration Closed"}
                     </span>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-1">
-                      Teachers Assigned
+                    <p className="text-[10px] font-black text-[#666] uppercase tracking-widest mb-1">
+                      Faculty Count
                     </p>
-                    <p className="text-base font-medium">
-                      {selectedSubject.teachers.length}
+                    <p className="text-xl font-black text-emerald-950">
+                      {selectedSubject.teachers.length} Members
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-1">
-                      Students Enrolled
+                    <p className="text-[10px] font-black text-[#666] uppercase tracking-widest mb-1">
+                      Student Capacity
                     </p>
-                    <p className="text-base font-medium">
-                      {selectedSubject.children.length}
+                    <p className="text-xl font-black text-emerald-950">
+                      {selectedSubject.children.length} Enrolled
                     </p>
                   </div>
                 </div>
-                <div className="pt-4 flex gap-3">
+                <div className="flex gap-4 pt-4">
                   <button
                     onClick={() => {
                       closeDetails();
                       navigate(`/subjects/${selectedSubject._id}`);
                     }}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 text-white rounded-lg font-semibold hover:bg-gray-800 transition text-base"
+                    className="flex-1 py-5 bg-emerald-950 text-yellow-400 rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-xl shadow-emerald-900/20 flex items-center justify-center gap-2 hover:bg-emerald-900 transition-all"
                   >
-                    <Eye className="w-5 h-5" />
-                    View Full Details
+                    <Eye size={18} /> Manage Course
                   </button>
                   {type === "admin" && (
                     <button
@@ -711,9 +684,9 @@ export default function SubjectsManager() {
                         closeDetails();
                         openAddEdit(selectedSubject);
                       }}
-                      className="flex-1 py-3 border border-[#008080] text-[#008080] rounded-lg font-semibold hover:bg-[#008080]/10 transition text-base"
+                      className="px-8 py-5 border-2 border-green text-emerald-900 rounded-[2rem] font-black uppercase text-xs tracking-widest hover:bg-[#66666612] transition-all"
                     >
-                      Edit Subject
+                      Quick Edit
                     </button>
                   )}
                 </div>
@@ -722,41 +695,37 @@ export default function SubjectsManager() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Add / Edit Modal */}
       <AnimatePresence>
         {isAddEditOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50"
             onClick={closeAddEdit}
+            className="fixed inset-0 bg-emerald-950/40 backdrop-blur-md flex items-center justify-center p-4 z-[110]"
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl border-2 border-[#008080]/50 p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-[3.5rem] p-10 md:p-12 max-w-lg w-full shadow-2xl max-h-[80%] overflow-y-auto"
             >
-              <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-                <h2 className="text-2xl font-extrabold text-gray-900">
-                  {editingSubject ? "Edit Subject" : "Add New Subject"}
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-3xl font-black text-emerald-950 tracking-tighter">
+                  {editingSubject ? "Modify Subject" : "New Department Entry"}
                 </h2>
                 <button
                   onClick={closeAddEdit}
-                  className="text-gray-400 hover:text-gray-700 transition"
+                  className="text-[#666] hover:text-emerald-950 transition-colors"
                 >
-                  <X className="w-6 h-6" />
+                  <X />
                 </button>
               </div>
-
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Name */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-1">
-                    Subject Name <span className="text-red-500">*</span>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-[#666] ml-1">
+                    Subject Title
                   </label>
                   <input
                     type="text"
@@ -764,20 +733,13 @@ export default function SubjectsManager() {
                     value={form.name}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-[#008080] focus:ring-1 focus:ring-[#008080]/50 focus:outline-none transition-colors text-sm"
-                    placeholder="e.g. Mathematics"
+                    className="w-full bg-[#66666608] border-2 border-transparent focus:border-yellow-400 rounded-2xl p-4 font-bold outline-none text-emerald-950 transition-all"
+                    placeholder="e.g. Theoretical Physics"
                   />
-                  {submitted && !form.name && (
-                    <p className="text-red-600 text-xs mt-1">
-                      Subject Name is required
-                    </p>
-                  )}
                 </div>
-
-                {/* Code */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-1">
-                    Subject Code <span className="text-red-500">*</span>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-[#666] ml-1">
+                    Unique Code
                   </label>
                   <input
                     type="text"
@@ -785,188 +747,129 @@ export default function SubjectsManager() {
                     value={form.code}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-[#008080] focus:ring-1 focus:ring-[#008080]/50 focus:outline-none transition-colors text-sm font-mono uppercase"
-                    placeholder="e.g. MATH101"
+                    className="w-full bg-[#66666608] border-2 border-transparent focus:border-yellow-400 rounded-2xl p-4 font-bold outline-none text-emerald-950 font-mono uppercase transition-all"
+                    placeholder="PHYS404"
                   />
-                  {submitted && !form.code && (
-                    <p className="text-red-600 text-xs mt-1">
-                      Subject Code is required
-                    </p>
-                  )}
                 </div>
-
-                {/* Grade Level */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-1">
-                    Grade Level <span className="text-red-500">*</span>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-[#666] ml-1">
+                    Assigned Grade
                   </label>
                   <select
                     name="gradeLevel"
                     value={form.gradeLevel}
                     onChange={handleChange}
                     required
-                    disabled={loadingGrades}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-[#008080] focus:ring-1 focus:ring-[#008080]/50 focus:outline-none transition-colors text-sm disabled:bg-gray-50 appearance-none bg-white"
+                    className="w-full bg-[#66666608] border-2 border-transparent focus:border-yellow-400 rounded-2xl p-4 font-bold outline-none text-emerald-950 appearance-none transition-all"
                   >
-                    <option value="">
-                      {loadingGrades
-                        ? "Loading grades..."
-                        : grades.length === 0
-                        ? "No grades available"
-                        : "Select Grade Level"}
-                    </option>
+                    <option value="">Select Level</option>
                     {grades.map((g) => (
                       <option key={g._id} value={g._id}>
                         {g.title}
                       </option>
                     ))}
                   </select>
-                  {submitted && !form.gradeLevel && (
-                    <p className="text-red-600 text-xs mt-1">
-                      Grade Level is required
-                    </p>
-                  )}
                 </div>
-
-                {/* Teachers Multi-Select */}
-                <div className="relative">
-                  <label className="block text-sm font-semibold text-gray-900 mb-1">
-                    Assign Teachers
+                <div className="relative space-y-2">
+                  <label className="text-[10px] font-black uppercase text-[#666] ml-1">
+                    Faculty Selection
                   </label>
-                  {/* Trigger Button (Cleaned up styling) */}
                   <div
                     onClick={() => setTeacherDropdownOpen(!teacherDropdownOpen)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg cursor-pointer flex justify-between items-center bg-white hover:border-[#008080] transition-all duration-200 text-sm"
+                    className="w-full bg-[#66666608] border-2 border-transparent hover:border-green rounded-2xl p-4 font-bold text-emerald-950 flex justify-between items-center cursor-pointer transition-all"
                   >
                     <span
-                      className={`font-medium ${
-                        form.teachers.length === 0
-                          ? "text-gray-500"
-                          : "text-gray-900"
-                      }`}
+                      className={
+                        form.teachers.length === 0 ? "text-[#666]" : ""
+                      }
                     >
                       {form.teachers.length === 0
-                        ? "Select teachers..."
-                        : `${form.teachers.length} teacher${
-                            form.teachers.length > 1 ? "s" : ""
-                          } selected`}
+                        ? "Assign teachers..."
+                        : `${form.teachers.length} Staff Selected`}
                     </span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
-                        teacherDropdownOpen ? "rotate-180" : ""
-                      }`}
-                    />
+                    <ChevronDown size={16} />
                   </div>
-
-                  {/* Dropdown Panel (Cleaned up styling) */}
                   {teacherDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                      {teachers.length === 0 ? (
-                        <div className="px-4 py-3 text-center text-gray-500 text-sm font-medium">
-                          No teachers available
-                        </div>
-                      ) : (
-                        <div className="p-1">
-                          {teachers.map((teacher) => {
-                            const isSelected = form.teachers.includes(
-                              teacher._id
-                            );
-                            return (
-                              <label
-                                key={teacher._id}
-                                className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-all duration-150 text-sm ${
-                                  isSelected
-                                    ? "bg-[#008080]/10 text-gray-900 font-semibold"
-                                    : "hover:bg-gray-50 text-gray-800"
-                                }`}
-                                onClick={() => toggleTeacher(teacher._id)}
-                              >
-                                {/* Custom Checkbox (Cleaner style) */}
-                                <div
-                                  className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
-                                    isSelected
-                                      ? "border-[#008080] bg-[#008080]"
-                                      : "border-gray-300"
-                                  }`}
-                                >
-                                  {isSelected && (
-                                    <Check className="w-3 h-3 text-white" />
-                                  )}
-                                </div>
-
-                                {/* Teacher Name */}
-                                <span className="select-none">
-                                  {teacher.firstName} {teacher.lastName}
-                                </span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      )}
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#66666612] rounded-3xl shadow-2xl z-[120] max-h-48 overflow-y-auto p-2">
+                      {teachers.map((teacher) => {
+                        const isSelected = form.teachers.includes(teacher._id);
+                        return (
+                          <div
+                            key={teacher._id}
+                            onClick={() => toggleTeacher(teacher._id)}
+                            className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all mb-1 ${
+                              isSelected
+                                ? "bg-emerald-900 text-yellow-400"
+                                : "hover:bg-[#66666612] text-emerald-800"
+                            }`}
+                          >
+                            <div
+                              className={`w-4 h-4 rounded border flex items-center justify-center ${
+                                isSelected
+                                  ? "border-yellow-400"
+                                  : "border-[#666]"
+                              }`}
+                            >
+                              {isSelected && <Check size={12} />}
+                            </div>
+                            <span className="text-xs font-black uppercase tracking-widest">
+                              {teacher.firstName} {teacher.lastName}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
-
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-1">
-                    Description (Optional)
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-[#666] ml-1">
+                    Overview
                   </label>
                   <textarea
                     name="description"
                     value={form.description}
                     onChange={handleChange}
-                    rows={3}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-[#008080] focus:ring-1 focus:ring-[#008080]/50 focus:outline-none transition-colors text-sm resize-none"
-                    placeholder="Brief description..."
+                    rows={2}
+                    className="w-full bg-[#66666608] border-2 border-transparent focus:border-yellow-400 rounded-2xl p-4 font-bold outline-none text-emerald-950 resize-none transition-all"
+                    placeholder="Optional syllabus summary..."
                   />
                 </div>
-
-                {/* Active Toggle */}
-                <div className="flex items-center gap-4 pt-2">
+                <div className="flex items-center gap-4 py-2">
                   <div
                     onClick={handleActiveToggle}
-                    className={`relative w-11 h-6 rounded-full transition-all cursor-pointer flex items-center ${
-                      form.isActive ? "bg-[#008080]" : "bg-gray-300"
+                    className={`relative w-12 h-6 rounded-full cursor-pointer transition-all ${
+                      form.isActive ? "bg-emerald-900" : "bg-green"
                     }`}
                   >
                     <div
-                      className={`absolute w-4 h-4 bg-white rounded-full shadow-md transition-transform ${
-                        form.isActive ? "translate-x-[22px]" : "translate-x-1"
+                      className={`absolute top-1 left-1 w-4 h-4 bg-yellow-400 rounded-full transition-transform ${
+                        form.isActive ? "translate-x-6" : ""
                       }`}
                     />
                   </div>
-                  <label className="text-sm font-medium text-gray-900 select-none">
-                    Subject is **{form.isActive ? "Active" : "Inactive"}**
+                  <label className="text-[10px] font-black uppercase text-emerald-950 tracking-widest">
+                    Mark as {form.isActive ? "Active" : "On Hold"}
                   </label>
                 </div>
-
-                {/* Buttons */}
-                <p className="text-red-600 text-sm">{error}</p>
-                <div className="flex gap-3 pt-4">
+                <div className="flex gap-4 pt-4">
                   <button
                     type="submit"
                     disabled={formLoading}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#008080] text-white rounded-lg font-semibold hover:bg-[#008080]/90 disabled:opacity-50 transition text-base"
+                    className="flex-1 py-5 bg-emerald-950 text-yellow-400 rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-xl shadow-emerald-900/20 flex items-center justify-center gap-2"
                   >
                     {formLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2 className="animate-spin" size={18} />
                     ) : editingSubject ? (
-                      <>
-                        <Check className="w-5 h-5" />
-                        Update Subject
-                      </>
+                      <Check size={18} />
                     ) : (
-                      <>
-                        <Plus className="w-5 h-5" />
-                        Create Subject
-                      </>
-                    )}
+                      <Plus size={18} />
+                    )}{" "}
+                    {editingSubject ? "Confirm Changes" : "Register Subject"}
                   </button>
                   <button
                     type="button"
                     onClick={closeAddEdit}
-                    className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-100 transition text-base"
+                    className="px-8 py-5 font-black uppercase text-xs text-[#666] hover:text-emerald-950 transition-colors"
                   >
                     Cancel
                   </button>
@@ -976,53 +879,50 @@ export default function SubjectsManager() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {isDeleteOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50"
             onClick={closeDeleteConfirm}
+            className="fixed inset-0 bg-emerald-950/40 backdrop-blur-md flex items-center justify-center p-4 z-[130]"
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl border-2 border-red-500/50 p-8 max-w-sm w-full shadow-2xl"
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
               onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-[3.5rem] p-10 md:p-12 max-w-sm w-full text-center shadow-2xl"
             >
-              <div className="flex items-center gap-3 mb-5 border-b border-gray-100 pb-3">
-                <AlertCircle className="w-6 h-6 text-red-600" />
-                <h3 className="text-xl font-extrabold text-gray-900">
-                  Confirm Deletion
-                </h3>
+              <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <AlertCircle size={40} />
               </div>
-              <p className="text-sm text-gray-700 mb-6">
-                Are you sure you want to delete this subject? This action{" "}
-                <strong className="text-red-600">cannot be undone</strong>.
+              <h3 className="text-2xl font-black text-emerald-950 mb-3 tracking-tighter">
+                Confirm Deletion
+              </h3>
+              <p className="text-emerald-800/50 font-medium mb-10 text-sm leading-relaxed italic">
+                "Warning: This will remove all records and resources associated
+                with this subject permanently."
               </p>
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3">
                 <button
                   onClick={confirmDelete}
                   disabled={deleting}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 disabled:opacity-50 transition text-base"
+                  className="w-full py-5 bg-red-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-600/20 flex items-center justify-center gap-2"
                 >
                   {deleting ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="animate-spin" size={18} />
                   ) : (
-                    <Trash2 className="w-5 h-5" />
-                  )}
-                  Delete Subject
+                    <Trash2 size={18} />
+                  )}{" "}
+                  Erase Permanently
                 </button>
                 <button
                   onClick={closeDeleteConfirm}
-                  disabled={deleting}
-                  className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-100 transition text-base"
+                  className="w-full py-4 text-[#666] font-black uppercase text-[10px] tracking-widest hover:text-emerald-950 transition-colors"
                 >
-                  Cancel
+                  Keep Subject
                 </button>
               </div>
             </motion.div>

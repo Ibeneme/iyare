@@ -1,9 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { fetchReports } from "../../../../Redux/Slices/SettingsSlice";
-import ModalDropdown from "../../../../Components/Modal/ModalDropdown";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import {
+  Loader2,
+  Mail,
+  FileText,
+  Calendar,
+  ChevronRight,
+  AlertCircle,
+  Inbox,
+} from "lucide-react";
 
 const Reports: React.FC = () => {
   const dispatch = useDispatch();
@@ -22,8 +29,8 @@ const Reports: React.FC = () => {
         setLoading(false);
       })
       .catch((err: any) => {
-        console.error("Error fetching reports:", err);
-        setError("Failed to load reports. Please try again.");
+        console.log(err);
+        setError("Failed to synchronize reports. Please try again.");
         setLoading(false);
       });
   }, [dispatch]);
@@ -34,104 +41,115 @@ const Reports: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#fcfdfc] py-8 px-4 sm:px-6 lg:px-10">
       {loading ? (
-        <AnimatePresence>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="min-h-[100%] py-48 bg-white flex flex-col items-center justify-center gap-5 z-50"
-          >
-            <Loader2 className="w-14 h-14 animate-spin text-gray-900" />
-            <p className="text-xl font-bold text-gray-900">
-              Loading Profiles...
-            </p>
-          </motion.div>
-        </AnimatePresence>
+        <div className="fixed inset-0 flex flex-col items-center justify-center bg-white/90 backdrop-blur-md z-[100]">
+          <Loader2 className="w-16 h-16 animate-spin text-[#064e3b]" />
+          <p className="mt-6 text-[10px] font-black uppercase tracking-[0.4em] text-[#064e3b]">
+            Fetching Intelligence...
+          </p>
+        </div>
       ) : (
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto space-y-8">
           {/* Header */}
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-700 rounded-full flex items-center justify-center text-yellow-300">
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mt-10">
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 rounded-lg text-[#064e3b] text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+                <FileText size={12} className="text-yellow-600" />{" "}
+                Administrative Audit
               </div>
-              Reports Log
-            </h2>
-            <p className="mt-2 text-gray-600 max-w-3xl">
-              Below is a list of all submitted reports, including the sender’s
-              email and the title of each report. Click on any report to view
-              its full description and respond directly if needed.
-            </p>
+              <h1 className="text-4xl md:text-5xl font-black text-[#064e3b] tracking-tighter">
+                Reports Log
+              </h1>
+              <p className="text-slate-500 font-bold max-w-xl leading-relaxed">
+                Review submitted institutional reports. Click any entry to view
+                full details and initiate a formal response.
+              </p>
+            </div>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-              {error}
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-5 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3"
+            >
+              <AlertCircle className="text-red-600" size={20} />
+              <p className="text-xs font-black uppercase tracking-widest text-red-600">
+                {error}
+              </p>
+            </motion.div>
           )}
 
-          {/* Reports Table */}
+          {/* Reports Content */}
           {reports.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
-              <p className="text-gray-500">No reports available.</p>
+            <div className="text-center py-24 bg-white rounded-[3rem] border border-slate-100 shadow-sm">
+              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Inbox size={32} className="text-slate-200" />
+              </div>
+              <h2 className="text-xl font-black text-[#064e3b] tracking-tighter">
+                No Reports Found
+              </h2>
+              <p className="text-slate-400 font-bold text-sm uppercase tracking-widest mt-2">
+                Database is currently empty
+              </p>
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Email
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/50 border-b border-slate-100">
+                      <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        Sender Email
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Title
+                      <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        Subject Title
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Description
+                      <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        Preview
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Submitted At
+                      <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        Timestamp
+                      </th>
+                      <th className="px-8 py-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        Action
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-slate-50">
                     {reports.map((report: any, index: number) => (
                       <tr
                         key={report._id || index}
                         onClick={() => handleOpenModal(report)}
-                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                        className="group hover:bg-emerald-50/30 transition-all cursor-pointer"
                       >
-                        <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                          {report.email}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {report.title}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-600 max-w-xs">
-                          <span className="block truncate">
-                            {report.description.length > 50
-                              ? `${report.description.slice(0, 50)}...`
-                              : report.description}
+                        <td className="px-8 py-5">
+                          <span className="font-black text-[#064e3b] text-sm tracking-tight">
+                            {report.email}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {new Date(report.createdAt).toLocaleString()}
+                        <td className="px-8 py-5">
+                          <span className="inline-flex px-3 py-1 bg-yellow-400 text-[#064e3b] text-[10px] font-black uppercase tracking-widest rounded-lg">
+                            {report.title}
+                          </span>
+                        </td>
+                        <td className="px-8 py-5">
+                          <p className="text-slate-500 font-bold text-sm truncate max-w-[200px]">
+                            {report.description}
+                          </p>
+                        </td>
+                        <td className="px-8 py-5">
+                          <div className="flex items-center gap-2 text-slate-400 font-black text-[10px] uppercase tracking-widest">
+                            <Calendar size={12} />
+                            {new Date(report.createdAt).toLocaleDateString()}
+                          </div>
+                        </td>
+                        <td className="px-8 py-5 text-right">
+                          <div className="inline-flex p-3 rounded-xl text-[#064e3b] group-hover:bg-yellow-400 transition-all">
+                            <ChevronRight size={18} />
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -141,65 +159,85 @@ const Reports: React.FC = () => {
             </div>
           )}
 
-          {/* Modal */}
-          {isModalOpen && selectedReport && (
-            <ModalDropdown
-              onClose={() => {
-                setIsModalOpen(false);
-                setSelectedReport(null);
-              }}
-            >
-              <div className="p-6 max-w-2xl mx-auto bg-white rounded-xl">
-                {/* Header */}
-                <div className="mb-6">
-                  <h3 className="inline-block px-4 py-2 bg-gray-100 text-gray-900 font-semibold text-lg rounded-lg capitalize">
-                    {selectedReport.title}
-                  </h3>
-                  <br />
-                  <p className="mt-2 inline-block px-3 py-1 bg-green-800 text-yellow-300 text-xs font-medium rounded-full">
-                    <strong>Sender:</strong> {selectedReport.email}
-                  </p>
-                </div>
-
-                {/* Description */}
-                <div className="mb-6">
-                  <h4 className="text-sm font-bold text-gray-900 mb-2">
-                    Description:
-                  </h4>
-                  <div className="max-h-64 overflow-y-auto p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                      {selectedReport.description}
-                    </p>
+          {/* Modal System */}
+          <AnimatePresence>
+            {isModalOpen && selectedReport && (
+              <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setIsModalOpen(false)}
+                  className="fixed inset-0 bg-[#064e3b]/15 backdrop-blur-sm"
+                />
+                <motion.div
+                  initial={{ scale: 0.95, y: 30 }}
+                  animate={{ scale: 1, y: 0 }}
+                  exit={{ scale: 0.95, y: 30 }}
+                  className="relative bg-white rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col"
+                >
+                  {/* Modal Header */}
+                  <div className="bg-[#064e3b] p-10 md:p-12 text-white">
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="space-y-2">
+                        <p className="text-yellow-400 font-black text-[10px] uppercase tracking-[0.3em]">
+                          Official Report Detail
+                        </p>
+                        <h3 className="text-3xl font-black tracking-tighter leading-none">
+                          {selectedReport.title}
+                        </h3>
+                      </div>
+                      <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
+                        <FileText className="text-yellow-400" />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-xl border border-white/10 w-fit">
+                      <Mail size={14} className="text-yellow-400" />
+                      <span className="text-sm font-bold text-emerald-50">
+                        {selectedReport.email}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                {/* Footer */}
-                <div className="flex justify-end">
-                  <a
-                    href={`mailto:${
-                      selectedReport.email
-                    }?subject=Re: ${encodeURIComponent(selectedReport.title)}`}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-700 text-yellow-300 font-medium text-sm rounded-lg hover:bg-green-800 transition-colors"
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                      />
-                    </svg>
-                    Reply via Email
-                  </a>
-                </div>
+                  {/* Modal Body */}
+                  <div className="p-10 md:p-12 space-y-8">
+                    <div className="space-y-4">
+                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full" />
+                        Report Narrative
+                      </h4>
+                      <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 max-h-72 overflow-y-auto custom-scrollbar">
+                        <p className="text-slate-700 font-bold leading-relaxed whitespace-pre-wrap">
+                          {selectedReport.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Footer Actions */}
+                    <div className="flex flex-col md:flex-row gap-4 pt-6">
+                      <a
+                        href={`mailto:${
+                          selectedReport.email
+                        }?subject=Formal Response: ${encodeURIComponent(
+                          selectedReport.title
+                        )}`}
+                        className="flex-[2] inline-flex items-center justify-center gap-3 bg-[#064e3b] text-yellow-400 py-6 rounded-3xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:bg-emerald-800 transition-all"
+                      >
+                        <Mail size={18} />
+                        Initiate Email Response
+                      </a>
+                      <button
+                        onClick={() => setIsModalOpen(false)}
+                        className="flex-1 bg-slate-100 text-slate-400 py-6 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
-            </ModalDropdown>
-          )}
+            )}
+          </AnimatePresence>
         </div>
       )}
     </div>

@@ -230,7 +230,7 @@ const Navbar: React.FC = () => {
                     /* PROCEED TO DASHBOARD */
                     <button
                       onClick={() => {
-                        navigate("/subjects-manager");
+                        navigate("/subject-manager");
                         closeMenu();
                       }}
                       className="w-full py-4 bg-[#023009] text-white rounded-2xl font-bold text-lg hover:bg-[#012009] transition-all flex items-center justify-center gap-3 shadow-md"

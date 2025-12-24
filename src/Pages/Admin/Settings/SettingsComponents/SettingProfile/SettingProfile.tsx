@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from "react";
 import {
-  // FiUser,
   FiEdit3,
   FiTrash2,
   FiMail,
   FiShield,
   FiX,
+  FiUser,
 } from "react-icons/fi";
 import { useUserActions } from "../../../../../Hooks/useUsers";
 import { useToast } from "../../../../../Context/ToastProvider";
 import { fetchUserById } from "../../../../../Redux/Admin/adminUsers";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../../../../Redux/store";
-import Loader from "../../../../../Components/Loader/Loader";
+import { Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Props {
   adminRole: string;
@@ -32,15 +33,11 @@ const SettingProfile: React.FC<Props> = ({
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editedFirstName, setEditedFirstName] = useState("");
   const [editedLastName, setEditedLastName] = useState("");
 
-  /* ========================================
-     FETCH USER PROFILE
-  ======================================== */
   const fetchUserProfile = async () => {
     setLoading(true);
     setError(null);
@@ -48,7 +45,6 @@ const SettingProfile: React.FC<Props> = ({
       const result = await dispatch(
         fetchUserById({ id: currentUserId, userType })
       ).unwrap();
-
       setUserData(result);
       setEditedFirstName(result.firstName || "");
       setEditedLastName(result.lastName || "");
@@ -63,18 +59,13 @@ const SettingProfile: React.FC<Props> = ({
     fetchUserProfile();
   }, [currentUserId, userType]);
 
-  /* ========================================
-     EDIT SUBMIT
-  ======================================== */
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const response = await editUser(adminRole, currentUserId, {
         name: `${editedFirstName} ${editedLastName}`,
       });
-
       if (response.success) {
         addToast("success", "Profile updated successfully!");
         setShowEditModal(false);
@@ -89,216 +80,238 @@ const SettingProfile: React.FC<Props> = ({
     }
   };
 
-  const handleDeleteConfirm = () => {
-    addToast("error", "Account deletion is not yet implemented.");
-    setShowDeleteModal(false);
-  };
-
-  /* ========================================
-     RENDER STATES
-  ======================================== */
-  if (loading) {
+  if (loading && !userData) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader />
+      <div className="flex flex-col items-center justify-center h-96 gap-4">
+        <Loader2 className="w-10 h-10 animate-spin text-[#064e3b]" />
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#064e3b]">
+          Syncing Profile
+        </p>
       </div>
     );
   }
 
-  if (error) {
+  if (error)
     return (
-      <div className="p-6 text-center text-gray-800 bg-gray-100 rounded-xl">
-        {error}
+      <div className="p-10 text-red-600 font-black text-left">{error}</div>
+    );
+  if (!userData)
+    return (
+      <div className="p-10 text-slate-400 font-black text-left uppercase tracking-widest text-xs">
+        No profile found.
       </div>
     );
-  }
-
-  if (!userData) {
-    return (
-      <div className="p-6 text-center text-gray-600">
-        No profile data found.
-      </div>
-    );
-  }
 
   return (
-    <>
-      <div className="max-w-4xl mx-auto p-6 space-y-8 bg-white">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-black">Your Profile</h1>
-          <span className="px-4 py-1 text-sm font-medium text-gray-800 bg-gray-200 rounded-full">
-            {adminRole || "Member"}
-          </span>
+    <div className="max-w-4xl text-left">
+      {/* Header Section */}
+      <div className="mb-10 space-y-2">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-[#064e3b] rounded-lg text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+          <FiUser size={12} /> Personal Identity
         </div>
+        <h1 className="text-4xl font-black text-[#064e3b] tracking-tighter">
+          Your Profile
+        </h1>
+        <p className="text-slate-500 font-bold text-sm">
+          Review and update your system identity and account credentials.
+        </p>
+      </div>
 
-        {/* Profile Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-            {/* Avatar */}
-            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center text-3xl font-bold text-gray-800">
+      {/* Profile Info Card (Flat) */}
+      <div className="bg-[#fcfdfc] border border-slate-100 rounded-[2rem] p-8 md:p-12">
+        <div className="flex flex-col md:flex-row gap-10 items-start">
+          {/* Avatar Area */}
+          <div className="relative group">
+            <div className="w-32 h-32 bg-[#064e3b] text-yellow-400 rounded-3xl flex items-center justify-center text-4xl font-black shadow-xl shadow-emerald-900/10">
               {userData.firstName[0]}
               {userData.lastName[0]}
             </div>
+            <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-white border-4 border-[#fcfdfc] rounded-full flex items-center justify-center">
+              <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+            </div>
+          </div>
 
-            <div className="flex-1 text-center sm:text-left">
-              <h2 className="text-2xl font-bold text-black">
+          {/* Details Area */}
+          <div className="flex-1 space-y-6">
+            <div>
+              <span className="text-[10px] font-black text-yellow-600 uppercase tracking-widest block mb-1">
+                Full Legal Name
+              </span>
+              <h2 className="text-3xl font-black text-[#064e3b] tracking-tight">
                 {userData.firstName} {userData.lastName}
               </h2>
-              <div className="mt-3 space-y-2 text-gray-700">
-                <p className="flex items-center justify-center sm:justify-start gap-2">
-                  <FiMail className="w-5 h-5" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2">
+                  <FiMail /> Registered Email
+                </p>
+                <p className="font-bold text-[#064e3b] text-sm truncate">
                   {userData.email}
                 </p>
-                <p className="flex items-center justify-center sm:justify-start gap-2">
-                  <FiShield className="w-5 h-5" />
+              </div>
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2">
+                  <FiShield /> Access Level
+                </p>
+                <p className="font-bold text-[#064e3b] text-sm uppercase tracking-wider">
                   {userData.role || adminRole}
                 </p>
               </div>
             </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 mt-8">
-            <button
-              onClick={() => setShowEditModal(true)}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition"
-            >
-              <FiEdit3 />
-              Edit Profile
-            </button>
-            <button
-              onClick={() => setShowDeleteModal(true)}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition"
-            >
-              <FiTrash2 />
-              Delete Account
-            </button>
+            {/* Actions */}
+            <div className="flex flex-wrap gap-4 pt-6">
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="flex items-center gap-3 px-8 py-4 bg-[#064e3b] text-yellow-400 font-black text-xs uppercase tracking-widest rounded-xl hover:brightness-110 transition-all shadow-lg shadow-emerald-900/10"
+              >
+                <FiEdit3 /> Edit Profile
+              </button>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="flex items-center gap-3 px-8 py-4 bg-red-50 text-red-600 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-red-100 transition-all"
+              >
+                <FiTrash2 /> Deactivate
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ========================================
-         EDIT MODAL — WITH BLUR
-      ======================================== */}
-      {showEditModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto"
-          onClick={(e) =>
-            e.target === e.currentTarget && setShowEditModal(false)
-          }
-        >
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6 relative max-h-screen overflow-y-auto">
-            <button
+      {/* Edit Modal */}
+      <AnimatePresence>
+        {showEditModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               onClick={() => setShowEditModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10"
+              className="absolute inset-0 bg-[#064e3b]/95 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              className="relative bg-white w-full max-w-lg rounded-[2.5rem] p-10 shadow-2xl"
             >
-              <FiX className="w-6 h-6" />
-            </button>
-
-            <h2 className="text-2xl font-bold text-black mb-2 pr-10">
-              Edit Profile
-            </h2>
-            <p className="text-sm text-gray-600 mb-6">
-              Update your personal information below.
-            </p>
-
-            <form onSubmit={handleEditSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-800 mb-2">
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  value={editedFirstName}
-                  onChange={(e) => setEditedFirstName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 transition bg-white text-black"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-800 mb-2">
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  value={editedLastName}
-                  onChange={(e) => setEditedLastName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 transition bg-white text-black"
-                  required
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
+              <div className="flex justify-between items-start mb-8">
+                <div>
+                  <h2 className="text-3xl font-black text-[#064e3b] tracking-tighter">
+                    Modify Data
+                  </h2>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                    Updates take effect instantly
+                  </p>
+                </div>
                 <button
-                  type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 px-5 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition"
+                  className="p-2 text-slate-300 hover:text-red-500 transition-all"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 px-5 py-3 bg-gray-300 hover:bg-gray-400 disabled:opacity-50 text-gray-800 font-medium rounded-lg transition"
-                >
-                  {loading ? "Saving..." : "Save Changes"}
+                  <FiX size={24} />
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
 
-      {/* ========================================
-         DELETE MODAL — WITH BLUR
-      ======================================== */}
-      {showDeleteModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto"
-          onClick={(e) =>
-            e.target === e.currentTarget && setShowDeleteModal(false)
-          }
-        >
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6 text-center relative max-h-screen overflow-y-auto">
-            <button
+              <form onSubmit={handleEditSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 gap-6">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">
+                      First Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editedFirstName}
+                      onChange={(e) => setEditedFirstName(e.target.value)}
+                      className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-[#064e3b] outline-none focus:border-[#064e3b] transition-all"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editedLastName}
+                      onChange={(e) => setEditedLastName(e.target.value)}
+                      className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-xl font-bold text-[#064e3b] outline-none focus:border-[#064e3b] transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1 py-4 bg-slate-100 text-slate-400 font-black text-[10px] uppercase tracking-widest rounded-xl"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-4 bg-[#064e3b] text-yellow-400 font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-900/20"
+                  >
+                    {loading ? "Syncing..." : "Update Identity"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Modal */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               onClick={() => setShowDeleteModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10"
+              className="absolute inset-0 bg-[#064e3b]/95 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              className="relative bg-white w-full max-w-md rounded-[2.5rem] p-12 text-center"
             >
-              <FiX className="w-6 h-6" />
-            </button>
+              <div className="w-20 h-20 mx-auto mb-6 bg-red-50 rounded-3xl flex items-center justify-center">
+                <FiTrash2 className="w-10 h-10 text-red-600" />
+              </div>
+              <h2 className="text-2xl font-black text-[#064e3b] tracking-tighter mb-2">
+                Permanent Deletion
+              </h2>
+              <p className="text-slate-500 font-bold text-sm mb-8 leading-relaxed">
+                This action will scrub your identity from the system. Access
+                cannot be recovered.
+              </p>
 
-            <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
-              <FiTrash2 className="w-8 h-8 text-gray-800" />
-            </div>
-
-            <h2 className="text-2xl font-bold text-black mb-3">
-              Delete Account?
-            </h2>
-            <p className="text-gray-600 mb-6">
-              This action <strong>cannot be undone</strong>. All your data will
-              be permanently removed.
-            </p>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 px-5 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                className="flex-1 px-5 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg transition"
-              >
-                Delete Account
-              </button>
-            </div>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 py-4 bg-slate-100 text-slate-400 font-black text-[10px] uppercase tracking-widest rounded-xl"
+                >
+                  Keep Account
+                </button>
+                <button
+                  onClick={() =>
+                    addToast("error", "Action restricted for administrators.")
+                  }
+                  className="flex-1 py-4 bg-red-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-red-200"
+                >
+                  Yes, Delete
+                </button>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
-    </>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 
