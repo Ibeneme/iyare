@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────────────────────────
-   AdminDashboard.tsx – FULLY UPGRADED (Grades + Subjects for Teachers)
+   AdminDashboard.tsx – COMPLETE & FULLY FIXED VERSION
    ───────────────────────────────────────────────────────────────────────────── */
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -13,12 +13,12 @@ import {
   createUser,
   fetchAllUsersByType,
 } from "../../../../Redux/Admin/adminUsers";
-import useUserRole from "../../../../Hooks/useUserRole";
+
 import axios from "axios";
 import { BASE_URL } from "../../../../Redux/baseurl";
 import suspendImage from "../../../../assets/images/admin/suspend.png";
 import removeImage from "../../../../assets/images/admin/removeImage.png";
-import { Loader2,User } from "lucide-react";
+import { Loader2, User } from "lucide-react";
 
 const GRADES_API = `${BASE_URL}/api/grades/grades`;
 
@@ -41,7 +41,6 @@ export type FilterType = "all" | "active" | "disabled" | "suspended";
 
 interface AdminDashboardProps {
   userType: UserType;
-  initialFilter?: FilterType; // <- add this line
 }
 
 interface Grade {
@@ -61,9 +60,9 @@ const filterOptions: Record<UserType, FilterType[]> = {
   student: ["all", "active", "disabled"],
   teacher: ["all", "active", "disabled"],
   notFound: ["all"],
-  course: ["all", "active", "disabled"], // added
-  department: ["all", "active", "disabled"], // added
-  grade: ["all", "active", "disabled"], // added
+  course: ["all", "active", "disabled"],
+  department: ["all", "active", "disabled"],
+  grade: ["all", "active", "disabled"],
 };
 
 const formatFilterText = (text: string) =>
@@ -74,7 +73,7 @@ const formatFilterText = (text: string) =>
     .replace(/\s+/g, " ");
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
-  const { userRole } = useUserRole();
+
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { addToast } = useToast();
@@ -92,7 +91,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
   const [parents, setParents] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
 
-  // Form states
+  // Admin Form
   const [addAdminEmail, setAddAdminEmail] = useState("");
   const [addAdminRole, setAddAdminRole] = useState("");
   const [addAdminFirstName, setAddAdminFirstName] = useState("");
@@ -100,6 +99,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
   const [addAdminPassword, setAddAdminPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  // Common User Form
   const [userFirstName, setUserFirstName] = useState("");
   const [userLastName, setUserLastName] = useState("");
   const [userEmail, setUserEmail] = useState("");
@@ -116,8 +116,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
   const [loadingGrades, setLoadingGrades] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
 
+  console.log(loadingSubjects)
   const token = localStorage.getItem("token");
 
+  // Errors
   const [formErrors, setFormErrors] = useState({
     email: "",
     role: "",
@@ -126,8 +128,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
     password: "",
   });
 
-  console.log(loadingSubjects, formErrors);
-  const [formErrorsUsers, setFormErrorsUsers] = useState<any>({});
+  const [formErrorsUsers, setFormErrorsUsers] = useState<{
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phoneNumber?: string;
+    grades?: string;
+  }>({});
 
   const [confirmModal, setConfirmModal] = useState<{
     type: "suspend" | "remove" | "unsuspend";
@@ -172,9 +179,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
   useEffect(() => {
     fetchUsers();
   }, [userType, filter]);
@@ -305,28 +309,56 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
       : "Dashboard";
 
   /* ------------------------------------------------------------------ */
+  /* Reset Forms */
+  /* ------------------------------------------------------------------ */
+  const resetAdminForm = () => {
+    setAddAdminEmail("");
+    setAddAdminRole("");
+    setAddAdminFirstName("");
+    setAddAdminLastName("");
+    setAddAdminPassword("");
+    setFormErrors({
+      email: "",
+      role: "",
+      firstName: "",
+      lastName: "",
+      password: "",
+    });
+  };
+
+  const resetUserForm = () => {
+    setUserFirstName("");
+    setUserLastName("");
+    setUserEmail("");
+    setUserPhoneNumber("");
+    setParentId("");
+    setSelectedGradeIds([]);
+    setSelectedSubjectIds([]);
+    setFormErrorsUsers({});
+  };
+
+  /* ------------------------------------------------------------------ */
   /* Submit Form */
   /* ------------------------------------------------------------------ */
   const handleSubmitAll = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsModalOpen(false);
-    setLoading(true);
 
     try {
+      setLoading(true);
+
       if (userType === "admin") {
-        // ... (same as before)
         const errors: any = {};
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addAdminEmail))
-          errors.email = "Invalid email";
-        if (!addAdminRole) errors.role = "Required";
-        if (!addAdminFirstName) errors.firstName = "Required";
-        if (!addAdminLastName) errors.lastName = "Required";
+        if (!addAdminEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addAdminEmail))
+          errors.email = "Valid email is required";
+        if (!addAdminRole) errors.role = "Role is required";
+        if (!addAdminFirstName) errors.firstName = "First name is required";
+        if (!addAdminLastName) errors.lastName = "Last name is required";
         if (!addAdminPassword || addAdminPassword.length < 6)
-          errors.password = "Min 6 chars";
+          errors.password = "Password must be at least 6 characters";
 
         setFormErrors(errors);
-        if (Object.keys(errors).length) {
-          setIsModalOpen(true);
+
+        if (Object.keys(errors).length > 0) {
           setLoading(false);
           return;
         }
@@ -342,28 +374,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
         ).unwrap();
 
         if (res.success) {
+          addToast("success", "Admin added successfully!");
+          resetAdminForm();
           fetchUsers();
-          addToast("success", "Admin added!");
-          setAddAdminEmail("");
-          setAddAdminRole("");
-          setAddAdminFirstName("");
-          setAddAdminLastName("");
-          setAddAdminPassword("");
+          setIsModalOpen(false);
+        } else {
+          addToast("error", res.message || "Failed to add admin");
         }
       } else if (["parent", "student", "teacher"].includes(userType)) {
         const errors: any = {};
-        if (!userFirstName) errors.firstName = "Required";
-        if (!userLastName) errors.lastName = "Required";
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail))
-          errors.email = "Invalid email";
-        if (!userPhoneNumber) errors.phoneNumber = "Required";
+        if (!userFirstName) errors.firstName = "First name is required";
+        if (!userLastName) errors.lastName = "Last name is required";
+        if (!userEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail))
+          errors.email = "Valid email is required";
+        if (!userPhoneNumber) errors.phoneNumber = "Phone number is required";
 
         if (userType === "teacher" && selectedGradeIds.length === 0)
-          errors.grades = "Select at least one grade";
+          errors.grades = "Please select at least one grade";
 
         setFormErrorsUsers(errors);
-        if (Object.keys(errors).length) {
-          setIsModalOpen(true);
+
+        if (Object.keys(errors).length > 0) {
           setLoading(false);
           return;
         }
@@ -374,42 +405,49 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
           email: userEmail,
           phoneNumber: userPhoneNumber,
           userType,
-          ...(userType === "student" && { parentId }),
+          ...(userType === "student" && parentId && { parentId }),
           ...(userType === "teacher" && {
             gradeIds: selectedGradeIds,
             subjectIds: selectedSubjectIds,
           }),
         };
 
-        const res: any = await dispatch(createUser(body));
-        if (res.payload?.success) {
+        const res: any = await dispatch(createUser(body)).unwrap();
+
+        if (res.success) {
+          addToast(
+            "success",
+            `${
+              userType.charAt(0).toUpperCase() + userType.slice(1)
+            } created successfully!`
+          );
+          resetUserForm();
           fetchUsers();
-          addToast("success", `${userType} created!`);
-          // Reset all
-          setUserFirstName("");
-          setUserLastName("");
-          setUserEmail("");
-          setUserPhoneNumber("");
-          setParentId("");
-          setSelectedGradeIds([]);
-          setSelectedSubjectIds([]);
+          setIsModalOpen(false);
         } else {
-          addToast("error", "Failed");
-          setIsModalOpen(true);
+          addToast("error", res.message || "Failed to create user");
         }
       }
     } catch (err: any) {
-      addToast("error", err.message || "Something went wrong");
-      setIsModalOpen(true);
+      addToast("error", err.message || "An error occurred");
     } finally {
       setLoading(false);
     }
   };
 
+  /* ------------------------------------------------------------------ */
+  /* Close Modal & Reset */
+  /* ------------------------------------------------------------------ */
+  const closeModal = () => {
+    setIsModalOpen(false);
+    resetAdminForm();
+    resetUserForm();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
-      {isLoading ? (
-        <div className="min-h-[100%] flex py-48 flex-col min-h-[100%] items-center justify-center bg-white/70 backdrop-blur-sm z-50">
+      {isLoading && !isModalOpen ? (
+        <div className="min-h-[100vh] flex items-center justify-center">
           <Loader2 className="w-14 h-14 animate-spin text-green-700" />
           <p className="mt-4 text-green-700 text-[14px] font-semibold">
             Loading...
@@ -417,6 +455,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
         </div>
       ) : (
         <div className="max-w-7xl mx-auto">
+          {/* Header */}
           <div className="mb-10 mt-6">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-14 h-14 bg-[#064e3b] rounded-2xl flex items-center justify-center text-yellow-400 shadow-lg shadow-emerald-900/20">
@@ -427,14 +466,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                   {getTitle()}
                 </h1>
                 <p className="text-slate-500 font-bold text-sm">
-                  Directory of all registered {userType}s in the Yare Height
-                  system.
+                  Directory of all registered {userType}s in the system.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Filters and Actions Bar */}
+          {/* Filters + Add Button */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div className="flex flex-wrap gap-2 p-1.5 bg-white rounded-2xl border border-slate-100 shadow-sm">
               {filterOptions[userType]?.map((f) => (
@@ -452,18 +490,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
               ))}
             </div>
 
-            {userRole === "admin" &&
-              (userType === "teacher" || userType === "admin") && (
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="inline-flex items-center gap-3 bg-[#064e3b] text-yellow-400 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-800 transition-all shadow-xl shadow-emerald-900/20 active:scale-95"
-                >
-                  <FaUserPlus /> Add {userType}
-                </button>
-              )}
+            {(userType === "teacher" || userType === "admin") && (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="inline-flex items-center gap-3 bg-[#064e3b] text-yellow-400 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-800 transition-all shadow-xl shadow-emerald-900/20 active:scale-95"
+              >
+                <FaUserPlus /> Add {userType}
+              </button>
+            )}
           </div>
 
-          {/* Table Section */}
+          {/* Table */}
           <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -564,20 +601,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
             </div>
           </div>
 
-          {isModalOpen && userRole === "admin" && (
+          {/* Add User Modal */}
+          {isModalOpen  && (
             <>
               <div
                 className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-                onClick={() => setIsModalOpen(false)}
+                onClick={closeModal}
               />
               <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl mx-auto my-8 overflow-hidden animate-in fade-in zoom-in duration-300"
+                  className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl mx-auto my-8 overflow-hidden"
                 >
                   <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 px-8 py-6 text-white relative">
                     <button
-                      onClick={() => setIsModalOpen(false)}
+                      onClick={closeModal}
                       className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition"
                     >
                       <svg
@@ -594,7 +632,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                         />
                       </svg>
                     </button>
-
                     <h2 className="text-3xl font-extrabold tracking-tight pr-12">
                       Add New{" "}
                       {userType.charAt(0).toUpperCase() + userType.slice(1)}
@@ -608,128 +645,152 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                     onSubmit={handleSubmitAll}
                     className="p-6 space-y-7 max-h-[75vh] overflow-y-auto"
                   >
+                    {/* Admin Form Fields */}
                     {userType === "admin" && (
                       <>
-                        <div className="space-y-5">
+                        <div>
+                          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Email Address
+                          </label>
+                          <input
+                            type="email"
+                            value={addAdminEmail}
+                            onChange={(e) => setAddAdminEmail(e.target.value)}
+                            placeholder="admin@school.edu"
+                            className="mt-2 w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
+                          />
+                          {formErrors.email && (
+                            <p className="text-red-600 text-sm mt-1">
+                              {formErrors.email}
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Role
+                          </label>
+                          <div className="mt-3 flex gap-6">
+                            {["superadmin", "admin"].map((role) => (
+                              <label
+                                key={role}
+                                className="flex items-center gap-3 cursor-pointer group"
+                              >
+                                <input
+                                  type="radio"
+                                  name="adminRole"
+                                  value={role}
+                                  checked={addAdminRole === role}
+                                  onChange={(e) =>
+                                    setAddAdminRole(e.target.value)
+                                  }
+                                  className="sr-only"
+                                />
+                                <div
+                                  className={`w-7 h-7 rounded-full border-3 flex items-center justify-center transition-all ${
+                                    addAdminRole === role
+                                      ? "border-emerald-500 bg-emerald-500 shadow-lg"
+                                      : "border-gray-300 group-hover:border-emerald-400"
+                                  }`}
+                                >
+                                  {addAdminRole === role && (
+                                    <div className="w-3 h-3 bg-white rounded-full" />
+                                  )}
+                                </div>
+                                <span
+                                  className={`font-medium capitalize ${
+                                    addAdminRole === role
+                                      ? "text-emerald-600"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  {role === "superadmin"
+                                    ? "Super Admin"
+                                    : "Admin"}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                          {formErrors.role && (
+                            <p className="text-red-600 text-sm mt-2">
+                              {formErrors.role}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-5">
                           <div>
                             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                              Email Address
+                              First Name
                             </label>
                             <input
-                              type="email"
-                              value={addAdminEmail}
-                              onChange={(e) => setAddAdminEmail(e.target.value)}
-                              placeholder="admin@school.edu"
+                              type="text"
+                              value={addAdminFirstName}
+                              onChange={(e) =>
+                                setAddAdminFirstName(e.target.value)
+                              }
+                              placeholder="John"
                               className="mt-2 w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
                             />
+                            {formErrors.firstName && (
+                              <p className="text-red-600 text-sm mt-1">
+                                {formErrors.firstName}
+                              </p>
+                            )}
                           </div>
-
                           <div>
                             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                              Role
+                              Last Name
                             </label>
-                            <div className="mt-3 flex gap-6">
-                              {["superadmin", "admin"].map((role) => (
-                                <label
-                                  key={role}
-                                  className="flex items-center gap-3 cursor-pointer group"
-                                >
-                                  <input
-                                    type="radio"
-                                    name="adminRole"
-                                    value={role}
-                                    checked={addAdminRole === role}
-                                    onChange={(e) =>
-                                      setAddAdminRole(e.target.value)
-                                    }
-                                    className="sr-only"
-                                  />
-                                  <div
-                                    className={`w-7 h-7 rounded-full border-3 flex items-center justify-center transition-all
-                               ${
-                                 addAdminRole === role
-                                   ? "border-emerald-500 bg-emerald-500 shadow-lg"
-                                   : "border-gray-300 group-hover:border-emerald-400"
-                               }`}
-                                  >
-                                    {addAdminRole === role && (
-                                      <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
-                                    )}
-                                  </div>
-                                  <span
-                                    className={`font-medium capitalize ${
-                                      addAdminRole === role
-                                        ? "text-emerald-600"
-                                        : "text-gray-700"
-                                    }`}
-                                  >
-                                    {role === "superadmin"
-                                      ? "Super Admin"
-                                      : "Admin"}
-                                  </span>
-                                </label>
-                              ))}
-                            </div>
+                            <input
+                              type="text"
+                              value={addAdminLastName}
+                              onChange={(e) =>
+                                setAddAdminLastName(e.target.value)
+                              }
+                              placeholder="Doe"
+                              className="mt-2 w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
+                            />
+                            {formErrors.lastName && (
+                              <p className="text-red-600 text-sm mt-1">
+                                {formErrors.lastName}
+                              </p>
+                            )}
                           </div>
+                        </div>
 
-                          <div className="grid grid-cols-2 gap-5">
-                            <div>
-                              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                First Name
-                              </label>
-                              <input
-                                type="text"
-                                value={addAdminFirstName}
-                                onChange={(e) =>
-                                  setAddAdminFirstName(e.target.value)
-                                }
-                                placeholder="John"
-                                className="mt-2 w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Last Name
-                              </label>
-                              <input
-                                type="text"
-                                value={addAdminLastName}
-                                onChange={(e) =>
-                                  setAddAdminLastName(e.target.value)
-                                }
-                                placeholder="Doe"
-                                className="mt-2 w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
-                              />
-                            </div>
+                        <div>
+                          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Password
+                          </label>
+                          <div className="relative mt-2">
+                            <input
+                              type={showPassword ? "text" : "password"}
+                              value={addAdminPassword}
+                              onChange={(e) =>
+                                setAddAdminPassword(e.target.value)
+                              }
+                              placeholder="••••••••"
+                              className="w-full px-5 py-4 pr-16 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-600 font-semibold text-sm hover:underline"
+                            >
+                              {showPassword ? "Hide" : "Show"}
+                            </button>
                           </div>
-
-                          <div>
-                            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                              Password
-                            </label>
-                            <div className="relative mt-2">
-                              <input
-                                type={showPassword ? "text" : "password"}
-                                value={addAdminPassword}
-                                onChange={(e) =>
-                                  setAddAdminPassword(e.target.value)
-                                }
-                                placeholder="••••••••"
-                                className="w-full px-5 py-4 pr-16 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-600 font-semibold text-sm hover:underline"
-                              >
-                                {showPassword ? "Hide" : "Show"}
-                              </button>
-                            </div>
-                          </div>
+                          {formErrors.password && (
+                            <p className="text-red-600 text-sm mt-1">
+                              {formErrors.password}
+                            </p>
+                          )}
                         </div>
                       </>
                     )}
 
+                    {/* Teacher / Parent / Student Form Fields */}
                     {["parent", "student", "teacher"].includes(userType) && (
                       <div className="space-y-8">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -742,11 +803,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                               value={userFirstName}
                               onChange={(e) => setUserFirstName(e.target.value)}
                               placeholder="Emma"
-                              className="mt-2 w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl 
-                        text-gray-900 placeholder-gray-400 focus:ring-4 focus:ring-emerald-200 
-                        focus:border-emerald-500 transition"
-                              required
+                              className="mt-2 w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
                             />
+                            {formErrorsUsers.firstName && (
+                              <p className="text-red-600 text-sm mt-1">
+                                {formErrorsUsers.firstName}
+                              </p>
+                            )}
                           </div>
 
                           <div>
@@ -758,11 +821,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                               value={userLastName}
                               onChange={(e) => setUserLastName(e.target.value)}
                               placeholder="Wilson"
-                              className="mt-2 w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl 
-                        text-gray-900 placeholder-gray-400 focus:ring-4 focus:ring-emerald-200 
-                        focus:border-emerald-500 transition"
-                              required
+                              className="mt-2 w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
                             />
+                            {formErrorsUsers.lastName && (
+                              <p className="text-red-600 text-sm mt-1">
+                                {formErrorsUsers.lastName}
+                              </p>
+                            )}
                           </div>
                         </div>
 
@@ -775,11 +840,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                             value={userEmail}
                             onChange={(e) => setUserEmail(e.target.value)}
                             placeholder="emma.wilson@school.com"
-                            className="mt-2 w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl 
-                      text-gray-900 placeholder-gray-400 focus:ring-4 focus:ring-emerald-200 
-                      focus:border-emerald-500 transition"
-                            required
+                            className="mt-2 w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
                           />
+                          {formErrorsUsers.email && (
+                            <p className="text-red-600 text-sm mt-1">
+                              {formErrorsUsers.email}
+                            </p>
+                          )}
                         </div>
 
                         <div>
@@ -791,11 +858,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                             value={userPhoneNumber}
                             onChange={(e) => setUserPhoneNumber(e.target.value)}
                             placeholder="+234 801 234 5678"
-                            className="mt-2 w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl 
-                      text-gray-900 placeholder-gray-400 focus:ring-4 focus:ring-emerald-200 
-                      focus:border-emerald-500 transition"
-                            required
+                            className="mt-2 w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
                           />
+                          {formErrorsUsers.phoneNumber && (
+                            <p className="text-red-600 text-sm mt-1">
+                              {formErrorsUsers.phoneNumber}
+                            </p>
+                          )}
                         </div>
 
                         {userType === "student" && (
@@ -806,9 +875,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                             <select
                               value={parentId}
                               onChange={(e) => setParentId(e.target.value)}
-                              className="mt-2 w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl 
-                        text-gray-900 focus:ring-4 focus:ring-emerald-200 
-                        focus:border-emerald-500 transition"
+                              className="mt-2 w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
                             >
                               <option value="">Choose parent...</option>
                               {parents.map((p: any) => (
@@ -828,7 +895,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                   <span className="w-6 h-6 bg-emerald-600 text-white rounded-full flex items-center justify-center text-xs">
                                     1
                                   </span>
-                                  Assign Grades
+                                  Assign Grades{" "}
                                   <span className="text-red-500">*</span>
                                 </h3>
                                 <span className="text-xs text-gray-500">
@@ -845,7 +912,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                   {grades.map((grade) => {
                                     const isSelected =
                                       selectedGradeIds.includes(grade._id);
-
                                     return (
                                       <label
                                         key={grade._id}
@@ -865,15 +931,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                           }
                                           className="sr-only"
                                         />
-
                                         <div
-                                          className={`p-4 rounded-xl border text-center transition shadow-sm
-                             ${
-                               isSelected
-                                 ? "bg-emerald-600 text-white border-emerald-600 shadow-md scale-[1.02]"
-                                 : "bg-white border-gray-300 hover:border-emerald-400"
-                             }
-                           `}
+                                          className={`p-4 rounded-xl border text-center transition shadow-sm ${
+                                            isSelected
+                                              ? "bg-emerald-600 text-white border-emerald-600 shadow-md scale-[1.02]"
+                                              : "bg-white border-gray-300 hover:border-emerald-400"
+                                          }`}
                                         >
                                           <p className="font-bold text-lg">
                                             {grade.title.match(/\d+/)?.[0] ||
@@ -896,7 +959,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                   })}
                                 </div>
                               )}
-
                               {formErrorsUsers.grades && (
                                 <p className="text-red-600 text-sm mt-2">
                                   {formErrorsUsers.grades}
@@ -924,7 +986,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                   );
                                   const subjects =
                                     subjectsByGrade[gradeId] || [];
-                                  if (!subjects.length) return null;
+                                  if (subjects.length === 0) return null;
 
                                   return (
                                     <div
@@ -934,7 +996,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                       <h4 className="font-semibold text-purple-800 mb-3">
                                         {grade?.title}
                                       </h4>
-
                                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                         {subjects.map((subject) => {
                                           const isSelected =
@@ -963,13 +1024,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                                 className="sr-only"
                                               />
                                               <div
-                                                className={`w-5 h-5 rounded-full border flex items-center justify-center transition
-                                   ${
-                                     isSelected
-                                       ? "bg-purple-600 border-purple-600"
-                                       : "border-gray-300"
-                                   }
-                                 `}
+                                                className={`w-5 h-5 rounded-full border flex items-center justify-center transition ${
+                                                  isSelected
+                                                    ? "bg-purple-600 border-purple-600"
+                                                    : "border-gray-300"
+                                                }`}
                                               >
                                                 {isSelected && (
                                                   <div className="w-2.5 h-2.5 bg-white rounded-full" />
@@ -982,7 +1041,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                                     : "text-gray-700"
                                                 }`}
                                               >
-                                                {subject.name}
+                                                {subject.name || subject.title}
                                               </span>
                                             </label>
                                           );
@@ -1001,14 +1060,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                     <div className="flex gap-4 pt-6 border-t border-gray-100">
                       <button
                         type="submit"
-                        className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-4 rounded-2xl font-bold text-lg hover:from-emerald-700 hover:to-teal-700 transition shadow-xl"
+                        disabled={isLoading}
+                        className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-4 rounded-2xl font-bold text-lg hover:from-emerald-700 hover:to-teal-700 transition shadow-xl disabled:opacity-70"
                       >
-                        Create{" "}
-                        {userType.charAt(0).toUpperCase() + userType.slice(1)}
+                        {isLoading
+                          ? "Creating..."
+                          : `Create ${
+                              userType.charAt(0).toUpperCase() +
+                              userType.slice(1)
+                            }`}
                       </button>
                       <button
                         type="button"
-                        onClick={() => setIsModalOpen(false)}
+                        onClick={closeModal}
                         className="flex-1 bg-gray-100 text-gray-800 py-4 rounded-2xl font-bold text-lg hover:bg-gray-200 transition"
                       >
                         Cancel
@@ -1020,6 +1084,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
             </>
           )}
 
+          {/* Confirm Delete/Suspend Modal */}
           {confirmModal && (
             <>
               <div
@@ -1034,11 +1099,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                 >
                   <div
                     className={`px-8 py-10 text-white text-center relative overflow-hidden
-          ${
-            confirmModal.type === "remove"
-              ? "bg-gradient-to-br from-red-600 to-rose-700"
-              : "bg-gradient-to-br from-amber-600 to-orange-700"
-          }`}
+             ${
+               confirmModal.type === "remove"
+                 ? "bg-gradient-to-br from-red-600 to-rose-700"
+                 : "bg-gradient-to-br from-amber-600 to-orange-700"
+             }`}
                   >
                     <div className="absolute inset-0 bg-white/10"></div>
                     <div className="relative z-10">
@@ -1057,8 +1122,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                         {confirmModal.type === "remove" ? "Delete" : "Suspend"}{" "}
                         {userType}?
                       </h3>
-                      <br />
-                      <br /> <br />
                     </div>
 
                     <svg
@@ -1095,7 +1158,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                       </p>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex gap-4">
                       <button
                         onClick={() => setConfirmModal(null)}
@@ -1106,11 +1168,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                       <button
                         onClick={handleConfirmAction}
                         className={`flex-1 py-4 text-white rounded-2xl font-bold text-lg shadow-xl transition-all duration-200 transform hover:scale-105
-                ${
-                  confirmModal.type === "remove"
-                    ? "bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800"
-                    : "bg-gradient-to-r from-amber-600 to-orange-700 hover:from-amber-700 hover:to-orange-800"
-                }`}
+                   ${
+                     confirmModal.type === "remove"
+                       ? "bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800"
+                       : "bg-gradient-to-r from-amber-600 to-orange-700 hover:from-amber-700 hover:to-orange-800"
+                   }`}
                       >
                         Yes,{" "}
                         {confirmModal.type === "remove"

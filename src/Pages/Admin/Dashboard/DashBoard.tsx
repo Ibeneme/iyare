@@ -5,7 +5,7 @@ import AdminDashboard from "../Admin/Dashboard/AdminDashboard";
 export type FilterType = "all" | "active" | "disabled" | "suspended";
 
 const Dashboard: React.FC = () => {
-  const { userType, filter } = useParams<{
+  const { userType } = useParams<{
     userType?: string;
     filter?: FilterType;
   }>();
@@ -37,7 +37,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="dashboard">
-      <AdminDashboard userType={resolvedUserType} initialFilter={filter} />
+      <AdminDashboard userType={resolvedUserType} />
     </div>
   );
 };
