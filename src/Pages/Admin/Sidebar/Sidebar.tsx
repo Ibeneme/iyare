@@ -293,11 +293,10 @@ export const BottomNav: React.FC<{
 
   return (
     <>
-      {/* Mobile Fab */}
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsModalOpen(!isModalOpen)}
-        className="md:hidden fixed bottom-8 left-[40%] w-16 h-16 bg-emerald-950  rounded-full flex items-center justify-center shadow-2xl z-[100] border-4 border-[#064e3b]"
+        className="md:hidden fixed bottom-8 left-[38%] w-16 h-16 bg-emerald-950  rounded-full flex items-center justify-center shadow-2xl z-[100] border-4 border-[#064e3b]"
       >
         {isModalOpen ? (
           <X size={28} className="text-yellow-400" />
