@@ -192,31 +192,58 @@ const ControlBar: React.FC<ControlBarProps> = ({
               </button>
             ))}
 
-          <div className="relative">
+          <div className="flex items-center justify-center">
+            {" "}
+            {/* Wrapper to maintain flex flow */}
             <button
               onClick={() => setShowPicker(!showPicker)}
-              className="p-4 bg-white/10 rounded-2xl"
+              className={`px-5 py-4 rounded-2xl transition-all active:scale-90 ${
+                showPicker
+                  ? "bg-white/20 ring-2 ring-yellow-500/50"
+                  : "bg-white/10"
+              }`}
             >
-              <Smile />
+              <Smile className="w-5 h-5 md:w-6 md:h-6" />
             </button>
             <AnimatePresence>
               {showPicker && (
-                <motion.div
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: 10, opacity: 0 }}
-                  className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 flex gap-3 bg-gray-900 p-4 rounded-2xl border border-white/10 shadow-xl"
-                >
-                  {reactions.map((e) => (
-                    <button
-                      key={e}
-                      onClick={() => sendReaction(e)}
-                      className="text-3xl hover:scale-150 transition transform"
-                    >
-                      {e}
-                    </button>
-                  ))}
-                </motion.div>
+                <>
+                  {/* Transparent backdrop to close picker when clicking outside */}
+                  <div
+                    className="fixed inset-0 z-[-1]"
+                    onClick={() => setShowPicker(false)}
+                  />
+
+                  <motion.div
+                    initial={{ y: 20, x: "-50%", opacity: 0 }}
+                    animate={{ y: 0, x: "-50%", opacity: 1 }}
+                    exit={{ y: 20, x: "-50%", opacity: 0 }}
+                    /* 'fixed' positioning ensures it stays centered relative to the screen 
+             width, regardless of where the Smile button sits in the flex row.
+          */
+                    className="fixed bottom-40 md:bottom-24 left-1/2 -translate-x-1/2 z-[60] 
+                     flex gap-2 md:gap-2 bg-gray-900/95 backdrop-blur-2xl p-3 md:p-2
+                     rounded-3xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                  >
+                    {reactions.map((e) => (
+                      <button
+                        key={e}
+                        onClick={() => sendReaction(e)}
+                        className="text-3xl md:text-3xl hover:scale-150 active:scale-125 transition-transform duration-200"
+                      >
+                        {e}
+                      </button>
+                    ))}
+
+                    {/* Small pointer triangle */}
+                    <div
+                      className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 
+                          border-l-[8px] border-l-transparent 
+                          border-r-[8px] border-r-transparent 
+                          border-t-[8px] border-t-gray-900/95"
+                    />
+                  </motion.div>
+                </>
               )}
             </AnimatePresence>
           </div>
