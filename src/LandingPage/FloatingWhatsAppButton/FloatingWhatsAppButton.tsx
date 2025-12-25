@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 
 const FloatingWhatsAppButton: React.FC = () => {
-  const phoneNumber = "2349012345678"; // Change if needed
+  const phoneNumber = "+2347067363653"; // Change if needed
   const whatsappLink = `https://api.whatsapp.com/send/?phone=${phoneNumber}&text=Hi%20Yare!%20I%20have%20a%20question%20about%20enrollment.&type=phone_number&app_absent=0`;
 
   return (
