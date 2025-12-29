@@ -7,9 +7,12 @@ import {
   FiX,
   FiUser,
 } from "react-icons/fi";
-import { useUserActions } from "../../../../../Hooks/useUsers";
+
 import { useToast } from "../../../../../Context/ToastProvider";
-import { fetchUserById } from "../../../../../Redux/Admin/adminUsers";
+import {
+  fetchUserById,
+  updateUser,
+} from "../../../../../Redux/Admin/adminUsers";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../../../../Redux/store";
 import { Loader2 } from "lucide-react";
@@ -26,7 +29,6 @@ const SettingProfile: React.FC<Props> = ({
   currentUserId,
   userType,
 }) => {
-  const { editUser } = useUserActions();
   const { addToast } = useToast();
   const dispatch = useDispatch<AppDispatch>();
 
@@ -62,24 +64,51 @@ const SettingProfile: React.FC<Props> = ({
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     try {
-      const response = await editUser(adminRole, currentUserId, {
-        name: `${editedFirstName} ${editedLastName}`,
-      });
-      if (response.success) {
-        addToast("success", "Profile updated successfully!");
-        setShowEditModal(false);
-        fetchUserProfile();
-      } else {
-        addToast("error", response.error || "Update failed");
-      }
-    } catch {
-      addToast("error", "An error occurred.");
+      // Get the user object from localStorage
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) throw new Error("No user found in localStorage.");
+      const userObject = JSON.parse(storedUser);
+
+      const formatName = (name: string) => {
+        return name
+          .split(" ")
+          .map((word) =>
+            word
+              .split("-")
+              .map(
+                (part) =>
+                  part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+              )
+              .join("-")
+          )
+          .join(" ");
+      };
+
+      // Dispatch the updateUser thunk
+      await dispatch(
+        updateUser({
+          userType: userObject.userType, // userType from localStorage
+          id: userObject._id,            // user ID from localStorage
+          updateData: {
+            firstName: formatName(editedFirstName),
+            lastName: formatName(editedLastName),
+          },
+        })
+      ).unwrap();
+
+      addToast("success", "Profile updated successfully!");
+      setShowEditModal(false);
+
+      // ✅ Reload the profile data after update
+      await fetchUserProfile();
+    } catch (err: any) {
+      addToast("error", err?.message || "Failed to update profile.");
     } finally {
       setLoading(false);
     }
   };
-
   if (loading && !userData) {
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-4">
