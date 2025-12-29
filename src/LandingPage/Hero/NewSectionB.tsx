@@ -1,7 +1,6 @@
 // src/components/LessonsDigitalizedSection/LessonsDigitalizedSection.tsx
 import React from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 import {
   Brain,
   Zap,
@@ -69,10 +68,8 @@ const digitalFeatures = [
 ];
 
 const LessonsDigitalizedSection: React.FC = () => {
-  const navigate = useNavigate();
-
-  const startFreeTrial = () => {
-    navigate("/auth-sign-in?type=parent");
+  const openInNewTab = (url: string) => {
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -150,7 +147,7 @@ const LessonsDigitalizedSection: React.FC = () => {
           ))}
         </div>
 
-        {/* Dual CTA — SAME HEIGHT, NO BORDERS */}
+        {/* Dual CTA */}
         <div className="grid lg:grid-cols-2 gap-12 items-stretch mb-16">
           {/* Teacher / School Card */}
           <motion.div
@@ -204,7 +201,10 @@ const LessonsDigitalizedSection: React.FC = () => {
                 </li>
               </ul>
             </div>
-            <button className="mt-8 bg-[#ffd000] text-[#023009] px-8 py-4 rounded-full font-bold hover:bg-yellow-300 transition-all duration-300 transform hover:-translate-y-1 text-lg flex items-center justify-center gap-2">
+            <button
+              onClick={() => openInNewTab("/auth-sign-in?type=teacher")} // Change this URL when you have a teacher route
+              className="mt-8 bg-[#ffd000] text-[#023009] px-8 py-4 rounded-full font-bold hover:bg-yellow-300 transition-all duration-300 transform hover:-translate-y-1 text-lg flex items-center justify-center gap-2"
+            >
               Start Teaching <ArrowRight className="w-5 h-5" />
             </button>
           </motion.div>
@@ -262,7 +262,7 @@ const LessonsDigitalizedSection: React.FC = () => {
               </ul>
             </div>
             <button
-              onClick={startFreeTrial}
+              onClick={() => openInNewTab("/auth-sign-in?type=parent")}
               className="mt-8 bg-[#023009] text-white px-8 py-4 rounded-full font-bold hover:bg-[#023009]/90 transition-all duration-300 transform hover:-translate-y-1 text-lg flex items-center justify-center gap-2"
             >
               Start Free Trial <ArrowRight className="w-5 h-5" />
@@ -282,8 +282,6 @@ const LessonsDigitalizedSection: React.FC = () => {
           </p>
         </div>
       </div>
-
-
     </section>
   );
 };

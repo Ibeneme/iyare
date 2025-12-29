@@ -1,7 +1,6 @@
 // src/components/HomeLessonsSection/HomeLessonsSection.tsx
 import React from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
   Laptop,
@@ -63,14 +62,8 @@ const features = [
 ];
 
 const HomeLessonsSection: React.FC = () => {
-  const navigate = useNavigate();
-
-  const handleParentLogin = () => {
-    navigate("/auth-sign-in?type=parent");
-  };
-
-  const handleStudentLogin = () => {
-    navigate("/auth-sign-in?type=student");
+  const openInNewTab = (url: string) => {
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -204,7 +197,7 @@ const HomeLessonsSection: React.FC = () => {
               </ul>
             </div>
             <button
-              onClick={handleParentLogin}
+              onClick={() => openInNewTab("/auth-sign-in?type=parent")}
               className="mt-8 bg-[#ffd000] text-[#023009] px-8 py-4 rounded-full font-bold hover:bg-yellow-300 transition-all duration-300 transform hover:-translate-y-1 text-lg"
             >
               Open Parent Portal
@@ -264,7 +257,7 @@ const HomeLessonsSection: React.FC = () => {
               </ul>
             </div>
             <button
-              onClick={handleStudentLogin}
+              onClick={() => openInNewTab("/auth-sign-in?type=student")}
               className="mt-8 bg-[#023009] text-white px-8 py-4 rounded-full font-bold hover:bg-[#023009]/90 transition-all duration-300 transform hover:-translate-y-1 text-lg"
             >
               Start Learning Now

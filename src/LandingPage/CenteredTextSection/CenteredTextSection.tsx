@@ -57,7 +57,7 @@ const CenteredTextSection: React.FC = () => {
           className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-10"
         >
           <a
-            href="https://wa.me/2349012345678"
+            href="https://wa.me/2347067363653"
             target="_blank"
             rel="noopener noreferrer"
             className="group inline-flex items-center gap-2.5 bg-[#023009] text-white px-7 py-3.5 rounded-full font-bold text-base hover:bg-[#012009] transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg"

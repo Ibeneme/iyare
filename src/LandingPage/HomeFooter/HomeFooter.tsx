@@ -29,7 +29,7 @@ const HomeFooter: React.FC = () => {
       {!isBlogDetail && !isAdminRoute && <CenteredTextSection />}
       <FloatingWhatsAppButton />
       <footer className="relative bg-[#023009] text-white overflow-hidden pt-24">
-        <div className="container mx-auto px-6 py-16 max-w-7xl relative z-10 ">
+        <div className="container mx-auto px-6 py-16 max-w-7xl relative z-10">
           <div className="grid md:grid-cols-3 gap-12">
             {/* Brand & Mission */}
             <motion.div
@@ -50,11 +50,19 @@ const HomeFooter: React.FC = () => {
               </p>
               <div className="flex items-center gap-2 text-[#ffd000] text-sm">
                 <Globe className="w-4 h-4" />
-                <span className="font-bold">yare.ng</span>
+                <a
+                  href="https://yare.ng"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold hover:underline"
+                >
+                  yare.ng
+                </a>
               </div>
             </motion.div>
 
-            {/* Quick Links */}
+            {/* Quick Links – Internal navigation (same tab) */}
+            {/* Quick Links – All links open in a NEW TAB */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -75,6 +83,8 @@ const HomeFooter: React.FC = () => {
                   <li key={link.path}>
                     <a
                       href={link.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-white/80 hover:text-[#ffd000] transition-colors duration-300 flex items-center gap-2"
                     >
                       <div className="w-1 h-1 bg-[#ffd000] rounded-full"></div>
@@ -85,7 +95,7 @@ const HomeFooter: React.FC = () => {
               </ul>
             </motion.div>
 
-            {/* Contact & Social */}
+            {/* Contact & Social – All external → new tab */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -98,6 +108,8 @@ const HomeFooter: React.FC = () => {
               <div className="space-y-3 text-sm">
                 <a
                   href="mailto:support@yare.ng"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center gap-3 text-white/80 hover:text-[#ffd000] transition-colors"
                 >
                   <Mail className="w-4 h-4 text-[#ffd000]" />
@@ -105,6 +117,8 @@ const HomeFooter: React.FC = () => {
                 </a>
                 <a
                   href="https://wa.me/2349012345678"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center gap-3 text-white/80 hover:text-[#ffd000] transition-colors"
                 >
                   <Phone className="w-4 h-4 text-[#ffd000]" />
@@ -116,7 +130,7 @@ const HomeFooter: React.FC = () => {
                 </div>
               </div>
 
-              {/* Social Icons */}
+              {/* Social Icons – All open in new tab */}
               <div className="flex gap-3">
                 {[
                   { Icon: FaFacebook, link: "https://facebook.com/yarehub" },

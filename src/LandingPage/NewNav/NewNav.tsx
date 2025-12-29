@@ -1,6 +1,6 @@
 // src/components/Navbar/Navbar.tsx
 import React, { useState } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu,
@@ -8,6 +8,7 @@ import {
   BookOpen,
   FileText,
   Lock,
+  Home,
   Shield,
   ArrowRight,
   Users,
@@ -20,17 +21,21 @@ const ACTIVE_GREEN = "green";
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
   const location = useLocation();
 
   const toggleMenu = () => setIsOpen(!isOpen);
   const closeMenu = () => setIsOpen(false);
 
-  // 🔥 Token Detection
+  // Token Detection
   const token = localStorage.getItem("token");
   const isLoggedIn = Boolean(token);
 
   const navItems = [
+    {
+      to: "/",
+      label: "Home",
+      icon: <Home className="w-5 h-5" />,
+    },
     {
       to: "/subjects",
       label: "Subjects",
@@ -60,73 +65,75 @@ const Navbar: React.FC = () => {
     },
   ];
 
+  const openInNewTab = (url: string) => {
+    window.open(url, "_blank", "noopener,noreferrer");
+    closeMenu();
+  };
+
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 bg-white border-b-4 border-[#ffd000] z-50 shadow-lg">
         <div className="container mx-auto px-5 py-4 flex items-center justify-between">
-          {/* Logo */}
+          {/* Logo – stays in same tab */}
           <motion.div
             whileTap={{ scale: 0.95 }}
-            onClick={() => navigate("/")}
+            onClick={() => (window.location.href = "/")}
             className="cursor-pointer flex items-center gap-3"
           >
-            <div className="w-11 h-11 bg-[#ffd000] rounded-full flex items-center justify-center">
-              <img src={yare} />
+            <div className="w-11 h-11 bg-[#ffd000] rounded-full flex items-center justify-center overflow-hidden">
+              <img
+                src={yare}
+                alt="Yare Logo"
+                className="w-full h-full object-cover"
+              />
             </div>
           </motion.div>
 
-          {/* Desktop Nav */}
+          {/* Desktop Nav – All links open in NEW TAB */}
           <div className="hidden lg:flex items-center gap-8">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end
-                className={({ isActive }) =>
-                  `flex items-center gap-2 text-sm font-bold transition-all duration-200 ${
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.to;
+              return (
+                <a
+                  key={item.to}
+                  href={item.to}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`flex items-center gap-2 text-sm font-bold transition-all duration-200 ${
                     isActive
                       ? `text-[${ACTIVE_GREEN}] scale-110`
                       : "text-gray-600 hover:text-[#023009]"
-                  }`
-                }
-              >
-                <span
-                  className={
-                    location.pathname === item.to
-                      ? `text-[${ACTIVE_GREEN}]`
-                      : ""
-                  }
+                  }`}
                 >
-                  {item.icon}
-                </span>
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
+                  <span className={isActive ? `text-[${ACTIVE_GREEN}]` : ""}>
+                    {item.icon}
+                  </span>
+                  <span>{item.label}</span>
+                </a>
+              );
+            })}
 
             {/* Desktop Buttons */}
             <div className="flex items-center gap-4">
               {!isLoggedIn ? (
                 <>
-                  {/* SIGN IN */}
                   <button
-                    onClick={() => navigate("/auth-sign-in")}
+                    onClick={() => (window.location.href = "/auth-sign-in")}
                     className="px-6 py-2.5 bg-[#ffd000] text-[#023009] rounded-full font-bold text-sm hover:bg-[#e6c200] transition-all border-2 border-[#ffd000]"
                   >
                     Sign In
                   </button>
 
-                  {/* GET STARTED */}
                   <button
-                    onClick={() => navigate("/register")}
+                    onClick={() => (window.location.href = "/register")}
                     className="px-6 py-2.5 bg-[#023009] text-white rounded-full font-bold text-sm hover:bg-[#012009] transition-all flex items-center gap-2"
                   >
                     Get Started <ArrowRight className="w-4 h-4" />
                   </button>
                 </>
               ) : (
-                /* PROCEED TO DASHBOARD */
                 <button
-                  onClick={() => navigate("/subject-manager")}
+                  onClick={() => (window.location.href = "/subject-manager")}
                   className="px-6 py-2.5 bg-[#023009] text-white rounded-full font-bold text-sm hover:bg-[#012009] transition-all flex items-center gap-2"
                 >
                   Proceed to Dashboard <ArrowRight className="w-4 h-4" />
@@ -145,11 +152,10 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* MOBILE MENU + BLUR BG */}
+      {/* MOBILE MENU */}
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* Blur Background */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -159,7 +165,6 @@ const Navbar: React.FC = () => {
               onClick={closeMenu}
             />
 
-            {/* Mobile Menu */}
             <motion.div
               initial={{ y: -100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -174,10 +179,7 @@ const Navbar: React.FC = () => {
                     <motion.button
                       key={item.to}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => {
-                        navigate(item.to);
-                        closeMenu();
-                      }}
+                      onClick={() => openInNewTab(item.to)}
                       className={`w-full flex items-center justify-between py-4 px-5 text-left text-lg font-bold transition-all rounded-xl ${
                         active
                           ? "bg-[#ffd000] text-[#023009]"
@@ -204,10 +206,9 @@ const Navbar: React.FC = () => {
                 <div className="pt-6 space-y-4 border-t-2 border-gray-100">
                   {!isLoggedIn ? (
                     <>
-                      {/* SIGN IN */}
                       <button
                         onClick={() => {
-                          navigate("/auth-sign-in");
+                          window.location.href = "/auth-sign-in";
                           closeMenu();
                         }}
                         className="w-full py-4 bg-[#ffd000] text-[#023009] rounded-2xl font-bold text-lg hover:bg-[#e6c200] transition-all shadow-md"
@@ -215,10 +216,9 @@ const Navbar: React.FC = () => {
                         Sign In
                       </button>
 
-                      {/* GET STARTED */}
                       <button
                         onClick={() => {
-                          navigate("/register");
+                          window.location.href = "/register";
                           closeMenu();
                         }}
                         className="w-full py-4 bg-[#023009] text-white rounded-2xl font-bold text-lg hover:bg-[#012009] transition-all flex items-center justify-center gap-3 shadow-md"
@@ -227,10 +227,9 @@ const Navbar: React.FC = () => {
                       </button>
                     </>
                   ) : (
-                    /* PROCEED TO DASHBOARD */
                     <button
                       onClick={() => {
-                        navigate("/subject-manager");
+                        window.location.href = "/subject-manager";
                         closeMenu();
                       }}
                       className="w-full py-4 bg-[#023009] text-white rounded-2xl font-bold text-lg hover:bg-[#012009] transition-all flex items-center justify-center gap-3 shadow-md"
