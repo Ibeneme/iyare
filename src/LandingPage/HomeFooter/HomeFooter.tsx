@@ -51,12 +51,12 @@ const HomeFooter: React.FC = () => {
               <div className="flex items-center gap-2 text-[#ffd000] text-sm">
                 <Globe className="w-4 h-4" />
                 <a
-                  href="https://yare.ng"
+                  href="https://www.yareheightlearninghub.com/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-bold hover:underline"
                 >
-                  yare.ng
+                  www.yareheightlearninghub.com
                 </a>
               </div>
             </motion.div>
