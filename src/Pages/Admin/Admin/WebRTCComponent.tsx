@@ -87,7 +87,7 @@ const VideoTile: React.FC<VideoTileProps> = ({
           ref={videoRef}
           className={`w-full h-full ${
             isScreenShare ? "object-contain" : "object-cover"
-          } ${isLocalUser && !isScreenShare ? "scale-x-[-1]" : ""}`}
+          } `}
           autoPlay
           playsInline
           muted={isMuted}
