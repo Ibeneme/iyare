@@ -1,4 +1,3 @@
-// ControlBar.tsx — UPDATED WITH MUTE ALL + UNMUTE ALL TOGGLE
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -29,7 +28,7 @@ interface ControlBarProps {
   raiseHand: () => void;
   lowerHand: () => void;
   muteAll: () => void;
-  unmuteAll: () => void; // ← NEW: Unmute All function
+  unmuteAll: () => void;
   username: string;
   roomId: string;
   isForceMutedByHost?: boolean;
@@ -37,12 +36,6 @@ interface ControlBarProps {
 }
 
 const reactions = ["👍", "❤️", "😂", "👏", "🎉", "🤯"];
-
-interface FloatingReaction {
-  id: string;
-  emoji: string;
-  x: number;
-}
 
 const ControlBar: React.FC<ControlBarProps> = ({
   socket,
@@ -53,7 +46,7 @@ const ControlBar: React.FC<ControlBarProps> = ({
   startScreenShare,
   stopScreenShare,
   isScreenSharing,
-  raisedHands = new Set(),
+  raisedHands,
   userId,
   raiseHand,
   lowerHand,
@@ -61,235 +54,157 @@ const ControlBar: React.FC<ControlBarProps> = ({
   unmuteAll,
   username,
   roomId,
-  isForceMutedByHost = false,
+  isForceMutedByHost,
   userType,
 }) => {
   const [showPicker, setShowPicker] = useState(false);
-  const [floatingReactions, setFloatingReactions] = useState<
-    FloatingReaction[]
-  >([]);
-
-  const isHost = /teacher|admin|host/i.test(username);
+  const [floatingReactions, setFloatingReactions] = useState<any[]>([]);
   const [isAllMuted, setIsAllMuted] = useState(false);
 
+  const isTeacher = userType === "teacher" || userType === "admin";
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleReaction = (data: any) => {
+      if (data.userId === userId) return;
+      const id = Date.now() + Math.random();
+      setFloatingReactions((p) => [
+        ...p,
+        { id, emoji: data.reaction, x: Math.random() * 60 + 20 },
+      ]);
+      setTimeout(
+        () => setFloatingReactions((p) => p.filter((r) => r.id !== id)),
+        2500
+      );
+    };
+    socket.on("reaction", handleReaction);
+    return () => {
+      socket.off("reaction");
+    };
+  }, [socket, userId]);
+
   const sendReaction = (emoji: string) => {
-    if (!socket || !roomId || !userId) return;
-    socket.emit("reaction", { userId, username, reaction: emoji, roomId });
-    const id = `local-${Date.now()}`;
-    const x = Math.random() * 60 + 20;
-    setFloatingReactions((prev) => [...prev, { id, emoji, x }]);
+    socket?.emit("reaction", { userId, username, reaction: emoji, roomId });
+    const id = Date.now();
+    setFloatingReactions((p) => [...p, { id, emoji, x: 50 }]);
     setTimeout(
-      () => setFloatingReactions((prev) => prev.filter((r) => r.id !== id)),
+      () => setFloatingReactions((p) => p.filter((r) => r.id !== id)),
       2500
     );
     setShowPicker(false);
   };
 
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleReaction = (data: { userId: string; reaction: string }) => {
-      if (data.userId === userId) return;
-      const id = `remote-${Date.now()}-${Math.random()}`;
-      const x = Math.random() * 60 + 20;
-      setFloatingReactions((prev) => [
-        ...prev,
-        { id, emoji: data.reaction, x },
-      ]);
-      setTimeout(
-        () => setFloatingReactions((prev) => prev.filter((r) => r.id !== id)),
-        2500
-      );
-    };
-
-    socket.on("reaction", handleReaction);
-    return () => {
-      socket.off("reaction", handleReaction);
-    };
-  }, [socket, userId]);
-
-  const isHandRaised = raisedHands?.has ? raisedHands.has(userId) : false;
-
-  const handleMuteToggleAll = () => {
-    if (isAllMuted) {
-      unmuteAll();
-      setIsAllMuted(false);
-    } else {
-      muteAll();
-      setIsAllMuted(true);
-    }
-  };
-
   return (
-    <>
-      {/* Floating Reactions */}
-      <div className="fixed bottom-28 inset-x-0 z-20 pointer-events-none flex justify-center">
-        <div className="relative w-full max-w-3xl">
-          <AnimatePresence>
-            {floatingReactions.map((r) => (
-              <motion.div
-                key={r.id}
-                initial={{ y: 100, opacity: 0, scale: 0.5 }}
-                animate={{ y: -600, opacity: [1, 1, 0], scale: [1, 1.5, 2] }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 2.2, ease: "easeOut" }}
-                className="absolute text-5xl select-none pointer-events-none drop-shadow-2xl"
-                style={{ left: `${r.x}%` }}
-              >
-                {r.emoji}
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      </div>
+    <div className="fixed bottom-8 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
+      {/* Floating Emotions */}
+      <AnimatePresence>
+        {floatingReactions.map((r) => (
+          <motion.div
+            key={r.id}
+            initial={{ y: 0, opacity: 0 }}
+            animate={{ y: -400, opacity: [0, 1, 0], scale: [1, 2] }}
+            className="absolute text-5xl"
+            style={{ left: `${r.x}%` }}
+          >
+            {r.emoji}
+          </motion.div>
+        ))}
+      </AnimatePresence>
 
-      {/* Control Bar */}
-      <div className="fixed bottom-8 inset-x-0 z-50 pointer-events-none flex justify-center px-4">
-        <motion.div
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="pointer-events-auto bg-black/40 backdrop-blur-2xl border border-white/10 rounded-3xl px-6 py-4 flex flex-wrap gap-4 justify-center items-center shadow-2xl"
+      <div className="pointer-events-auto bg-black/60 backdrop-blur-2xl border border-white/10 rounded-[32px] p-2 flex items-center gap-2 shadow-2xl">
+        <button
+          onClick={toggleMic}
+          className={`p-4 rounded-2xl ${
+            micEnabled && !isForceMutedByHost
+              ? "bg-white/5 hover:bg-white/10"
+              : "bg-red-500"
+          }`}
         >
-          {/* Mic Button - Shows red if force muted */}
+          {micEnabled && !isForceMutedByHost ? (
+            <Mic size={20} />
+          ) : (
+            <MicOff size={20} />
+          )}
+        </button>
+        <button
+          onClick={toggleVideo}
+          className={`p-4 rounded-2xl ${
+            videoEnabled ? "bg-white/5 hover:bg-white/10" : "bg-red-500"
+          }`}
+        >
+          {videoEnabled ? <Video size={20} /> : <VideoOff size={20} />}
+        </button>
+
+        {isTeacher && (
           <button
-            onClick={toggleMic}
-            className={`p-4 rounded-2xl transition ${
-              micEnabled && !isForceMutedByHost ? "bg-white/10" : "bg-red-500"
+            onClick={isScreenSharing ? stopScreenShare : startScreenShare}
+            className={`p-4 rounded-2xl flex gap-2 items-center ${
+              isScreenSharing ? "bg-green-600" : "bg-white/5"
             }`}
           >
-            {micEnabled && !isForceMutedByHost ? (
-              <Mic className="text-white" />
+            {isScreenSharing ? (
+              <MonitorOff size={20} />
             ) : (
-              <MicOff className="text-white" />
+              <MonitorUp size={20} />
             )}
+            <span className="text-xs font-bold uppercase">Share</span>
           </button>
+        )}
 
+        <div className="relative">
           <button
-            onClick={toggleVideo}
-            className={`p-4 rounded-2xl transition ${
-              videoEnabled ? "bg-white/10" : "bg-red-500"
-            }`}
+            onClick={() => setShowPicker(!showPicker)}
+            className="p-4 rounded-2xl bg-white/5"
           >
-            {videoEnabled ? (
-              <Video className="text-white" />
-            ) : (
-              <VideoOff className="text-white" />
-            )}
+            <Smile size={20} />
           </button>
-
-          {userType === "teacher" ||
-            (userType === "admin" && (
-              <button
-                onClick={isScreenSharing ? stopScreenShare : startScreenShare}
-                className={`px-5 py-3 rounded-2xl flex gap-2 items-center transition ${
-                  isScreenSharing ? "bg-green-600" : "bg-white/10"
-                }`}
-              >
-                {isScreenSharing ? <MonitorOff /> : <MonitorUp />}
-                <span className="text-sm font-medium">
-                  {isScreenSharing ? "Stop" : "Share"}
-                </span>
-              </button>
-            ))}
-
-          <div className="flex items-center justify-center">
-            {" "}
-            {/* Wrapper to maintain flex flow */}
-            <button
-              onClick={() => setShowPicker(!showPicker)}
-              className={`px-5 py-4 rounded-2xl transition-all active:scale-90 ${
-                showPicker
-                  ? "bg-white/20 ring-2 ring-yellow-500/50"
-                  : "bg-white/10"
-              }`}
-            >
-              <Smile className="w-5 h-5 md:w-6 md:h-6" />
-            </button>
-            <AnimatePresence>
-              {showPicker && (
-                <>
-                  {/* Transparent backdrop to close picker when clicking outside */}
-                  <div
-                    className="fixed inset-0 z-[-1]"
-                    onClick={() => setShowPicker(false)}
-                  />
-
-                  <motion.div
-                    initial={{ y: 20, x: "-50%", opacity: 0 }}
-                    animate={{ y: 0, x: "-50%", opacity: 1 }}
-                    exit={{ y: 20, x: "-50%", opacity: 0 }}
-                    className="fixed bottom-40 md:bottom-24 left-1/2 -translate-x-1/2 z-[60] 
-                     flex gap-2 md:gap-2 bg-emerald-950 backdrop-blur-2xl p-3 md:p-2
-                     rounded-3xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
-                  >
-                    {reactions.map((e) => (
-                      <button
-                        key={e}
-                        onClick={() => sendReaction(e)}
-                        className="text-3xl md:text-3xl hover:scale-150 active:scale-125 transition-transform duration-200"
-                      >
-                        {e}
-                      </button>
-                    ))}
-
-                    {/* Small pointer triangle */}
-                    <div
-                      className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 
-                          border-l-[8px] border-l-transparent 
-                          border-r-[8px] border-r-transparent 
-                          border-t-[8px] border-t-emerald-950 "
-                    />
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <button
-            onClick={isHandRaised ? lowerHand : raiseHand}
-            className={`px-5 py-3 rounded-2xl flex gap-2 items-center transition ${
-              isHandRaised ? "bg-yellow-500 text-black" : "bg-white/10"
-            }`}
-          >
-            <Hand className="w-5 h-5" />
-            <span className="text-sm font-medium">Raise Hand</span>
-          </button>
-
-          {/* === MUTE ALL / UNMUTE ALL BUTTON - ONLY FOR HOST === */}
-          {userType === "teacher" ||
-            (userType === "admin" && (
-              <button
-                onClick={handleMuteToggleAll}
-                className={`px-6 py-3 rounded-2xl flex gap-2 items-center font-medium transition ${
-                  isAllMuted
-                    ? "bg-green-600 hover:bg-green-500"
-                    : "bg-red-600/80 hover:bg-red-500"
-                }`}
-              >
-                {isAllMuted ? (
-                  <>
-                    <Volume2 className="w-5 h-5" />
-                    <span>Unmute All</span>
-                  </>
-                ) : (
-                  <>
-                    <VolumeX className="w-5 h-5" />
-                    <span>Mute All</span>
-                  </>
-                )}
-              </button>
-            ))}
-
-          {/* Optional: Show muted by host indicator for students */}
-          {!isHost && isForceMutedByHost && (
-            <div className="px-4 py-2 bg-red-900/50 rounded-2xl text-sm">
-              🔇 Muted by teacher
+          {showPicker && (
+            <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-emerald-950 p-2 rounded-2xl flex gap-2 border border-white/20">
+              {reactions.map((e) => (
+                <button
+                  key={e}
+                  onClick={() => sendReaction(e)}
+                  className="text-2xl hover:scale-125 transition-transform"
+                >
+                  {e}
+                </button>
+              ))}
             </div>
           )}
-        </motion.div>
+        </div>
+
+        <button
+          onClick={raisedHands.has(userId) ? lowerHand : raiseHand}
+          className={`p-4 rounded-2xl flex gap-2 items-center ${
+            raisedHands.has(userId) ? "bg-yellow-500 text-black" : "bg-white/5"
+          }`}
+        >
+          <Hand size={20} />
+        </button>
+
+        {isTeacher && (
+          <button
+            onClick={() => {
+              isAllMuted ? unmuteAll() : muteAll();
+              setIsAllMuted(!isAllMuted);
+            }}
+            className={`px-6 py-4 rounded-2xl flex gap-2 items-center font-bold text-xs uppercase ${
+              isAllMuted ? "bg-green-600" : "bg-red-600/80"
+            }`}
+          >
+            {isAllMuted ? (
+              <>
+                <Volume2 size={18} /> Unmute All
+              </>
+            ) : (
+              <>
+                <VolumeX size={18} /> Mute All
+              </>
+            )}
+          </button>
+        )}
       </div>
-    </>
+    </div>
   );
 };
-
 export default ControlBar;
