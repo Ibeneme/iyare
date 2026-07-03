@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-//import { Socket } from "socket.io-client";
 import ControlBar from "./ControlBar";
 import ChatModal from "./ChatModal";
 import { useParams, useNavigate } from "react-router-dom";
@@ -10,10 +9,6 @@ interface User {
   id: string;
   username: string;
 }
-
-// interface SessionDescription {
-//   type: "offer" | "answer";
-// }
 
 type PeerConnectionMap = { [key: string]: RTCPeerConnection };
 type PeerDataMap = { [key: string]: string };
@@ -62,18 +57,20 @@ const VideoTile: React.FC<VideoTileProps> = ({
   isVideoEnabled,
   isHandRaised,
 }) => {
+  console.log(id)
   const videoRef = useRef<HTMLVideoElement>(null);
-  console.log(id);
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.srcObject = stream;
       const playVideoSafely = async (videoEl: HTMLVideoElement) => {
         try {
-          if (videoEl.paused && (isVideoEnabled || isScreenShare))
+          if (videoEl.paused && (isVideoEnabled || isScreenShare)) {
             await videoEl.play();
+          }
         } catch (err: any) {
-          if (err.name !== "AbortError")
+          if (err.name !== "AbortError" && err.name !== "NotAllowedError") {
             console.warn("Video play failed:", err);
+          }
         }
       };
       playVideoSafely(videoRef.current);
@@ -128,6 +125,12 @@ const VideoChat: React.FC = () => {
   const localStreamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const isStartingLocalStream = useRef(false);
+  // Tracks late-joiner ids the presenter still needs to sync a screen
+  // track to, in case "prepare-late-joiner-screen" arrives before the
+  // peer connection for that joiner has been created.
+  const pendingScreenSyncRef = useRef<Set<string>>(new Set());
+  // Guards against overlapping start/stop screen-share calls.
+  const screenShareBusyRef = useRef(false);
 
   const { classId, classTitle, subject } = useParams<{
     classId: string;
@@ -153,13 +156,16 @@ const VideoChat: React.FC = () => {
   const [screenSharingPeer, setScreenSharingPeer] = useState<string | null>(
     null
   );
-
-  console.log(peerData, isStartingLocalStream);
   const [focusTarget, setFocusTarget] = useState<"screen" | "video">("screen");
   const [peerMediaStatus, setPeerMediaStatus] = useState<PeerMediaStatusMap>(
     {}
   );
   const [isForceMutedByHost, setIsForceMutedByHost] = useState(false);
+
+  const screenSharingPeerRef = useRef<string | null>(null);
+  useEffect(() => {
+    screenSharingPeerRef.current = screenSharingPeer;
+  }, [screenSharingPeer]);
 
   const displayClassTitle = classTitle
     ? decodeURIComponent(classTitle)
@@ -174,6 +180,7 @@ const VideoChat: React.FC = () => {
     },
     []
   );
+  console.log(peerData, isStartingLocalStream)
 
   const removeActiveStream = useCallback((socketId: string) => {
     setActiveStreams((prev) => {
@@ -228,6 +235,28 @@ const VideoChat: React.FC = () => {
     [socket, negotiate, updateActiveStream]
   );
 
+  // Defensive re-sync: make sure a given peer connection actually carries
+  // our current screen-share track. Used both right after a late joiner's
+  // peer connection is created, and when the server explicitly asks us to
+  // double check (via "prepare-late-joiner-screen").
+  const syncScreenShareToPeer = useCallback(
+    (peerId: string) => {
+      if (!screenStreamRef.current) return;
+      const pc = peerConnectionsRef.current[peerId];
+      const screenTrack = screenStreamRef.current.getVideoTracks()[0];
+      if (!pc || !screenTrack) return;
+
+      const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+      if (sender) {
+        if (sender.track !== screenTrack) sender.replaceTrack(screenTrack);
+      } else {
+        pc.addTrack(screenTrack, screenStreamRef.current);
+      }
+      negotiate(pc, peerId);
+    },
+    [negotiate]
+  );
+
   // --- Socket Listeners Setup ---
   useEffect(() => {
     if (!socket) return;
@@ -235,6 +264,11 @@ const VideoChat: React.FC = () => {
     socket.on("new-user-joined", (newUser: User) => {
       setPeerData((prev) => ({ ...prev, [newUser.id]: newUser.username }));
       createPeerConnection(newUser.id, true);
+
+      if (pendingScreenSyncRef.current.has(newUser.id)) {
+        pendingScreenSyncRef.current.delete(newUser.id);
+        syncScreenShareToPeer(newUser.id);
+      }
     });
 
     socket.on(
@@ -274,11 +308,12 @@ const VideoChat: React.FC = () => {
       }
     );
 
-    socket.on("user-left", (id) => {
+    socket.on("user-left", (id: string) => {
       removeActiveStream(id);
       peerConnectionsRef.current[id]?.close();
       delete peerConnectionsRef.current[id];
-      if (screenSharingPeer === id) setScreenSharingPeer(null);
+      pendingScreenSyncRef.current.delete(id);
+      if (screenSharingPeerRef.current === id) setScreenSharingPeer(null);
     });
 
     socket.on("chat-message", (msg: ChatMessage) =>
@@ -289,17 +324,17 @@ const VideoChat: React.FC = () => {
       setPeerMediaStatus((prev) => ({ ...prev, [senderId]: mediaStatus }));
     });
 
-    socket.on("start-screen-share", (id) => {
+    socket.on("start-screen-share", (id: string) => {
       setScreenSharingPeer(id);
       setFocusTarget("screen");
     });
 
     socket.on("stop-screen-share", () => setScreenSharingPeer(null));
 
-    socket.on("raise-hand", (id) =>
+    socket.on("raise-hand", (id: string) =>
       setRaisedHands((prev) => new Set(prev).add(id))
     );
-    socket.on("lower-hand", (id) =>
+    socket.on("lower-hand", (id: string) =>
       setRaisedHands((prev) => {
         const next = new Set(prev);
         next.delete(id);
@@ -323,6 +358,19 @@ const VideoChat: React.FC = () => {
       setIsForceMutedByHost(false);
     });
 
+    // Presenter-only: the server tells us a late joiner is arriving so we
+    // can double check the screen track actually made it to them.
+    socket.on("prepare-late-joiner-screen", (lateJoinerId: string) => {
+      if (peerConnectionsRef.current[lateJoinerId]) {
+        syncScreenShareToPeer(lateJoinerId);
+      } else {
+        // Peer connection for this joiner doesn't exist yet — remember to
+        // sync as soon as "new-user-joined" creates it.
+        pendingScreenSyncRef.current.add(lateJoinerId);
+      }
+    });
+
+    socket.on("force-leave-room", () => handleLeave());
     socket.on("room-ended", () => handleLeave());
 
     return () => {
@@ -339,9 +387,15 @@ const VideoChat: React.FC = () => {
       socket.off("lower-hand");
       socket.off("force-mute");
       socket.off("force-unmute");
+      socket.off("prepare-late-joiner-screen");
+      socket.off("force-leave-room");
       socket.off("room-ended");
     };
-  }, [socket, createPeerConnection, removeActiveStream, screenSharingPeer]);
+    // NOTE: screenSharingPeer is intentionally NOT a dependency here — the
+    // ref above keeps handlers current without re-subscribing every socket
+    // listener on every screen-share change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, createPeerConnection, removeActiveStream, syncScreenShareToPeer]);
 
   // --- Handlers ---
   const handleJoinRoom = async () => {
@@ -371,50 +425,131 @@ const VideoChat: React.FC = () => {
   };
 
   const toggleVideo = () => {
+    if (isScreenSharing) {
+      console.warn("Camera toggle disabled during screen sharing");
+      return; // Prevent interference with active screen share
+    }
+
     const next = !videoEnabled;
     localStreamRef.current?.getVideoTracks().forEach((t) => (t.enabled = next));
     setVideoEnabled(next);
     socket?.emit("media-toggle", { mic: micEnabled, video: next });
   };
-
+  // --- Screen Sharing (rewritten to be resilient) ---
   const startScreenShare = async () => {
-    const stream = await (navigator.mediaDevices as any).getDisplayMedia({
-      video: true,
-    });
-    screenStreamRef.current = stream;
-    setIsScreenSharing(true);
-    updateActiveStream(socket!.id!, stream, usernameJoined);
+    if (isScreenSharing || screenShareBusyRef.current) return;
+    screenShareBusyRef.current = true;
 
-    Object.entries(peerConnectionsRef.current).forEach(([id, pc]) => {
-      const sender = pc.getSenders().find((s) => s.track?.kind === "video");
-      sender?.replaceTrack(stream.getVideoTracks()[0]);
-      negotiate(pc, id);
-    });
+    try {
+      // === FORCE TURN ON VIDEO IF IT'S OFF ===
+      if (!videoEnabled && localStreamRef.current) {
+        localStreamRef.current.getVideoTracks().forEach((t) => {
+          t.enabled = true;
+        });
+        setVideoEnabled(true);
+        socket?.emit("media-toggle", {
+          mic: micEnabled,
+          video: true,
+        });
+        console.log("Camera forced ON for screen sharing");
+      }
 
-    socket?.emit("start-screen-share");
-    stream.getVideoTracks()[0].onended = stopScreenShare;
+      // Now start screen sharing
+      const stream = await (navigator.mediaDevices as any).getDisplayMedia({
+        video: { cursor: "always" },
+      });
+
+      const screenTrack: MediaStreamTrack = stream.getVideoTracks()[0];
+      if (!screenTrack) throw new Error("No screen video track");
+
+      screenStreamRef.current = stream;
+      setIsScreenSharing(true);
+      updateActiveStream(socket!.id!, stream, usernameJoined);
+
+      // Replace video track with screen on all peers
+      Object.entries(peerConnectionsRef.current).forEach(([id, pc]) => {
+        const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+        if (sender) {
+          sender.replaceTrack(screenTrack).catch(console.error);
+        } else if (screenStreamRef.current) {
+          pc.addTrack(screenTrack, screenStreamRef.current);
+        }
+        negotiate(pc, id);
+      });
+
+      socket?.emit("start-screen-share");
+
+      screenTrack.onended = () => {
+        stopScreenShare();
+      };
+    } catch (err) {
+      console.warn("Screen share failed:", err);
+      screenStreamRef.current = null;
+      setIsScreenSharing(false);
+    } finally {
+      screenShareBusyRef.current = false;
+    }
   };
 
   const stopScreenShare = () => {
-    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
-    screenStreamRef.current = null;
-    setIsScreenSharing(false);
-    updateActiveStream(socket!.id!, localStreamRef.current!, usernameJoined);
+    if (!screenStreamRef.current || screenShareBusyRef.current) return;
+    screenShareBusyRef.current = true;
 
-    Object.entries(peerConnectionsRef.current).forEach(([id, pc]) => {
-      const sender = pc.getSenders().find((s) => s.track?.kind === "video");
-      sender?.replaceTrack(localStreamRef.current!.getVideoTracks()[0]);
-      negotiate(pc, id);
-    });
-    socket?.emit("stop-screen-share");
+    try {
+      screenStreamRef.current.getTracks().forEach((t) => t.stop());
+      screenStreamRef.current = null;
+      setIsScreenSharing(false);
+
+      const camTrack = localStreamRef.current?.getVideoTracks()[0];
+      if (localStreamRef.current) {
+        updateActiveStream(socket!.id!, localStreamRef.current, usernameJoined);
+      }
+
+      Object.entries(peerConnectionsRef.current).forEach(([id, pc]) => {
+        const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+        if (camTrack) {
+          if (sender) {
+            sender.replaceTrack(camTrack);
+          } else if (localStreamRef.current) {
+            pc.addTrack(camTrack, localStreamRef.current);
+          }
+        }
+        negotiate(pc, id);
+      });
+
+      socket?.emit("stop-screen-share");
+    } finally {
+      screenShareBusyRef.current = false;
+    }
   };
 
   const handleLeave = useCallback(() => {
+    // Stop sharing cleanly so we don't leave a ghost presenter behind.
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach((t) => t.stop());
+      screenStreamRef.current = null;
+      socket?.emit("stop-screen-share");
+    }
+
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
-    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
     Object.values(peerConnectionsRef.current).forEach((pc) => pc.close());
+    peerConnectionsRef.current = {};
+
+    // Tell the server we're gone — the socket itself stays alive since
+    // it's shared globally across the app.
+    socket?.emit("leave-room");
+
     navigate(-1);
-  }, [navigate]);
+  }, [navigate, socket]);
+
+  // Best-effort cleanup if the component unmounts some other way (browser
+  // back button, route change, etc.) without the user hitting "Leave Room".
+  useEffect(() => {
+    return () => {
+      socket?.emit("leave-room");
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // --- Grid Logic ---
   const streamsArray = Object.entries(activeStreams).filter(
@@ -446,10 +581,10 @@ const VideoChat: React.FC = () => {
       case 9:
         return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 max-w-8xl mx-auto";
       default:
-        // 10+ users: use 4 columns on xl, 3 on lg, 2 on sm
         return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 max-w-9xl mx-auto";
     }
   };
+
   return (
     <div className="bg-emerald-950 text-white h-screen max-h-screen flex flex-col relative overflow-hidden font-sans">
       {!isConnected ? (
@@ -462,16 +597,6 @@ const VideoChat: React.FC = () => {
               Classroom Session
             </p>
             <div className="space-y-4">
-              {/* <input
-                 className="w-full bg-black/40 p-5 rounded-2xl border border-green-800/50 focus:border-yellow-500/50 outline-none transition-all"
-                 placeholder="Your Name"
-                 onChange={(e) => setUsername(e.target.value)}
-               />
-               <input
-                 className="w-full bg-black/40 p-5 rounded-2xl border border-green-800/50 focus:border-yellow-500/50 outline-none transition-all"
-                 placeholder="Room Secret"
-                 onChange={(e) => setRoomId(e.target.value)}
-               /> */}
               <button
                 className="w-full bg-yellow-500 text-green-950 font-black py-5 rounded-2xl hover:bg-yellow-400 active:scale-95 transition-all shadow-xl shadow-yellow-500/20"
                 onClick={handleJoinRoom}

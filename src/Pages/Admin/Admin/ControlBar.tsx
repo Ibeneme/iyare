@@ -127,10 +127,13 @@ const ControlBar: React.FC<ControlBarProps> = ({
           )}
         </button>
         <button
-          onClick={toggleVideo}
+          onClick={isScreenSharing ? undefined : toggleVideo}
+          disabled={isScreenSharing}
           className={`p-4 rounded-2xl ${
-            videoEnabled ? "bg-white/5 hover:bg-white/10" : "bg-red-500"
-          }`}
+            videoEnabled && !isScreenSharing
+              ? "bg-white/5 hover:bg-white/10"
+              : "bg-red-500"
+          } ${isScreenSharing ? "opacity-50 cursor-not-allowed" : ""}`}
         >
           {videoEnabled ? <Video size={20} /> : <VideoOff size={20} />}
         </button>
