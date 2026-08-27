@@ -31,6 +31,7 @@ export const store = configureStore({
     adminClasses,
     SettingsSlice,
     awards: awardSlice,
+    
   } as any, // <-- bypass TS4023
 });
 
