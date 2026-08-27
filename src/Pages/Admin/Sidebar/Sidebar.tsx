@@ -16,6 +16,7 @@ import {
   ChevronRight,
   X,
   ShieldCheck,
+  Bell
 } from "lucide-react";
 import { FaGuilded } from "react-icons/fa6";
 import { MdGrading } from "react-icons/md";
@@ -76,6 +77,13 @@ const Sidebar: React.FC = () => {
       allowedRoles: ["student", "parent", "teacher", "admin"],
     },
     {
+      title: "Notifications",
+      icon: Bell,
+      path: "/notifications",
+      type: "link",
+      allowedRoles: ["student", "parent", "teacher", "admin"],
+    },
+    {
       title: "Grades",
       icon: MdGrading,
       path: "/grade-manager",
@@ -96,6 +104,7 @@ const Sidebar: React.FC = () => {
       type: "link",
       allowedRoles: ["student", "parent", "teacher", "admin"],
     },
+
     {
       title: "Enrolled",
       icon: UserCheck,

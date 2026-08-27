@@ -61,7 +61,8 @@ const ControlBar: React.FC<ControlBarProps> = ({
   const [floatingReactions, setFloatingReactions] = useState<any[]>([]);
   const [isAllMuted, setIsAllMuted] = useState(false);
 
-  const isTeacher = userType === "teacher" || userType === "admin";
+  const isTeacher =
+    userType === "teacher" || userType === "admin" || userType === "student";
 
   useEffect(() => {
     if (!socket) return;

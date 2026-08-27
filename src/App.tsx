@@ -54,6 +54,7 @@ import ClassesTimetable from "./Pages/Main/Classes/ClassesTimetable";
 import ParentGuideModal from "./Pages/Main/Guides/ParentGuideModal";
 import UserDetailsPage from "./Pages/Admin/Admin/UserDetails/UserDetails";
 import Grades from "./Pages/Main/Grades/Grades";
+import NotificationsManager from "./Pages/Main/Notifications/Notifications";
 
 function App() {
   return (
@@ -173,6 +174,14 @@ function App() {
             element={
               <Layout>
                 <ClassesMain />
+              </Layout>
+            }
+          />{" "}
+                  <Route
+            path="/notifications"
+            element={
+              <Layout>
+                <NotificationsManager />
               </Layout>
             }
           />{" "}

@@ -13,12 +13,11 @@ import {
   createUser,
   fetchAllUsersByType,
 } from "../../../../Redux/Admin/adminUsers";
-
 import axios from "axios";
 import { BASE_URL } from "../../../../Redux/baseurl";
 import suspendImage from "../../../../assets/images/admin/suspend.png";
 import removeImage from "../../../../assets/images/admin/removeImage.png";
-import { Loader2, User } from "lucide-react";
+import { Loader2, User, X } from "lucide-react";
 
 const GRADES_API = `${BASE_URL}/api/grades/grades`;
 
@@ -73,13 +72,11 @@ const formatFilterText = (text: string) =>
     .replace(/\s+/g, " ");
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
-
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { addToast } = useToast();
   const { filter: urlFilter } = useParams<{ filter?: string }>();
   const filter = (urlFilter as FilterType) || "all";
-
   const { suspendAdmin, removeAdmin } = useAdminActions();
 
   const [isLoading, setLoading] = useState(true);
@@ -116,7 +113,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
   const [loadingGrades, setLoadingGrades] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
 
-  console.log(loadingSubjects)
+  console.log(loadingSubjects);
   const token = localStorage.getItem("token");
 
   // Errors
@@ -205,6 +202,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
         setLoadingGrades(false);
       }
     };
+
     fetchGrades();
   }, [token, userType]);
 
@@ -276,6 +274,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
   const handleConfirmAction = async () => {
     if (!confirmModal?.id) return;
     const { id, type, userType } = confirmModal;
+
     setLoading(true);
     setConfirmModal(null);
 
@@ -357,7 +356,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
           errors.password = "Password must be at least 6 characters";
 
         setFormErrors(errors);
-
         if (Object.keys(errors).length > 0) {
           setLoading(false);
           return;
@@ -388,12 +386,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
         if (!userEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail))
           errors.email = "Valid email is required";
         if (!userPhoneNumber) errors.phoneNumber = "Phone number is required";
-
         if (userType === "teacher" && selectedGradeIds.length === 0)
           errors.grades = "Please select at least one grade";
 
         setFormErrorsUsers(errors);
-
         if (Object.keys(errors).length > 0) {
           setLoading(false);
           return;
@@ -447,7 +443,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
       {isLoading && !isModalOpen ? (
-        <div className="min-h-[100vh] flex items-center justify-center">
+        <div className="min-h-[100vh] flex flex-col items-center justify-center">
           <Loader2 className="w-14 h-14 animate-spin text-green-700" />
           <p className="mt-4 text-green-700 text-[14px] font-semibold">
             Loading...
@@ -490,7 +486,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
               ))}
             </div>
 
-            {(userType === "teacher" || userType === "admin") && (
+            {/* Allow Add for admin, teacher AND student */}
+            {(userType === "teacher" ||
+              userType === "admin" ||
+              userType === "student") && (
               <button
                 onClick={() => setIsModalOpen(true)}
                 className="inline-flex items-center gap-3 bg-[#064e3b] text-yellow-400 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-800 transition-all shadow-xl shadow-emerald-900/20 active:scale-95"
@@ -577,7 +576,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                         <td className="px-8 py-5 whitespace-nowrap text-right">
                           <div className="flex items-center justify-end gap-2">
                             {(userType === "teacher" ||
-                              userType === "admin") && (
+                              userType === "admin" ||
+                              userType === "student") && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -601,55 +601,55 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
             </div>
           </div>
 
-          {/* Add User Modal */}
-          {isModalOpen  && (
+          {/* ═══════════════════════════════════════════════════════════════
+                  ADD USER MODAL – Restyled
+                ═══════════════════════════════════════════════════════════════ */}
+          {isModalOpen && (
             <>
               <div
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
                 onClick={closeModal}
               />
               <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl mx-auto my-8 overflow-hidden"
+                  className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl mx-auto my-8 overflow-hidden border border-slate-100"
                 >
-                  <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 px-8 py-6 text-white relative">
+                  {/* Header */}
+                  <div className="relative bg-[#064e3b] px-8 py-7">
                     <button
                       onClick={closeModal}
-                      className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition"
+                      className="absolute top-5 right-5 w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
                     >
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
+                      <X className="w-5 h-5 text-white" />
                     </button>
-                    <h2 className="text-3xl font-extrabold tracking-tight pr-12">
-                      Add New{" "}
-                      {userType.charAt(0).toUpperCase() + userType.slice(1)}
-                    </h2>
-                    <p className="text-white/90 mt-1 text-sm font-medium">
-                      Fill in the details below to create a new account
-                    </p>
+
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-yellow-400 flex items-center justify-center text-[#064e3b] shadow-lg">
+                        <FaUserPlus className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-black text-white tracking-tight">
+                          Add New{" "}
+                          {userType.charAt(0).toUpperCase() + userType.slice(1)}
+                        </h2>
+                        <p className="text-emerald-100 text-sm font-medium mt-0.5">
+                          Fill in the details to create a new account
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
+                  {/* Body */}
                   <form
                     onSubmit={handleSubmitAll}
-                    className="p-6 space-y-7 max-h-[75vh] overflow-y-auto"
+                    className="p-8 space-y-6 max-h-[70vh] overflow-y-auto"
                   >
-                    {/* Admin Form Fields */}
+                    {/* ─── Admin Form ─── */}
                     {userType === "admin" && (
-                      <>
+                      <div className="space-y-6">
                         <div>
-                          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">
                             Email Address
                           </label>
                           <input
@@ -657,24 +657,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                             value={addAdminEmail}
                             onChange={(e) => setAddAdminEmail(e.target.value)}
                             placeholder="admin@school.edu"
-                            className="mt-2 w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
+                            className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-[#064e3b] font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition"
                           />
                           {formErrors.email && (
-                            <p className="text-red-600 text-sm mt-1">
+                            <p className="text-red-500 text-xs font-semibold mt-1.5">
                               {formErrors.email}
                             </p>
                           )}
                         </div>
 
                         <div>
-                          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3">
                             Role
                           </label>
-                          <div className="mt-3 flex gap-6">
+                          <div className="flex gap-4">
                             {["superadmin", "admin"].map((role) => (
                               <label
                                 key={role}
-                                className="flex items-center gap-3 cursor-pointer group"
+                                className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 cursor-pointer transition-all ${
+                                  addAdminRole === role
+                                    ? "border-yellow-400 bg-yellow-50"
+                                    : "border-slate-200 bg-white hover:border-slate-300"
+                                }`}
                               >
                                 <input
                                   type="radio"
@@ -687,21 +691,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                   className="sr-only"
                                 />
                                 <div
-                                  className={`w-7 h-7 rounded-full border-3 flex items-center justify-center transition-all ${
+                                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                                     addAdminRole === role
-                                      ? "border-emerald-500 bg-emerald-500 shadow-lg"
-                                      : "border-gray-300 group-hover:border-emerald-400"
+                                      ? "border-[#064e3b] bg-[#064e3b]"
+                                      : "border-slate-300"
                                   }`}
                                 >
                                   {addAdminRole === role && (
-                                    <div className="w-3 h-3 bg-white rounded-full" />
+                                    <div className="w-2 h-2 bg-yellow-400 rounded-full" />
                                   )}
                                 </div>
                                 <span
-                                  className={`font-medium capitalize ${
+                                  className={`font-bold text-sm ${
                                     addAdminRole === role
-                                      ? "text-emerald-600"
-                                      : "text-gray-700"
+                                      ? "text-[#064e3b]"
+                                      : "text-slate-600"
                                   }`}
                                 >
                                   {role === "superadmin"
@@ -712,15 +716,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                             ))}
                           </div>
                           {formErrors.role && (
-                            <p className="text-red-600 text-sm mt-2">
+                            <p className="text-red-500 text-xs font-semibold mt-1.5">
                               {formErrors.role}
                             </p>
                           )}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                           <div>
-                            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">
                               First Name
                             </label>
                             <input
@@ -730,16 +734,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                 setAddAdminFirstName(e.target.value)
                               }
                               placeholder="John"
-                              className="mt-2 w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
+                              className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-[#064e3b] font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition"
                             />
                             {formErrors.firstName && (
-                              <p className="text-red-600 text-sm mt-1">
+                              <p className="text-red-500 text-xs font-semibold mt-1.5">
                                 {formErrors.firstName}
                               </p>
                             )}
                           </div>
                           <div>
-                            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">
                               Last Name
                             </label>
                             <input
@@ -749,10 +753,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                 setAddAdminLastName(e.target.value)
                               }
                               placeholder="Doe"
-                              className="mt-2 w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
+                              className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-[#064e3b] font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition"
                             />
                             {formErrors.lastName && (
-                              <p className="text-red-600 text-sm mt-1">
+                              <p className="text-red-500 text-xs font-semibold mt-1.5">
                                 {formErrors.lastName}
                               </p>
                             )}
@@ -760,10 +764,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                         </div>
 
                         <div>
-                          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">
                             Password
                           </label>
-                          <div className="relative mt-2">
+                          <div className="relative">
                             <input
                               type={showPassword ? "text" : "password"}
                               value={addAdminPassword}
@@ -771,31 +775,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                 setAddAdminPassword(e.target.value)
                               }
                               placeholder="••••••••"
-                              className="w-full px-5 py-4 pr-16 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
+                              className="w-full px-5 py-3.5 pr-16 bg-slate-50 border border-slate-200 rounded-2xl text-[#064e3b] font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition"
                             />
                             <button
                               type="button"
                               onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-600 font-semibold text-sm hover:underline"
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#064e3b] font-bold text-xs uppercase tracking-wider hover:text-emerald-700"
                             >
                               {showPassword ? "Hide" : "Show"}
                             </button>
                           </div>
                           {formErrors.password && (
-                            <p className="text-red-600 text-sm mt-1">
+                            <p className="text-red-500 text-xs font-semibold mt-1.5">
                               {formErrors.password}
                             </p>
                           )}
                         </div>
-                      </>
+                      </div>
                     )}
 
-                    {/* Teacher / Parent / Student Form Fields */}
+                    {/* ─── Parent / Student / Teacher Form ─── */}
                     {["parent", "student", "teacher"].includes(userType) && (
-                      <div className="space-y-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                           <div>
-                            <label className="text-[11px] font-semibold text-gray-700 tracking-wider uppercase">
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">
                               First Name
                             </label>
                             <input
@@ -803,17 +807,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                               value={userFirstName}
                               onChange={(e) => setUserFirstName(e.target.value)}
                               placeholder="Emma"
-                              className="mt-2 w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
+                              className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-[#064e3b] font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition"
                             />
                             {formErrorsUsers.firstName && (
-                              <p className="text-red-600 text-sm mt-1">
+                              <p className="text-red-500 text-xs font-semibold mt-1.5">
                                 {formErrorsUsers.firstName}
                               </p>
                             )}
                           </div>
-
                           <div>
-                            <label className="text-[11px] font-semibold text-gray-700 tracking-wider uppercase">
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">
                               Last Name
                             </label>
                             <input
@@ -821,10 +824,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                               value={userLastName}
                               onChange={(e) => setUserLastName(e.target.value)}
                               placeholder="Wilson"
-                              className="mt-2 w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
+                              className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-[#064e3b] font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition"
                             />
                             {formErrorsUsers.lastName && (
-                              <p className="text-red-600 text-sm mt-1">
+                              <p className="text-red-500 text-xs font-semibold mt-1.5">
                                 {formErrorsUsers.lastName}
                               </p>
                             )}
@@ -832,7 +835,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                         </div>
 
                         <div>
-                          <label className="text-[11px] font-semibold text-gray-700 tracking-wider uppercase">
+                          <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">
                             Email Address
                           </label>
                           <input
@@ -840,17 +843,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                             value={userEmail}
                             onChange={(e) => setUserEmail(e.target.value)}
                             placeholder="emma.wilson@school.com"
-                            className="mt-2 w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
+                            className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-[#064e3b] font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition"
                           />
                           {formErrorsUsers.email && (
-                            <p className="text-red-600 text-sm mt-1">
+                            <p className="text-red-500 text-xs font-semibold mt-1.5">
                               {formErrorsUsers.email}
                             </p>
                           )}
                         </div>
 
                         <div>
-                          <label className="text-[11px] font-semibold text-gray-700 tracking-wider uppercase">
+                          <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">
                             Phone Number
                           </label>
                           <input
@@ -858,10 +861,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                             value={userPhoneNumber}
                             onChange={(e) => setUserPhoneNumber(e.target.value)}
                             placeholder="+234 801 234 5678"
-                            className="mt-2 w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
+                            className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-[#064e3b] font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition"
                           />
                           {formErrorsUsers.phoneNumber && (
-                            <p className="text-red-600 text-sm mt-1">
+                            <p className="text-red-500 text-xs font-semibold mt-1.5">
                               {formErrorsUsers.phoneNumber}
                             </p>
                           )}
@@ -869,13 +872,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
 
                         {userType === "student" && (
                           <div>
-                            <label className="text-[11px] font-semibold text-gray-700 tracking-wider uppercase">
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">
                               Select Parent
                             </label>
                             <select
                               value={parentId}
                               onChange={(e) => setParentId(e.target.value)}
-                              className="mt-2 w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 focus:ring-4 focus:ring-emerald-200 focus:border-emerald-500 transition"
+                              className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-[#064e3b] font-medium focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition"
                             >
                               <option value="">Choose parent...</option>
                               {parents.map((p: any) => (
@@ -889,33 +892,36 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
 
                         {userType === "teacher" && (
                           <>
-                            <div>
+                            {/* Grades */}
+                            <div className="pt-2">
                               <div className="flex items-center justify-between mb-4">
-                                <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-                                  <span className="w-6 h-6 bg-emerald-600 text-white rounded-full flex items-center justify-center text-xs">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-6 h-6 rounded-lg bg-[#064e3b] text-yellow-400 flex items-center justify-center text-xs font-black">
                                     1
                                   </span>
-                                  Assign Grades{" "}
-                                  <span className="text-red-500">*</span>
-                                </h3>
-                                <span className="text-xs text-gray-500">
+                                  <h3 className="text-sm font-black text-[#064e3b]">
+                                    Assign Grades{" "}
+                                    <span className="text-red-500">*</span>
+                                  </h3>
+                                </div>
+                                <span className="text-xs font-bold text-slate-400">
                                   {selectedGradeIds.length} selected
                                 </span>
                               </div>
 
                               {loadingGrades ? (
-                                <div className="flex justify-center py-6">
-                                  <div className="animate-spin h-8 w-8 border-4 border-emerald-500 border-t-transparent rounded-full" />
+                                <div className="flex justify-center py-8">
+                                  <Loader2 className="w-8 h-8 animate-spin text-[#064e3b]" />
                                 </div>
                               ) : (
-                                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                                   {grades.map((grade) => {
                                     const isSelected =
                                       selectedGradeIds.includes(grade._id);
                                     return (
                                       <label
                                         key={grade._id}
-                                        className="cursor-pointer relative"
+                                        className="cursor-pointer"
                                       >
                                         <input
                                           type="checkbox"
@@ -932,21 +938,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                           className="sr-only"
                                         />
                                         <div
-                                          className={`p-4 rounded-xl border text-center transition shadow-sm ${
+                                          className={`p-3.5 rounded-2xl border-2 text-center transition-all ${
                                             isSelected
-                                              ? "bg-emerald-600 text-white border-emerald-600 shadow-md scale-[1.02]"
-                                              : "bg-white border-gray-300 hover:border-emerald-400"
+                                              ? "bg-[#064e3b] border-[#064e3b] text-yellow-400 shadow-md scale-[1.02]"
+                                              : "bg-white border-slate-200 hover:border-emerald-300 text-slate-700"
                                           }`}
                                         >
-                                          <p className="font-bold text-lg">
+                                          <p className="font-black text-lg leading-none">
                                             {grade.title.match(/\d+/)?.[0] ||
                                               "?"}
                                           </p>
                                           <p
-                                            className={`text-xs mt-1 ${
+                                            className={`text-[10px] font-bold mt-1 uppercase tracking-wider ${
                                               isSelected
-                                                ? "text-white/90"
-                                                : "text-gray-600"
+                                                ? "text-emerald-200"
+                                                : "text-slate-400"
                                             }`}
                                           >
                                             {grade.title
@@ -960,22 +966,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                 </div>
                               )}
                               {formErrorsUsers.grades && (
-                                <p className="text-red-600 text-sm mt-2">
+                                <p className="text-red-500 text-xs font-semibold mt-2">
                                   {formErrorsUsers.grades}
                                 </p>
                               )}
                             </div>
 
+                            {/* Subjects */}
                             {selectedGradeIds.length > 0 && (
-                              <div className="space-y-5">
-                                <div className="flex items-center justify-between mb-3">
-                                  <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-                                    <span className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs">
+                              <div className="pt-2 space-y-4">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className="w-6 h-6 rounded-lg bg-yellow-400 text-[#064e3b] flex items-center justify-center text-xs font-black">
                                       2
                                     </span>
-                                    Assign Subjects
-                                  </h3>
-                                  <span className="text-xs text-gray-500">
+                                    <h3 className="text-sm font-black text-[#064e3b]">
+                                      Assign Subjects
+                                    </h3>
+                                  </div>
+                                  <span className="text-xs font-bold text-slate-400">
                                     {selectedSubjectIds.length} selected
                                   </span>
                                 </div>
@@ -991,12 +1000,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                   return (
                                     <div
                                       key={gradeId}
-                                      className="bg-purple-50 p-5 rounded-xl border border-purple-200"
+                                      className="bg-slate-50 rounded-2xl p-5 border border-slate-100"
                                     >
-                                      <h4 className="font-semibold text-purple-800 mb-3">
+                                      <h4 className="font-black text-[#064e3b] text-sm mb-3">
                                         {grade?.title}
                                       </h4>
-                                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                                         {subjects.map((subject) => {
                                           const isSelected =
                                             selectedSubjectIds.includes(
@@ -1005,7 +1014,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                           return (
                                             <label
                                               key={subject._id}
-                                              className="flex items-center gap-3 cursor-pointer"
+                                              className={`flex items-center gap-2.5 p-3 rounded-xl cursor-pointer transition-all ${
+                                                isSelected
+                                                  ? "bg-[#064e3b] text-yellow-400"
+                                                  : "bg-white border border-slate-200 hover:border-emerald-300"
+                                              }`}
                                             >
                                               <input
                                                 type="checkbox"
@@ -1024,21 +1037,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                                 className="sr-only"
                                               />
                                               <div
-                                                className={`w-5 h-5 rounded-full border flex items-center justify-center transition ${
+                                                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                                                   isSelected
-                                                    ? "bg-purple-600 border-purple-600"
-                                                    : "border-gray-300"
+                                                    ? "border-yellow-400 bg-yellow-400"
+                                                    : "border-slate-300"
                                                 }`}
                                               >
                                                 {isSelected && (
-                                                  <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                                                  <div className="w-1.5 h-1.5 bg-[#064e3b] rounded-full" />
                                                 )}
                                               </div>
                                               <span
-                                                className={`text-sm ${
+                                                className={`text-sm font-semibold truncate ${
                                                   isSelected
-                                                    ? "text-purple-700"
-                                                    : "text-gray-700"
+                                                    ? "text-yellow-400"
+                                                    : "text-slate-700"
                                                 }`}
                                               >
                                                 {subject.name || subject.title}
@@ -1057,11 +1070,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                       </div>
                     )}
 
-                    <div className="flex gap-4 pt-6 border-t border-gray-100">
+                    {/* Footer Actions */}
+                    <div className="flex gap-3 pt-6 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition"
+                      >
+                        Cancel
+                      </button>
                       <button
                         type="submit"
                         disabled={isLoading}
-                        className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-4 rounded-2xl font-bold text-lg hover:from-emerald-700 hover:to-teal-700 transition shadow-xl disabled:opacity-70"
+                        className="flex-1 py-4 bg-[#064e3b] text-yellow-400 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-emerald-800 transition shadow-lg shadow-emerald-900/20 disabled:opacity-60"
                       >
                         {isLoading
                           ? "Creating..."
@@ -1070,13 +1091,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                               userType.slice(1)
                             }`}
                       </button>
-                      <button
-                        type="button"
-                        onClick={closeModal}
-                        className="flex-1 bg-gray-100 text-gray-800 py-4 rounded-2xl font-bold text-lg hover:bg-gray-200 transition"
-                      >
-                        Cancel
-                      </button>
                     </div>
                   </form>
                 </div>
@@ -1084,95 +1098,80 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
             </>
           )}
 
-          {/* Confirm Delete/Suspend Modal */}
+          {/* ═══════════════════════════════════════════════════════════════
+                  CONFIRM DELETE / SUSPEND MODAL – Restyled
+                ═══════════════════════════════════════════════════════════════ */}
           {confirmModal && (
             <>
               <div
-                className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 transition-all duration-300"
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
                 onClick={() => setConfirmModal(null)}
               />
-
               <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-300 ease-out"
+                  className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100"
                 >
+                  {/* Colored Header */}
                   <div
-                    className={`px-8 py-10 text-white text-center relative overflow-hidden
-             ${
-               confirmModal.type === "remove"
-                 ? "bg-gradient-to-br from-red-600 to-rose-700"
-                 : "bg-gradient-to-br from-amber-600 to-orange-700"
-             }`}
+                    className={`px-8 py-10 text-center relative ${
+                      confirmModal.type === "remove"
+                        ? "bg-gradient-to-br from-red-600 to-rose-700"
+                        : "bg-gradient-to-br from-amber-500 to-orange-600"
+                    }`}
                   >
-                    <div className="absolute inset-0 bg-white/10"></div>
-                    <div className="relative z-10">
-                      <div className="w-28 h-28 mx-auto mb-4 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                        <img
-                          src={
-                            confirmModal.type === "remove"
-                              ? removeImage
-                              : suspendImage
-                          }
-                          alt=""
-                          className="w-16 h-16"
-                        />
-                      </div>
-                      <h3 className="text-3xl font-extrabold tracking-tight">
-                        {confirmModal.type === "remove" ? "Delete" : "Suspend"}{" "}
-                        {userType}?
-                      </h3>
-                    </div>
-
-                    <svg
-                      className="absolute bottom-0 left-0 w-full"
-                      viewBox="0 0 1440 320"
-                      preserveAspectRatio="none"
-                    >
-                      <path
-                        fill="white"
-                        d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,176C1248,192,1344,192,1392,192L1440,192L1440,320L0,320Z"
+                    <div className="w-24 h-24 mx-auto mb-5 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                      <img
+                        src={
+                          confirmModal.type === "remove"
+                            ? removeImage
+                            : suspendImage
+                        }
+                        alt=""
+                        className="w-14 h-14"
                       />
-                    </svg>
+                    </div>
+                    <h3 className="text-2xl font-black text-white tracking-tight">
+                      {confirmModal.type === "remove" ? "Delete" : "Suspend"}{" "}
+                      {userType}?
+                    </h3>
                   </div>
 
-                  <div className="p-8 bg-white">
-                    <div className="text-center mb-8">
-                      <p className="text-gray-700 text-lg leading-relaxed">
-                        You are about to{" "}
-                        <span
-                          className={`font-bold ${
-                            confirmModal.type === "remove"
-                              ? "text-red-600"
-                              : "text-amber-600"
-                          }`}
-                        >
-                          {confirmModal.type === "remove"
-                            ? "permanently delete"
-                            : "suspend"}
-                        </span>{" "}
-                        this {userType}.
-                      </p>
-                      <p className="text-sm text-gray-500 mt-3">
-                        All associated data will be affected.
-                      </p>
-                    </div>
+                  {/* Body */}
+                  <div className="p-8">
+                    <p className="text-center text-slate-600 font-medium leading-relaxed">
+                      You are about to{" "}
+                      <span
+                        className={`font-black ${
+                          confirmModal.type === "remove"
+                            ? "text-red-600"
+                            : "text-amber-600"
+                        }`}
+                      >
+                        {confirmModal.type === "remove"
+                          ? "permanently delete"
+                          : "suspend"}
+                      </span>{" "}
+                      this {userType}.
+                    </p>
+                    <p className="text-center text-sm text-slate-400 mt-2">
+                      All associated data will be affected.
+                    </p>
 
-                    <div className="flex gap-4">
+                    <div className="flex gap-3 mt-8">
                       <button
                         onClick={() => setConfirmModal(null)}
-                        className="flex-1 py-4 bg-gray-100 text-gray-800 rounded-2xl font-bold text-lg hover:bg-gray-200 transition-all duration-200 shadow-md"
+                        className="flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleConfirmAction}
-                        className={`flex-1 py-4 text-white rounded-2xl font-bold text-lg shadow-xl transition-all duration-200 transform hover:scale-105
-                   ${
-                     confirmModal.type === "remove"
-                       ? "bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800"
-                       : "bg-gradient-to-r from-amber-600 to-orange-700 hover:from-amber-700 hover:to-orange-800"
-                   }`}
+                        className={`flex-1 py-4 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg transition hover:scale-[1.02] ${
+                          confirmModal.type === "remove"
+                            ? "bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800"
+                            : "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                        }`}
                       >
                         Yes,{" "}
                         {confirmModal.type === "remove"

@@ -12,6 +12,7 @@ import subjectSlice from "./Slices/subject.slice";
 import classSlice from "./Slices/class.slice";
 import resourcesSlice from "./Slices/resources.slice";
 import lessonFeeSlice from "./Slices/lessonFee.slice";
+import notificationSlice from "./Slices/notifications.slice";
 
 export const store = configureStore({
   reducer: {
@@ -19,6 +20,7 @@ export const store = configureStore({
     class: classSlice,
     resources: resourcesSlice,
     lessonFee: lessonFeeSlice,
+    notifications: notificationSlice,
 
     adminAuth,
     adminParent,
