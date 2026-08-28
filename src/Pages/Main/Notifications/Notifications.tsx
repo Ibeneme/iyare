@@ -1,5 +1,4 @@
-
-import  { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Loader2,
   X,
@@ -15,7 +14,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom"; // ← added
+import { useNavigate } from "react-router-dom"; 
 import { AppDispatch, RootState } from "../../../Redux/store";
 import {
   fetchNotifications,
@@ -25,6 +24,7 @@ import {
 } from "../../../Redux/Slices/notifications.slice";
 
 export default function NotificationsManager() {
+  
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate(); // ← added
   const { notifications, unreadCount, loading } = useSelector(
