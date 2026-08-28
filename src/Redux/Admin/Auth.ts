@@ -40,7 +40,7 @@ const initialState: AdminState = {
 
 // Base API Path
 const API_BASE = `/api/admin`;
-
+const API_BASE_USERS = `/api/users`;
 // --- Thunks (Refactored to use axiosInstance) ---
 
 // Register Admin
@@ -245,6 +245,21 @@ export const addAdmin = createAsyncThunk(
 );
 
 
+// Verify Authentication Token (Added Route Integration)
+export const verifyAuthToken = createAsyncThunk(
+    'admin/verifyAuthToken',
+    async (_, thunkAPI) => {
+        try {
+            // Uses axiosInstance; authorization header will be automatically injected by interceptors if token is stored
+            const response = await axiosInstance.get(`${API_BASE_USERS}/verify-token`);
+            console.warn(response, 'responseresponse')
+            return response.data.data;
+        } catch (err: any) {
+            return thunkAPI.rejectWithValue(err.response?.data?.message || 'Token verification failed');
+        }
+    }
+);
+
 
 const adminAuthSlice = createSlice({
     name: 'adminAuth',
@@ -382,6 +397,23 @@ const adminAuthSlice = createSlice({
                 state.error = action.payload;
             })
 
+            // Verify Auth Token Reducers
+            .addCase(verifyAuthToken.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(verifyAuthToken.fulfilled, (state, action: PayloadAction<any>) => {
+                state.loading = false;
+                // Optionally update admin state or payload data returned by verification route
+                if (action.payload?.user) {
+                    state.admin = { ...state.admin, ...action.payload.user };
+                }
+            })
+            .addCase(verifyAuthToken.rejected, (state, action: PayloadAction<any>) => {
+                state.loading = false;
+                state.error = action.payload;
+                state.admin = null; // Clear session if token verification fails
+            })
 
             .addCase(addAdmin.fulfilled, (state) => {
                 //state.admins.push(action.payload);

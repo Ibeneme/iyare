@@ -1,4 +1,3 @@
-
 import React, {
   useEffect,
   useState,
@@ -36,13 +35,10 @@ import { BASE_URL } from "../../../Redux/baseurl";
 import { useNavigate } from "react-router-dom";
 import { getUserType } from "../../../utils/userType";
 
-
 const GRADES_API = `${BASE_URL}/api/grades/grades`;
 const TEACHERS_API = `${BASE_URL}/api/grades/grades/teachers/all`;
 
-/* -------------------------------------------------
-         Types
-      ------------------------------------------------- */
+/* ------------------------------------------------- Types ------------------------------------------------- */
 
 interface Grade {
   _id: string;
@@ -81,13 +77,11 @@ type Subject = {
   updatedAt: string;
 };
 
-/* -------------------------------------------------
-         Component
-      ------------------------------------------------- */
+/* ------------------------------------------------- Component ------------------------------------------------- */
+
 export default function SubjectsManager() {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-
   const token = localStorage.getItem("token") || "";
 
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -97,16 +91,16 @@ export default function SubjectsManager() {
   const [loadingGrades, setLoadingGrades] = useState(true);
   const [loadingTeachers, setLoadingTeachers] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   console.log(error);
+
   const [isAddEditOpen, setIsAddEditOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
-
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [subjectToDelete, setSubjectToDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-
   const [search, setSearch] = useState("");
   const [selectedGrade, setSelectedGrade] = useState<string>("");
   const [submitted, setSubmitted] = useState(false);
@@ -130,7 +124,7 @@ export default function SubjectsManager() {
     setError(null);
     dispatch(fetchSubjects())
       .unwrap()
-      .then((subjectsFromApi) => {
+      .then((subjectsFromApi: any[]) => {
         const normalized: Subject[] = subjectsFromApi.map((s) => ({
           _id: s._id,
           name: s.name,
@@ -145,19 +139,20 @@ export default function SubjectsManager() {
           createdAt: s.createdAt,
           updatedAt: s.updatedAt,
         }));
-
         setSubjects(normalized);
         setLoading(false);
       })
-      .catch((err) => {
+      .catch((err: any) => {
         const msg = err?.message || "Failed to load subjects";
         setError(msg);
         toast.error(msg);
         setLoading(false);
       });
-  }, [dispatch]);
+  }, [dispatch, submitted]);
 
-  useEffect(() => loadSubjects(), [loadSubjects]);
+  useEffect(() => {
+    loadSubjects();
+  }, [loadSubjects]);
 
   /* ---------- Load Grades ---------- */
   useEffect(() => {
@@ -303,8 +298,8 @@ export default function SubjectsManager() {
       setFormStep(1);
       return;
     }
-
     setFormLoading(true);
+
     const payload = {
       name: form.name.trim(),
       code: form.code.trim(),
@@ -319,7 +314,7 @@ export default function SubjectsManager() {
       : createSubject(payload as any);
 
     try {
-      const result = await dispatch(action as any).unwrap();
+      const result: any = await dispatch(action as any).unwrap();
       const normalizedResult = {
         ...result,
         gradeLevelTitle:
@@ -367,11 +362,9 @@ export default function SubjectsManager() {
 
   const filteredSubjects = React.useMemo(() => {
     let result = subjects;
-
     if (selectedGrade) {
       result = result.filter((s) => s.gradeLevelId === selectedGrade);
     }
-
     const term = search?.trim()?.toLowerCase();
     if (term) {
       result = result.filter((s) => {
@@ -383,7 +376,6 @@ export default function SubjectsManager() {
         );
       });
     }
-
     return result;
   }, [subjects, selectedGrade, search]);
 
@@ -409,7 +401,7 @@ export default function SubjectsManager() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 flex flex-col items-center justify-center bg-white/90 backdrop-blur-md z-[100]"
+          className="fixed inset-0 flex flex-col items-center justify-center bg-white/95 backdrop-blur-md z-[100]"
         >
           <Loader2 className="w-16 h-16 animate-spin text-emerald-900 mb-4" />
           <p className="text-emerald-900 font-black uppercase tracking-[0.3em] text-xs">
@@ -501,7 +493,6 @@ export default function SubjectsManager() {
                     exit={{ opacity: 0, scale: 0.95 }}
                     className="group bg-white rounded-[2.5rem] border border-[#66666612] p-6 md:p-7 hover:border-yellow-400 transition-all duration-300 relative overflow-hidden flex flex-col"
                   >
-                    {/* Decorative corner */}
                     <div className="absolute top-0 right-0 w-20 h-20 bg-[#66666608] rounded-bl-[2.5rem] -mr-6 -mt-6 group-hover:bg-yellow-400/80 transition-colors duration-300" />
 
                     <div className="relative z-10 mb-5">
@@ -526,7 +517,6 @@ export default function SubjectsManager() {
                           {subject.isActive ? "Live" : "Hold"}
                         </div>
                       </div>
-
                       <h3 className="text-xl md:text-2xl font-black text-emerald-950 leading-tight group-hover:text-emerald-900 transition-colors">
                         {subject.name}
                       </h3>
@@ -557,14 +547,12 @@ export default function SubjectsManager() {
                       </div>
                     </div>
 
-                    {/* Action buttons — View / Edit / Delete */}
                     <div className="flex gap-2 relative z-10 mt-auto">
                       <button
                         onClick={() => openDetails(subject)}
                         className="flex-1 py-2.5 bg-sky-50 text-sky-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-sky-500 hover:text-white transition-all flex items-center justify-center gap-1.5"
                       >
-                        <Eye size={14} />
-                        View
+                        <Eye size={14} /> View
                       </button>
                       {type === "admin" && (
                         <>
@@ -572,15 +560,13 @@ export default function SubjectsManager() {
                             onClick={() => openAddEdit(subject)}
                             className="flex-1 py-2.5 bg-amber-50 text-amber-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all flex items-center justify-center gap-1.5"
                           >
-                            <Pencil size={14} />
-                            Edit
+                            <Pencil size={14} /> Edit
                           </button>
                           <button
                             onClick={() => openDeleteConfirm(subject._id)}
                             className="flex-1 py-2.5 bg-rose-50 text-rose-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center gap-1.5"
                           >
-                            <Trash2 size={14} />
-                            Delete
+                            <Trash2 size={14} /> Delete
                           </button>
                         </>
                       )}
@@ -640,9 +626,7 @@ export default function SubjectsManager() {
               onClick={(e) => e.stopPropagation()}
               className="bg-white rounded-t-[2rem] sm:rounded-[2rem] p-5 sm:p-8 max-w-xl w-full relative overflow-hidden max-h-[88vh] overflow-y-auto"
             >
-              {/* Mobile grab handle */}
               <div className="sm:hidden w-10 h-1 bg-[#66666630] rounded-full mx-auto mb-4" />
-
               <div className="flex justify-between items-start mb-6 relative z-10">
                 <div className="pr-4">
                   <span className="px-2.5 py-0.5 bg-yellow-400 text-emerald-950 rounded-lg text-[10px] font-black uppercase tracking-widest mb-2 inline-block">
@@ -760,9 +744,7 @@ export default function SubjectsManager() {
               onClick={(e) => e.stopPropagation()}
               className="bg-white rounded-t-[2rem] sm:rounded-[2rem] p-5 sm:p-7 max-w-md w-full max-h-[88vh] overflow-y-auto"
             >
-              {/* Mobile grab handle */}
               <div className="sm:hidden w-10 h-1 bg-[#66666630] rounded-full mx-auto mb-4" />
-
               <div className="flex justify-between items-center mb-5">
                 <div>
                   <h2 className="text-xl md:text-2xl font-black text-emerald-950 tracking-tighter">
@@ -780,7 +762,6 @@ export default function SubjectsManager() {
                 </button>
               </div>
 
-              {/* Step indicator */}
               <div className="flex gap-2 mb-6">
                 <div
                   className={`h-1 flex-1 rounded-full transition-colors ${
@@ -868,8 +849,7 @@ export default function SubjectsManager() {
                         onClick={goToStep2}
                         className="flex-1 py-3.5 bg-emerald-950 text-yellow-400 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-900 transition-all"
                       >
-                        Next
-                        <ChevronRight size={16} />
+                        Next <ChevronRight size={16} />
                       </button>
                       <button
                         type="button"
@@ -884,7 +864,6 @@ export default function SubjectsManager() {
 
                 {formStep === 2 && (
                   <>
-                    {/* Faculty multi-select */}
                     <div className="relative space-y-1.5">
                       <label className="text-[10px] font-black uppercase text-[#666] ml-1 tracking-widest">
                         Faculty Selection
@@ -908,7 +887,7 @@ export default function SubjectsManager() {
                       </div>
 
                       {teacherDropdownOpen && (
-                        <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-[#66666612] rounded-2xl z-[120] max-h-40 overflow-y-auto p-1.5">
+                        <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-[#66666612] rounded-2xl z-[120] max-h-40 overflow-y-auto p-1.5 shadow-lg">
                           {teachers.map((teacher) => {
                             const isSelected = form.teachers.includes(
                               teacher._id
@@ -961,7 +940,6 @@ export default function SubjectsManager() {
                       />
                     </div>
 
-                    {/* Active toggle */}
                     <div className="flex items-center gap-3 py-1">
                       <div
                         onClick={handleActiveToggle}
