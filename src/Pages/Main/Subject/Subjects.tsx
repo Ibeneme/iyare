@@ -118,37 +118,42 @@ export default function SubjectsManager() {
   });
 
   /* ---------- Load Subjects ---------- */
-  const loadSubjects = useCallback(() => {
-    console.log(submitted);
-    setLoading(true);
-    setError(null);
-    dispatch(fetchSubjects())
-      .unwrap()
-      .then((subjectsFromApi: any[]) => {
-        const normalized: Subject[] = subjectsFromApi.map((s) => ({
+/* ---------- Load Subjects ---------- */
+const loadSubjects = useCallback(() => {
+  setLoading(true);
+  setError(null);
+  dispatch(fetchSubjects())
+    .unwrap()
+    .then((subjectsFromApi: any[]) => {
+      const normalized: Subject[] = subjectsFromApi.map((s) => {
+        // Extract the first grade level object or fallback safely
+        const primaryGrade = s.gradeLevel?.[0] || s.grades?.[0];
+        
+        return {
           _id: s._id,
           name: s.name,
           code: s.code,
           description: s.description,
-          gradeLevelTitle: s.gradeLevelTitle ?? "—",
-          gradeLevelId: s.gradeLevelId ?? "",
+          gradeLevelTitle: primaryGrade?.title ?? "—",
+          gradeLevelId: primaryGrade?._id || primaryGrade?.id || "",
           isActive: s.isActive,
           teachers: s.teachers ?? [],
           children: s.children ?? [],
           classes: s.classes ?? [],
           createdAt: s.createdAt,
           updatedAt: s.updatedAt,
-        }));
-        setSubjects(normalized);
-        setLoading(false);
-      })
-      .catch((err: any) => {
-        const msg = err?.message || "Failed to load subjects";
-        setError(msg);
-        toast.error(msg);
-        setLoading(false);
+        };
       });
-  }, [dispatch, submitted]);
+      setSubjects(normalized);
+      setLoading(false);
+    })
+    .catch((err: any) => {
+      const msg = err?.message || "Failed to load subjects";
+      setError(msg);
+      toast.error(msg);
+      setLoading(false);
+    });
+}, [dispatch]);
 
   useEffect(() => {
     loadSubjects();

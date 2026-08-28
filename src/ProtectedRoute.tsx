@@ -1,14 +1,15 @@
 // src/Components/ProtectedRoute.jsx
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { verifyAuthToken } from "./Redux/Admin/Auth";
+import { AppDispatch } from "./Redux/store";
 
 const ProtectedRoute = () => {
   const [isVerifying, setIsVerifying] = useState(true);
   const [isValid, setIsValid] = useState(false);
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const location = useLocation(); // Tracks path changes on SPA navigation
 
   // Retrieve token and stored user type from localStorage
