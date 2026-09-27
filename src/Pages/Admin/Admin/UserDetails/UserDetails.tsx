@@ -16,7 +16,7 @@ import {
   Calendar,
   BookOpen,
   Users,
-  Edit3,
+ // Edit3,
 } from "lucide-react";
 
 const GRADES_API = `${BASE_URL}/api/grades/grades`;
@@ -192,12 +192,12 @@ const UserDetailsPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <button
+            {/* <button
               onClick={() => navigate("/settings")}
               className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-6 py-3 rounded-2xl font-bold transition-all border border-white/10"
             >
               <Edit3 size={18} className="text-yellow-400" /> Edit Profile
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
