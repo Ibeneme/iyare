@@ -172,7 +172,7 @@ const FAQSection: React.FC = () => {
                 {/* Question */}
                 <button
                   onClick={() => toggleFAQ(index)}
-                  className="w-full px-6 py-5 flex items-center justify-between text-left focus:outline-none"
+                  className="w-full px-6 py-5 flex items-center justify-between text-left focus:outline-none cursor-pointer"
                 >
                   <div className="flex items-center gap-4">
                     <div
@@ -184,13 +184,7 @@ const FAQSection: React.FC = () => {
                     >
                       {faq.icon}
                     </div>
-                    <h3
-                      className={`text-lg font-bold ${
-                        activeIndex === index
-                          ? "text-[#023009]"
-                          : "text-[#023009]"
-                      }`}
-                    >
+                    <h3 className="text-lg font-bold text-[#023009]">
                       {faq.question}
                     </h3>
                   </div>
