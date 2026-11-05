@@ -1,19 +1,18 @@
+// src/LandingPage/Hero/Hero.tsx
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import libraryImg from "../../assets/images/library.jpg";
 import ScrollingCards from "./ScrollingCards";
 
 const Hero: React.FC = () => {
+  const navigate = useNavigate();
   const stats = [
     { value: "500+", label: "Active Students", delay: 0.2 },
     { value: "98%", label: "Success Rate", delay: 0.4 },
     { value: "30+", label: "Expert Teachers", delay: 0.6 },
     { value: "4.9", label: "Student Rating", delay: 0.8 },
   ];
-
-  const openInNewTab = (url: string) => {
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
 
   return (
     <>
@@ -50,17 +49,17 @@ const Hero: React.FC = () => {
                 a thriving community of learners.
               </motion.p>
 
-              {/* BUTTONS – Now open in NEW TAB */}
+              {/* BUTTONS */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6, duration: 0.7 }}
                 className="flex flex-col sm:flex-row gap-4"
               >
-                {/* EXPLORE SUBJECTS → opens /subjects in new tab */}
+                {/* EXPLORE SUBJECTS */}
                 <button
-                  onClick={() => openInNewTab("/subjects")}
-                  className="group bg-[#ffd000] text-[#023009] px-8 py-4 rounded-full font-bold text-lg hover:bg-yellow-400 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 flex items-center justify-center gap-2"
+                  onClick={() => navigate("/subjects")}
+                  className="group bg-[#ffd000] text-[#023009] px-8 py-4 rounded-full font-bold text-lg hover:bg-yellow-400 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   Explore Subjects
                   <span className="group-hover:translate-x-1 transition-transform">
@@ -68,10 +67,10 @@ const Hero: React.FC = () => {
                   </span>
                 </button>
 
-                {/* GET STARTED → opens /register in new tab */}
+                {/* GET STARTED */}
                 <button
-                  onClick={() => openInNewTab("/register")}
-                  className="border-2 border-white text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-[#023009] transition-all duration-300 backdrop-blur-sm"
+                  onClick={() => navigate("/register")}
+                  className="border-2 border-white text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-[#023009] transition-all duration-300 backdrop-blur-sm cursor-pointer"
                 >
                   Get Started
                 </button>
