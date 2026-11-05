@@ -1,5 +1,6 @@
 // src/components/HomeLessonsSection/HomeLessonsSection.tsx
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   BookOpen,
@@ -62,9 +63,7 @@ const features = [
 ];
 
 const HomeLessonsSection: React.FC = () => {
-  const openInNewTab = (url: string) => {
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
+  const navigate = useNavigate();
 
   return (
     <section className="relative bg-gradient-to-b from-[#f5fdf5] to-white py-32 overflow-hidden">
@@ -197,8 +196,8 @@ const HomeLessonsSection: React.FC = () => {
               </ul>
             </div>
             <button
-              onClick={() => openInNewTab("/auth-sign-in?type=parent")}
-              className="mt-8 bg-[#ffd000] text-[#023009] px-8 py-4 rounded-full font-bold hover:bg-yellow-300 transition-all duration-300 transform hover:-translate-y-1 text-lg"
+              onClick={() => navigate("/auth-sign-in?type=parent")}
+              className="mt-8 bg-[#ffd000] text-[#023009] px-8 py-4 rounded-full font-bold hover:bg-yellow-300 transition-all duration-300 transform hover:-translate-y-1 text-lg cursor-pointer"
             >
               Open Parent Portal
             </button>
@@ -257,8 +256,8 @@ const HomeLessonsSection: React.FC = () => {
               </ul>
             </div>
             <button
-              onClick={() => openInNewTab("/auth-sign-in?type=student")}
-              className="mt-8 bg-[#023009] text-white px-8 py-4 rounded-full font-bold hover:bg-[#023009]/90 transition-all duration-300 transform hover:-translate-y-1 text-lg"
+              onClick={() => navigate("/auth-sign-in?type=student")}
+              className="mt-8 bg-[#023009] text-white px-8 py-4 rounded-full font-bold hover:bg-[#023009]/90 transition-all duration-300 transform hover:-translate-y-1 text-lg cursor-pointer"
             >
               Start Learning Now
             </button>
