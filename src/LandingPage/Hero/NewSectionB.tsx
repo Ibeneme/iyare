@@ -1,5 +1,6 @@
 // src/components/LessonsDigitalizedSection/LessonsDigitalizedSection.tsx
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Brain,
@@ -68,9 +69,7 @@ const digitalFeatures = [
 ];
 
 const LessonsDigitalizedSection: React.FC = () => {
-  const openInNewTab = (url: string) => {
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
+  const navigate = useNavigate();
 
   return (
     <section className="relative bg-gradient-to-b from-white to-[#f5fdf5] py-32 overflow-hidden">
@@ -202,8 +201,8 @@ const LessonsDigitalizedSection: React.FC = () => {
               </ul>
             </div>
             <button
-              onClick={() => openInNewTab("/auth-sign-in?type=teacher")} // Change this URL when you have a teacher route
-              className="mt-8 bg-[#ffd000] text-[#023009] px-8 py-4 rounded-full font-bold hover:bg-yellow-300 transition-all duration-300 transform hover:-translate-y-1 text-lg flex items-center justify-center gap-2"
+              onClick={() => navigate("/auth-sign-in?type=teacher")}
+              className="mt-8 bg-[#ffd000] text-[#023009] px-8 py-4 rounded-full font-bold hover:bg-yellow-300 transition-all duration-300 transform hover:-translate-y-1 text-lg flex items-center justify-center gap-2 cursor-pointer"
             >
               Start Teaching <ArrowRight className="w-5 h-5" />
             </button>
@@ -262,8 +261,8 @@ const LessonsDigitalizedSection: React.FC = () => {
               </ul>
             </div>
             <button
-              onClick={() => openInNewTab("/auth-sign-in?type=parent")}
-              className="mt-8 bg-[#023009] text-white px-8 py-4 rounded-full font-bold hover:bg-[#023009]/90 transition-all duration-300 transform hover:-translate-y-1 text-lg flex items-center justify-center gap-2"
+              onClick={() => navigate("/auth-sign-in?type=parent")}
+              className="mt-8 bg-[#023009] text-white px-8 py-4 rounded-full font-bold hover:bg-[#023009]/90 transition-all duration-300 transform hover:-translate-y-1 text-lg flex items-center justify-center gap-2 cursor-pointer"
             >
               Start Free Trial <ArrowRight className="w-5 h-5" />
             </button>
