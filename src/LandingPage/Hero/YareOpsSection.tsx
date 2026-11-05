@@ -1,3 +1,4 @@
+// src/LandingPage/Hero/YareOpsSection.tsx
 import React from "react";
 import { motion } from "framer-motion";
 import { Zap, Sparkles, ShieldCheck } from "lucide-react";
@@ -102,14 +103,14 @@ const YareOpsSection: React.FC = () => {
               </div>
             </div>
 
-            <motion.p
+            <motion.div
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               className="text-white/40 font-mono text-[11px] tracking-widest flex items-center gap-2"
             >
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               SYSTEM NODE: MANIFESTO_PROTOCOL_V2
-            </motion.p>
+            </motion.div>
           </div>
         </div>
       </div>
