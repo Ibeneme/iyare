@@ -1,7 +1,7 @@
 
 
 
-export const BASE_URL = `https://yare-server-vmf3.onrender.com`
+export const BASE_URL = `https://yare-server-i3th.onrender.com`
 // `https://yare-server.onrender.com`
 
 
