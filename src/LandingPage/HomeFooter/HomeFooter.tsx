@@ -1,6 +1,6 @@
 // src/components/HomeFooter/HomeFooter.tsx
 import React, { useEffect } from "react";
-import { useLocation, matchPath } from "react-router-dom";
+import { Link, useLocation, matchPath } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   FaInstagram,
@@ -61,8 +61,7 @@ const HomeFooter: React.FC = () => {
               </div>
             </motion.div>
 
-            {/* Quick Links – Internal navigation (same tab) */}
-            {/* Quick Links – All links open in a NEW TAB */}
+            {/* Quick Links – Internal navigation */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -81,21 +80,19 @@ const HomeFooter: React.FC = () => {
                   { label: "Privacy Policy", path: "/policy" },
                 ].map((link) => (
                   <li key={link.path}>
-                    <a
-                      href={link.path}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <Link
+                      to={link.path}
                       className="text-white/80 hover:text-[#ffd000] transition-colors duration-300 flex items-center gap-2"
                     >
                       <div className="w-1 h-1 bg-[#ffd000] rounded-full"></div>
                       {link.label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
             </motion.div>
 
-            {/* Contact & Social – All external → new tab */}
+            {/* Contact & Social */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -130,7 +127,7 @@ const HomeFooter: React.FC = () => {
                 </div>
               </div>
 
-              {/* Social Icons – All open in new tab */}
+              {/* Social Icons – External links remain in new tab */}
               <div className="flex gap-3">
                 {[
                   { Icon: FaFacebook, link: "https://facebook.com/yarehub" },
