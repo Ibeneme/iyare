@@ -2,12 +2,22 @@ import React, { useEffect, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, Users, Loader2 } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Users, Loader2, AlertCircle } from "lucide-react";
 import { AppDispatch } from "../../store/index";
 import { signInUser } from "../../store/features/users/users.slice";
-import AuthShell, { AuthNotice } from "./AuthShell";
+import AuthShell from "./AuthShell";
 import { PATHS } from "../../routes/paths";
 import { setAuthCookies, clearAuthCookies, setCookie } from "../../utils/cookies";
+
+const getAuthErrorMessage = (err: unknown): string => {
+  if (!err) return "Invalid credentials. Please try again.";
+  if (typeof err === "string") return err;
+  if (typeof err === "object") {
+    const record = err as Record<string, any>;
+    return record.message || record.error || "Invalid credentials. Please try again.";
+  }
+  return "Invalid credentials. Please try again.";
+};
 
 const SignIn: React.FC = () => {
   useEffect(() => { clearAuthCookies(); }, []);
@@ -29,8 +39,20 @@ const SignIn: React.FC = () => {
     setUserType(type === "parent" ? "parent" : "student");
   }, [location.search]);
 
+  // Observe/log login errors whenever `error` changes
+  useEffect(() => {
+    if (!error) return;
+    console.warn("[AuthObserver] Sign-in error:", {
+      userType,
+      identifier: userType === "student" ? studentId.trim() : email.trim(),
+      error,
+      timestamp: new Date().toISOString(),
+    });
+  }, [error, userType, studentId, email]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setLoading(true);
     setError(null);
 
@@ -74,7 +96,9 @@ const SignIn: React.FC = () => {
       setAuthCookies({ token, user, userType });
       navigate("/app/subjects");
     } catch (err: any) {
-      setError(err.message || "Invalid credentials. Please try again.");
+      const message = getAuthErrorMessage(err);
+      console.error("[SignIn] Rejected payload:", err);
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -171,8 +195,15 @@ const SignIn: React.FC = () => {
 
         <AnimatePresence>
           {error && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <AuthNotice tone="error">{error}</AuthNotice>
+            <motion.div
+              role="alert"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-red-600/15 border border-red-500 text-red-500 text-sm font-semibold shadow-sm"
+            >
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+              <span>{error}</span>
             </motion.div>
           )}
         </AnimatePresence>

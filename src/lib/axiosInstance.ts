@@ -36,8 +36,13 @@ axiosInstance.interceptors.response.use(
   (error: AxiosError) => {
     (error.config as any)?.__endBusy?.();
     const status = error.response?.status;
-    const body = error.response?.data as { maintenance?: boolean; readOnly?: boolean; message?: string } | undefined;
-    if (status === 401) {
+    const url = error.config?.url || "";
+    const isAuthSignIn = url.includes("/auth/signin");
+    const body = error.response?.data as
+      | { maintenance?: boolean; readOnly?: boolean; message?: string }
+      | undefined;
+
+    if (status === 401 && !isAuthSignIn) {
       logout();
     }
     // Server is in a blocking maintenance window: tell the page (the banner component shows it).
