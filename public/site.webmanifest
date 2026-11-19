@@ -1,0 +1,13 @@
+{
+  "name": "Yare Height Learning Hub",
+  "short_name": "Yare Height",
+  "description": "World-class learning for students, parents and teachers.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#023009",
+  "theme_color": "#FFD000",
+  "icons": [
+    { "src": "/logo.png", "sizes": "any", "type": "image/png", "purpose": "any" },
+    { "src": "/logo.png", "sizes": "any", "type": "image/png", "purpose": "maskable" }
+  ]
+}

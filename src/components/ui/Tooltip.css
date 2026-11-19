@@ -1,0 +1,21 @@
+/* Zero Shadows Policy + No-Italics rule apply here too. */
+.tip-bubble {
+  position: fixed;
+  transform: translate(-50%, -100%);
+  translate: 0 -8px;
+  background: var(--color-primary);
+  color: var(--color-card);
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: 500;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.5rem;
+  white-space: nowrap;
+  z-index: 10000080;
+  pointer-events: none;
+}
+
+.tip-bottom {
+  transform: translate(-50%, 0);
+  translate: 0 8px;
+}

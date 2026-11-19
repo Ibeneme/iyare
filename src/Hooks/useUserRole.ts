@@ -1,3 +1,4 @@
+import { getCookie} from "../utils/cookies";
 import { useEffect, useState } from "react";
 
 interface User {
@@ -14,7 +15,7 @@ const useUserRole = () => {
   useEffect(() => {
     const fetchUserFromLocalStorage = () => {
       try {
-        const userData = localStorage.getItem("user");
+        const userData = getCookie("user");
         if (!userData) return;
 
         const parsedUser: User = JSON.parse(userData);
@@ -23,7 +24,7 @@ const useUserRole = () => {
         setUserRole(parsedUser?.userType || parsedUser?.role || null);
         setIsSuperadmin(parsedUser?.superadmin || false);
       } catch (error) {
-        console.error("❌ Failed to parse user from localStorage:", error);
+        console.error("❌ Failed to parse user from cookies:", error);
         setUser(null);
         setUserRole(null);
         setIsSuperadmin(false);

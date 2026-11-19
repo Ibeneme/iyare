@@ -1,0 +1,39 @@
+/* Zero Shadows Policy (spec §0): no box-shadow/drop-shadow anywhere signed-in. No italics either. */
+.confirm-modal-overlay {
+  z-index: 10000050; /* above the generic ModalDropdown */
+}
+
+.confirm-modal-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-card);
+  color: var(--color-primary);
+  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.08));
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  animation: modalRise 0.2s ease;
+}
+
+.confirm-modal-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-style: normal;
+  margin: 0;
+}
+
+.confirm-modal-message {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--color-muted);
+  font-style: normal;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  margin-top: 0.5rem;
+}

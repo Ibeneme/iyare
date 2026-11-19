@@ -1,19 +1,28 @@
-// src/utils/auth.js
+import { getCookie, clearAuthCookies } from "./cookies";
+import { signInPathFor } from "../config/roles";
 
-export const isAuthenticated = () => {
-    try {
-        const userString = localStorage.getItem('user');
-        // Get the token directly from localStorage as well
-        const tokenString = localStorage.getItem('token'); 
-        if (userString && tokenString) {
-            const user = JSON.parse(userString);
-
-            return !!user; // The '!!' converts the object to a boolean (true)
-        }
-    } catch (error) {
-        console.error("Error parsing user data from localStorage:", error);
-        return false;
+export const isAuthenticated = (): boolean => {
+  try {
+    const userString = getCookie("user");
+    const tokenString = getCookie("token");
+    if (userString && tokenString) {
+      const user = JSON.parse(userString);
+      return !!user;
     }
-    // If either userString or tokenString is null, this will return false
+  } catch {
     return false;
+  }
+  return false;
+};
+
+
+/**
+ * Sign the user out and send them to the sign-in screen for their account type
+ * (admins -> /admin-sign-in, everyone else -> /sign-in?type=<role>).
+ * A full page load is used on purpose so no signed-in data stays in memory.
+ */
+export const logout = (): void => {
+  const role = getCookie("userType");
+  clearAuthCookies();
+  window.location.replace(signInPathFor(role));
 };

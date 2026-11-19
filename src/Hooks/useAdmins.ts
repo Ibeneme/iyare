@@ -7,8 +7,8 @@ import {
     deleteAdmin,
     updateSelfAdmin,
     addAdmin,
-} from "../Redux/Admin/Auth";
-import { AppDispatch } from "../Redux/store";
+} from "../store/features/auth/auth.slice";
+import { AppDispatch } from "../store/index";
 
 // Inline UserType
 export type UserType = "admin" | "superAdmin" | "moderator";

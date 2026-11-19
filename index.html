@@ -1,80 +1,81 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://www.yarelearninghub.com/" />
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/vite.png" />
-
-    <!-- Title -->
-    <title>Yare Learning Hub | Learn. Grow. Excel.</title>
-
-    <!-- SEO Meta Tags -->
-    <meta name="title" content="Yare Learning Hub | Learn. Grow. Excel." />
-    <meta
-      name="description"
-      content="Yare Learning Hub provides quality digital education and training to help you grow your skills, build your career, and succeed in today’s digital world."
-    />
-    <meta
-      name="keywords"
-      content="Yare Learning Hub, Digital Skills, Online Learning, Tech Training, Web Development, Data Analysis, UI/UX Design, Career Growth"
-    />
+    <!-- Primary Meta -->
+    <title>Yare Height — Learning Hub</title>
+    <meta name="description" content="Yare Height connects students and parents with qualified teachers for a world-class learning experience. Access subjects, classes, timetables, and more." />
+    <meta name="keywords" content="online learning, tutoring, students, parents, teachers, subjects, classes, Nigeria education" />
+    <meta name="author" content="Yare Height" />
     <meta name="robots" content="index, follow" />
-    <meta name="author" content="Yare Learning Hub" />
+    <meta name="theme-color" content="#023009" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#FFD000" media="(prefers-color-scheme: dark)" />
 
-    <!-- Open Graph (Facebook / LinkedIn) -->
-    <meta property="og:site_name" content="Yare Learning Hub" />
+    <!-- Canonical -->
+    <link rel="canonical" href="https://www.yareheight.com/" />
+
+    <!-- Open Graph -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.yarelearninghub.com/" />
-    <meta
-      property="og:title"
-      content="Yare Learning Hub | Learn. Grow. Excel."
-    />
-    <meta
-      property="og:description"
-      content="Learn digital skills, grow your career, and unlock your full potential with Yare Learning Hub."
-    />
-    <meta property="og:image" content="/seo-image.png" />
+    <meta property="og:url" content="https://www.yareheight.com/" />
+    <meta property="og:title" content="Yare Height — Learning Hub" />
+    <meta property="og:description" content="Yare Height connects students and parents with qualified teachers for a world-class learning experience." />
+    <meta property="og:image" content="https://www.yareheight.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="Yare Height" />
+    <meta property="og:locale" content="en_NG" />
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://www.yarelearninghub.com/" />
-    <meta
-      property="twitter:title"
-      content="Yare Learning Hub | Learn. Grow. Excel."
-    />
-    <meta
-      property="twitter:description"
-      content="Learn digital skills, grow your career, and unlock your full potential with Yare Learning Hub."
-    />
-    <meta property="twitter:image" content="/seo-image.png" />
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@yareheight" />
+    <meta name="twitter:title" content="Yare Height — Learning Hub" />
+    <meta name="twitter:description" content="Yare Height connects students and parents with qualified teachers for a world-class learning experience." />
+    <meta name="twitter:image" content="https://www.yareheight.com/og-image.png" />
 
-    <!-- JSON-LD Schema -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+
+    <!-- Structured Data -->
     <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        "name": "Yare Learning Hub",
-        "url": "https://www.yarelearninghub.com",
-        "logo": "https://www.yarelearninghub.com/vite.png",
-        "sameAs": [
-          "https://twitter.com/yarelearninghub",
-          "https://linkedin.com/company/yarelearninghub",
-          "https://facebook.com/yarelearninghub"
-        ]
+    {
+      "@context": "https://schema.org",
+      "@type": "EducationalOrganization",
+      "name": "Yare Height Learning Hub",
+      "url": "https://www.yareheight.com",
+      "logo": "https://www.yareheight.com/logo.png",
+      "description": "Yare Height connects students and parents with qualified teachers for a world-class learning experience.",
+      "sameAs": [],
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "NG"
       }
+    }
+    </script>
+
+    <!-- Prevent FOUC for dark mode — read cookie before first paint -->
+    <script>
+      (function() {
+        try {
+          var cookies = document.cookie.split('; ');
+          var themeCookie = cookies.find(function(c) { return c.startsWith('theme='); });
+          var theme = themeCookie ? decodeURIComponent(themeCookie.split('=')[1]) : null;
+          if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch(e) {}
+      })();
     </script>
   </head>
-
-  <body class="font-sans bg-white text-gray-900 antialiased">
+  <body>
     <div id="root"></div>
-
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

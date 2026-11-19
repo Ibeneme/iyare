@@ -1,13 +1,13 @@
 // src/hooks/useUsers.ts
 import { useDispatch } from "react-redux";
-import { AppDispatch } from "../Redux/store";
+import { AppDispatch } from "../store/index";
 import {
     createUser,
     fetchAllUsersByType,
     fetchUserById,
     updateUser,
     clearUserState,
-} from "../Redux/Admin/adminUsers";
+} from "../store/features/users/users.slice";
 
 // Inline User type inside the hook
 export interface User {

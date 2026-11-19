@@ -1,10 +1,11 @@
+import { getCookie, } from "./cookies";
 export const getUserType = (): string | null => {
     try {
-        const stored = localStorage.getItem("userType");
+        const stored = getCookie("userType");
 
 
         if (!stored) {
-            console.log("User type not found in localStorage.");
+            console.log("User type not found in cookies.");
             return null;
         }
 

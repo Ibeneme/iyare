@@ -1,0 +1,64 @@
+/* Phone input (react-phone-number-input) styled like .form-input */
+.phone-input {
+  display: flex; align-items: center; width: 100%;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid transparent;
+  padding: 0.625rem 1rem 0.625rem 3rem;
+  transition: border-color .15s, background-color .15s, box-shadow .15s;
+  --PhoneInputCountryFlag-borderColor: transparent;
+}
+.phone-input:focus-within {
+  background: var(--color-card);
+  border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
+.phone-input .PhoneInputInput {
+  flex: 1; min-width: 0; background: transparent; border: 0; outline: 0;
+  color: var(--color-primary); font: inherit; font-size: 0.875rem;
+}
+.phone-input.disabled { opacity: .6; cursor: not-allowed; }
+
+/* ═══════════════════════════════════════════════════════════
+   Auth screens use the landing theme: remap the app tokens so every
+   existing .form-input / .btn-* / .card / .badge-* picks up army green + yellow.
+═══════════════════════════════════════════════════════════ */
+.auth-scope {
+  --color-surface: var(--lp-bg);
+  --color-surface-alt: var(--lp-green-soft);
+  --color-card: var(--lp-surface);
+  --color-card-border: var(--lp-line);
+  --color-primary: var(--lp-ink);
+  --color-secondary: var(--lp-ink);
+  --color-muted: var(--lp-muted);
+  --color-subtle: color-mix(in srgb, var(--lp-muted) 70%, transparent);
+  --color-brand: var(--lp-green-deep);
+  --color-brand-hover: var(--lp-green);
+  --color-brand-fg: #ffffff;
+  --color-accent: var(--lp-yellow);
+  --color-accent-fg: var(--lp-on-yellow);
+  --color-success: var(--lp-green-text);
+  --color-success-bg: var(--lp-green-soft);
+  --color-warning: var(--lp-yellow-text);
+  --color-warning-bg: var(--lp-yellow-soft);
+  --color-info: var(--lp-green-text);
+  --color-info-bg: var(--lp-sand);
+  --shadow-card: 0 1px 2px rgba(45,55,25,.05), 0 8px 24px -12px rgba(45,55,25,.15);
+  --shadow-elevated: 0 24px 50px -24px rgba(45,55,25,.35);
+  background: var(--lp-bg);
+}
+.dark .auth-scope .btn-primary { background: var(--lp-yellow); color: var(--lp-on-yellow); }
+
+.auth-scope .card-elevated { border: 1px solid var(--lp-line); }
+.auth-scope .btn { height: 3rem; padding: 0 1.5rem; font-weight: 600; }
+.auth-scope .btn-sm { height: 2.25rem; padding: 0 1rem; }
+.auth-scope .btn-secondary { background: transparent; border: 1.5px solid var(--lp-ink); box-shadow: none; color: var(--lp-ink); }
+.auth-scope .btn-secondary:hover { background: var(--lp-ink); color: var(--lp-bg); }
+.auth-scope .form-label { color: var(--lp-ink); font-weight: 600; font-size: 0.85rem; }
+.auth-scope .form-input,
+.auth-scope .form-select { background: var(--lp-surface); border: 1.5px solid var(--lp-line); height: 3rem; border-radius: 999px; }
+.auth-scope textarea.form-input { height: auto; padding-top: 0.8rem; padding-bottom: 0.8rem; border-radius: 1.25rem; }
+.auth-scope .form-input:focus { border-color: var(--lp-green-mid); box-shadow: 0 0 0 4px var(--lp-yellow-soft); background: var(--lp-surface); }
+.auth-scope .phone-input { background: var(--lp-surface); border: 1.5px solid var(--lp-line); height: 3rem; border-radius: 999px; padding: 0 1.1rem 0 3rem; }
+.auth-scope .phone-input:focus-within { border-color: var(--lp-green-mid); box-shadow: 0 0 0 4px var(--lp-yellow-soft); background: var(--lp-surface); }
+.auth-scope a.text-brand, .auth-scope .text-brand { color: var(--lp-green-text); }
