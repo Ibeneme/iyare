@@ -1,7 +1,8 @@
 
 
 
-export const BASE_URL = `http://localhost:5001`
+export const BASE_URL = `https://yare-server-i3th.onrender.com`
+//`http://localhost:5001`
 // `https://yare-server.onrender.com`
 
 
