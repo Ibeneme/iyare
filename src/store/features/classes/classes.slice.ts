@@ -26,6 +26,9 @@ export interface TeacherInfo {
     firstName: string;
     lastName: string;
     email: string;
+    isDeleted?: boolean;
+    deleted?: boolean;
+    deletedAt?: string | null;
 }
 
 export interface SubjectInfo {
@@ -33,6 +36,7 @@ export interface SubjectInfo {
     name: string;
     code: string;
     description?: string;
+    teachers?: Array<TeacherInfo | string>;
 }
 
 export interface ClassModel {
@@ -40,6 +44,7 @@ export interface ClassModel {
     title: string;
     subjectId: SubjectInfo | string;
     teacherId?: TeacherInfo | string | null;
+    teacherIds?: Array<TeacherInfo | string>;
     studentIds: Array<SubjectStudentInfo | string>;
     scope?: ClassScope;
     isGeneral?: boolean;
@@ -61,6 +66,7 @@ export interface CreateOrUpdateClassPayload {
     title?: string;
     subjectId?: string;
     teacherId?: string | null;
+    teacherIds?: string[];
     scope?: ClassScope;
     isGeneral?: boolean;
     studentIds?: string[];
@@ -232,7 +238,8 @@ export const fetchClassById = createAsyncThunk<
 );
 
 /**
- * Create a new class (general for all subject students or specific for selected students).
+ * Create a new class (general for all subject students or specific for selected students)
+ * with one or multiple assigned teachers.
  */
 export const createClass = createAsyncThunk<
     ClassModel,
@@ -248,6 +255,7 @@ export const createClass = createAsyncThunk<
                 id: response.data.data._id,
                 title: response.data.data.title,
                 scope: response.data.data.scope,
+                teacherIds: response.data.data.teacherIds,
             });
             return response.data.data as ClassModel;
         } catch (err: any) {
@@ -275,6 +283,7 @@ export const updateClass = createAsyncThunk<
                 id,
                 title: response.data.data.title,
                 scope: response.data.data.scope,
+                teacherIds: response.data.data.teacherIds,
             });
             return response.data.data as ClassModel;
         } catch (err: any) {

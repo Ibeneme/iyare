@@ -12,22 +12,44 @@ interface User {
     email: string;
     firstName: string;
     lastName: string;
-    subjects: [];
+    subjects: any[];
     userType?: string;
-    children?: [];
+    children?: any[];
     parentId?: string;
     isSubscribed?: string;
-    class?: string
+    class?: string;
+    gradeId?: string | null;
+    gradeIds?: string[];
+    gradeLevel?: string | string[];
+    grades?: string[];
+    subjectIds?: string[];
     // Add other user properties here as they exist in your models
 }
 
+export interface CreateUserPayload {
+    userType: "teacher" | "student" | "parent" | "admin";
+    email: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber?: string;
+    password?: string;
+    role?: string;
+    parentId?: string;
+    gradeId?: string | null;
+    gradeIds?: string[];
+    gradeLevel?: string | string[];
+    grades?: string[];
+    subjectIds?: string[];
+    subjects?: string[];
+    [key: string]: any;
+}
 
 interface ApiResponse<T> {
     success: boolean;
     message: string;
     data?: T;
     token?: any;
-    resetToken?: any
+    resetToken?: any;
 }
 
 interface AllUsersPayload {
@@ -58,7 +80,7 @@ interface AuthState {
 
 export const createUser = createAsyncThunk<
     ApiResponse<User>,
-    any,
+    CreateUserPayload,
     { rejectValue: any }
 >("users/createUser", async (userData, thunkAPI) => {
     try {

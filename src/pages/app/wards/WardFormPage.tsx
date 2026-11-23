@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../../store";
 import { fetchCatalogue, addWard } from "../../../store/features/wards/wards.slice";
@@ -13,7 +14,30 @@ export default function WardFormPage() {
   const catalogue = useAppSelector((s) => s.wards.catalogue);
   const [f, setF] = useState({ firstName: "", lastName: "", email: "", password: "", gradeId: "", subjects: [] as string[] });
   const [busy, setBusy] = useState(false);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+  const eyeIconRef = useRef<SVGSVGElement>(null);
+  const eyeOffIconRef = useRef<SVGSVGElement>(null);
+  const toggleBtnRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => void dispatch(fetchCatalogue()), [dispatch]);
+
+  const handleTogglePassword = () => {
+    const input = passwordInputRef.current;
+    if (!input) return;
+    const isVisible = input.type === "text";
+    input.type = isVisible ? "password" : "text";
+    toggleBtnRef.current?.setAttribute("aria-pressed", String(!isVisible));
+    toggleBtnRef.current?.setAttribute(
+      "aria-label",
+      !isVisible ? "Hide password" : "Show password",
+    );
+    if (eyeIconRef.current) {
+      eyeIconRef.current.style.display = !isVisible ? "none" : "";
+    }
+    if (eyeOffIconRef.current) {
+      eyeOffIconRef.current.style.display = !isVisible ? "" : "none";
+    }
+  };
 
   const subs = (catalogue?.subjects ?? []).filter((s: any) => !f.gradeId || !s.gradeLevel || String(s.gradeLevel) === f.gradeId);
   const toggle = (id: string) => setF((x) => ({ ...x, subjects: x.subjects.includes(id) ? x.subjects.filter((y) => y !== id) : [...x.subjects, id] }));
@@ -32,7 +56,31 @@ export default function WardFormPage() {
         <label><span className="form-label">First name</span><input required className="form-input" value={f.firstName} onChange={(e) => setF({ ...f, firstName: e.target.value })} /></label>
         <label><span className="form-label">Last name</span><input required className="form-input" value={f.lastName} onChange={(e) => setF({ ...f, lastName: e.target.value })} /></label>
         <label><span className="form-label">Email</span><input required type="email" className="form-input" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></label>
-        <label><span className="form-label">Password</span><input required minLength={8} type="password" className="form-input" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /></label>
+        <label className="block">
+          <span className="form-label">Password</span>
+          <div className="relative">
+            <input
+              ref={passwordInputRef}
+              required
+              minLength={8}
+              type="password"
+              className="form-input w-full pr-10"
+              value={f.password}
+              onChange={(e) => setF({ ...f, password: e.target.value })}
+            />
+            <button
+              ref={toggleBtnRef}
+              type="button"
+              onClick={handleTogglePassword}
+              aria-label="Show password"
+              aria-pressed={false}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg text-[var(--color-muted)] hover:text-[var(--color-primary)] transition-colors"
+            >
+              <Eye ref={eyeIconRef} size={16} />
+              <EyeOff ref={eyeOffIconRef} size={16} style={{ display: "none" }} />
+            </button>
+          </div>
+        </label>
         <label className="md:col-span-2"><span className="form-label">Class</span>
           <Select required value={f.gradeId} onChange={(e) => setF({ ...f, gradeId: e.target.value, subjects: [] })}>
             <option value="">Choose a class…</option>

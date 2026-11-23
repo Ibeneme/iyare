@@ -12,11 +12,13 @@ import {
   Repeat,
   Users,
   UserCheck,
+  GraduationCap,
   Search,
   Mail,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import DateInput from "../../../components/ui/DateInput";
+import axiosInstance from "../../../lib/axiosInstance";
 import { AppDispatch } from "../../../store/index";
 import { fetchSubjectById } from "../../../store/features/subjects/subjects.slice";
 import {
@@ -26,6 +28,7 @@ import {
   updateClass,
   ClassScope,
   SubjectStudentInfo,
+  TeacherInfo,
 } from "../../../store/features/classes/classes.slice";
 import { PageHeader, Panel, StatusPill, Avatar } from "../../../components/ui";
 
@@ -65,6 +68,7 @@ export interface ScheduleItem {
 export interface ClassFormState {
   title: string;
   scope: ClassScope;
+  selectedTeacherIds: string[];
   selectedStudentIds: string[];
   schedules: ScheduleItem[];
 }
@@ -96,9 +100,56 @@ export const makeEmptySchedule = (): ScheduleItem => ({
 export const makeEmptyClassForm = (): ClassFormState => ({
   title: "",
   scope: "general",
+  selectedTeacherIds: [],
   selectedStudentIds: [],
   schedules: [makeEmptySchedule()],
 });
+
+const isActiveEntity = (item: any): boolean => {
+  if (!item) return false;
+  if (typeof item === "string") return Boolean(item.trim());
+  return !(
+    item.isDeleted === true ||
+    item.deleted === true ||
+    Boolean(item.deletedAt)
+  );
+};
+
+const extractIdsFromList = (rawItems: any[] | undefined): string[] => {
+  if (!Array.isArray(rawItems)) return [];
+  return Array.from(
+    new Set(
+      rawItems
+        .filter((item) => isActiveEntity(item))
+        .map((item) => {
+          if (typeof item === "string") return item.trim();
+          if (typeof item === "object") return item._id || item.id || "";
+          return "";
+        })
+        .map((id) => String(id).trim())
+        .filter(Boolean),
+    ),
+  );
+};
+
+const normalizeTeachersList = (rawTeachers: any[] | undefined): TeacherInfo[] => {
+  if (!Array.isArray(rawTeachers)) return [];
+  const map = new Map<string, TeacherInfo>();
+
+  for (const item of rawTeachers) {
+    if (!item || typeof item !== "object" || !isActiveEntity(item)) continue;
+    const id = String(item._id || item.id || "").trim();
+    if (!id || map.has(id)) continue;
+    map.set(id, {
+      _id: id,
+      firstName: item.firstName || "",
+      lastName: item.lastName || "",
+      email: item.email || "",
+    });
+  }
+
+  return Array.from(map.values());
+};
 
 const normalizeTimeSlots = (slots: any): TimeSlot[] => {
   if (Array.isArray(slots) && slots.length > 0) {
@@ -354,21 +405,6 @@ const buildSchedulePayload = (schedules: ScheduleItem[]) =>
     };
   });
 
-const extractIdsFromClassStudents = (
-  rawStudents: any[] | undefined,
-): string[] => {
-  if (!Array.isArray(rawStudents)) return [];
-  return rawStudents
-    .map((s) => {
-      if (!s) return null;
-      if (typeof s === "string") return s;
-      if (typeof s === "object") return s._id || s.id || null;
-      return null;
-    })
-    .filter(Boolean)
-    .map((id) => String(id));
-};
-
 export default function ScheduleClassPage() {
   const params = useParams<{
     id?: string;
@@ -386,6 +422,8 @@ export default function ScheduleClassPage() {
 
   const [subjectName, setSubjectName] = useState<string>("");
   const [gradeTitle, setGradeTitle] = useState<string>("");
+  const [availableTeachers, setAvailableTeachers] = useState<TeacherInfo[]>([]);
+  const [teacherSearch, setTeacherSearch] = useState<string>("");
   const [subjectStudents, setSubjectStudents] = useState<SubjectStudentInfo[]>(
     [],
   );
@@ -415,11 +453,15 @@ export default function ScheduleClassPage() {
       setLoadError(null);
 
       try {
-        const [subjectData, studentsList] = await Promise.all([
+        const [subjectData, studentsList, teachersRes] = await Promise.all([
           dispatch(fetchSubjectById(subjectId)).unwrap() as Promise<any>,
           dispatch(fetchSubjectStudents(subjectId))
             .unwrap()
             .catch(() => [] as SubjectStudentInfo[]),
+          axiosInstance
+            .get("/api/teachers")
+            .then((r) => r.data?.data || r.data?.teachers || r.data || [])
+            .catch(() => []),
         ]);
         if (!active) return;
 
@@ -429,6 +471,19 @@ export default function ScheduleClassPage() {
             subjectData?.grades?.[0]?.title ||
             "",
         );
+
+        const subjectTeachers = normalizeTeachersList(subjectData?.teachers);
+        const allTeachers = normalizeTeachersList(
+          Array.isArray(teachersRes) ? teachersRes : [],
+        );
+        const mergedTeachersMap = new Map<string, TeacherInfo>();
+        for (const t of [...subjectTeachers, ...allTeachers]) {
+          if (!mergedTeachersMap.has(t._id)) {
+            mergedTeachersMap.set(t._id, t);
+          }
+        }
+        const mergedTeachers = Array.from(mergedTeachersMap.values());
+        setAvailableTeachers(mergedTeachers);
 
         // Merge any subject.children fallback if fetchSubjectStudents returned empty
         const mergedStudents: SubjectStudentInfo[] =
@@ -458,17 +513,31 @@ export default function ScheduleClassPage() {
               target.scope === "specific" || target.isGeneral === false
                 ? "specific"
                 : "general";
-            const preselectedIds = extractIdsFromClassStudents(
-              target.studentIds,
+            const preselectedStudentIds = extractIdsFromList(target.studentIds);
+            const preselectedTeacherIds = extractIdsFromList(
+              Array.isArray(target.teacherIds) && target.teacherIds.length > 0
+                ? target.teacherIds
+                : target.teacherId
+                  ? [target.teacherId]
+                  : [],
             );
 
             setForm({
               title: target.title || "",
               scope: resolvedScope,
-              selectedStudentIds: preselectedIds,
+              selectedTeacherIds: preselectedTeacherIds,
+              selectedStudentIds: preselectedStudentIds,
               schedules,
             });
           }
+        } else {
+          setForm((prev) => ({
+            ...prev,
+            selectedTeacherIds:
+              prev.selectedTeacherIds.length > 0
+                ? prev.selectedTeacherIds
+                : subjectTeachers.map((t) => t._id),
+          }));
         }
       } catch (err: any) {
         if (active) {
@@ -504,6 +573,32 @@ export default function ScheduleClassPage() {
           ? [subjectStudents[0]._id]
           : prev.selectedStudentIds,
     }));
+  };
+
+  const toggleTeacherSelection = (teacherId: string) => {
+    setForm((prev) => {
+      const exists = prev.selectedTeacherIds.includes(teacherId);
+      return {
+        ...prev,
+        selectedTeacherIds: exists
+          ? prev.selectedTeacherIds.filter((id) => id !== teacherId)
+          : [...prev.selectedTeacherIds, teacherId],
+      };
+    });
+  };
+
+  const selectAllFilteredTeachers = (filtered: TeacherInfo[]) => {
+    const filteredIds = filtered.map((t) => t._id);
+    setForm((prev) => ({
+      ...prev,
+      selectedTeacherIds: Array.from(
+        new Set([...prev.selectedTeacherIds, ...filteredIds]),
+      ),
+    }));
+  };
+
+  const clearSelectedTeachers = () => {
+    setForm((prev) => ({ ...prev, selectedTeacherIds: [] }));
   };
 
   const toggleStudentSelection = (studentId: string) => {
@@ -825,6 +920,10 @@ export default function ScheduleClassPage() {
     }
   };
 
+  const selectedTeachersDetails = availableTeachers.filter((t) =>
+    form.selectedTeacherIds.includes(t._id),
+  );
+
   const selectedStudentsDetails = subjectStudents.filter((st) =>
     form.selectedStudentIds.includes(st._id),
   );
@@ -856,6 +955,8 @@ export default function ScheduleClassPage() {
     const isSpecific = form.scope === "specific";
     const payload = {
       title: form.title.trim(),
+      teacherId: form.selectedTeacherIds[0] || null,
+      teacherIds: form.selectedTeacherIds,
       scope: form.scope,
       isGeneral: !isSpecific,
       studentIds: isSpecific ? form.selectedStudentIds : undefined,
@@ -868,14 +969,14 @@ export default function ScheduleClassPage() {
         await dispatch(updateClass({ id: classId, data: payload })).unwrap();
         toast.success(
           isSpecific
-            ? "Specific class updated & selected students/parents alerted!"
+            ? "Specific class updated & assigned teachers/students/parents alerted!"
             : "General class updated!",
         );
       } else {
         await dispatch(createClass({ ...payload, subjectId })).unwrap();
         toast.success(
           isSpecific
-            ? "Specific class scheduled & selected students/parents alerted!"
+            ? "Specific class scheduled & assigned teachers/students/parents alerted!"
             : "General class scheduled for everyone in subject!",
         );
       }
@@ -895,6 +996,14 @@ export default function ScheduleClassPage() {
     (s) => s.frequency && s.frequency !== "none",
   );
 
+  const filteredTeachers = availableTeachers.filter((t) => {
+    if (!teacherSearch.trim()) return true;
+    const q = teacherSearch.toLowerCase();
+    const fullName = `${t.firstName || ""} ${t.lastName || ""}`.toLowerCase();
+    const email = (t.email || "").toLowerCase();
+    return fullName.includes(q) || email.includes(q);
+  });
+
   const filteredStudents = subjectStudents.filter((st) => {
     if (!studentSearch.trim()) return true;
     const q = studentSearch.toLowerCase();
@@ -902,6 +1011,8 @@ export default function ScheduleClassPage() {
     const email = (st.email || "").toLowerCase();
     return fullName.includes(q) || email.includes(q);
   });
+
+  const alertedTeachersCount = form.selectedTeacherIds.length;
 
   const alertedStudentsCount =
     form.scope === "specific"
@@ -941,8 +1052,8 @@ export default function ScheduleClassPage() {
         highlight={isEditing ? "scheduled class" : "class"}
         subtitle={
           isEditing
-            ? "Update the session title, audience scope, or schedule rules."
-            : "Schedule a general class for everyone in the subject or a specific class for selected students and alert their parents."
+            ? "Update the session title, assigned teachers, audience scope, or schedule rules."
+            : "Assign teachers, schedule a general class for everyone in the subject or a specific class for selected students, and alert their parents."
         }
       />
 
@@ -970,7 +1081,7 @@ export default function ScheduleClassPage() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <form onSubmit={handleSubmit} className="lg:col-span-8 space-y-6">
-            <Panel title="Session details & audience">
+            <Panel title="Session details, teachers & audience">
               <div className="space-y-5">
                 <div className="space-y-1.5">
                   <label htmlFor="class-title" className="form-label block">
@@ -990,6 +1101,122 @@ export default function ScheduleClassPage() {
                     <p className="text-xs font-medium text-[var(--color-danger)]">
                       Class title is required.
                     </p>
+                  )}
+                </div>
+
+                {/* Assign Teachers Multi-Select */}
+                <div className="rounded-2xl border border-[var(--color-card-border)] bg-[var(--row-bg)] p-4 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="p-1.5 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-border)] text-[var(--color-primary)]">
+                        <GraduationCap size={15} />
+                      </span>
+                      <div>
+                        <p className="text-xs font-semibold text-[var(--color-primary)]">
+                          Assign teacher(s) ({form.selectedTeacherIds.length}{" "}
+                          selected)
+                        </p>
+                        <p className="text-[11px] text-[var(--color-muted)]">
+                          Assigned teachers will see this class and receive
+                          schedule notifications.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      {filteredTeachers.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            selectAllFilteredTeachers(filteredTeachers)
+                          }
+                          className="btn btn-secondary !min-h-0 !py-1 !px-2.5 text-xs"
+                        >
+                          Select all
+                        </button>
+                      )}
+                      {form.selectedTeacherIds.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={clearSelectedTeachers}
+                          className="btn btn-secondary !min-h-0 !py-1 !px-2.5 text-xs"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {availableTeachers.length > 3 && (
+                    <div className="relative">
+                      <Search
+                        size={14}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)]"
+                      />
+                      <input
+                        type="text"
+                        value={teacherSearch}
+                        onChange={(e) => setTeacherSearch(e.target.value)}
+                        placeholder="Search teacher by name or email…"
+                        className="w-full form-input !pl-8 !min-h-0 !py-1.5 text-xs"
+                      />
+                    </div>
+                  )}
+
+                  {filteredTeachers.length === 0 ? (
+                    <p className="text-xs text-[var(--color-muted)] py-3 text-center">
+                      No teachers available to assign.
+                    </p>
+                  ) : (
+                    <div className="max-h-56 overflow-y-auto space-y-2 pr-1">
+                      {filteredTeachers.map((teacher, idx) => {
+                        const checked = form.selectedTeacherIds.includes(
+                          teacher._id,
+                        );
+                        const fullName =
+                          `${teacher.firstName || ""} ${teacher.lastName || ""}`.trim() ||
+                          "Unnamed Teacher";
+
+                        return (
+                          <label
+                            key={teacher._id}
+                            className={`flex items-center justify-between gap-3 p-2.5 rounded-xl border cursor-pointer transition-colors ${
+                              checked
+                                ? "border-[var(--color-primary)] bg-[var(--color-card)]"
+                                : "border-[var(--color-card-border)] bg-[var(--color-card)]/70 hover:bg-[var(--color-card)]"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() =>
+                                  toggleTeacherSelection(teacher._id)
+                                }
+                                className="rounded border-[var(--color-card-border)] accent-[var(--color-primary)]"
+                              />
+                              <Avatar name={fullName} size={28} />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-semibold text-[var(--color-primary)] truncate">
+                                  {fullName}
+                                </p>
+                                {teacher.email && (
+                                  <p className="text-[11px] text-[var(--color-muted)] truncate flex items-center gap-1 mt-0.5">
+                                    <Mail size={11} />
+                                    <span>{teacher.email}</span>
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            {checked && idx === 0 && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--row-bg)] text-[var(--color-primary)] font-medium shrink-0">
+                                Lead
+                              </span>
+                            )}
+                          </label>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
 
@@ -1334,6 +1561,14 @@ export default function ScheduleClassPage() {
                   </div>
                   <div className="py-2 flex items-center justify-between gap-2">
                     <span className="text-xs text-[var(--color-muted)]">
+                      Teachers assigned
+                    </span>
+                    <span className="text-xs font-medium text-[var(--color-primary)]">
+                      {alertedTeachersCount}
+                    </span>
+                  </div>
+                  <div className="py-2 flex items-center justify-between gap-2">
+                    <span className="text-xs text-[var(--color-muted)]">
                       Students alerted
                     </span>
                     <span className="text-xs font-medium text-[var(--color-primary)]">
@@ -1357,6 +1592,32 @@ export default function ScheduleClassPage() {
                     </span>
                   </div>
                 </div>
+
+                {selectedTeachersDetails.length > 0 && (
+                  <div className="border-t border-[var(--color-card-border)] pt-3 space-y-2">
+                    <p className="text-xs font-semibold text-[var(--color-primary)]">
+                      Assigned teachers
+                    </p>
+                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                      {selectedTeachersDetails.map((t, idx) => (
+                        <div
+                          key={t._id}
+                          className="p-2 rounded-xl bg-[var(--row-bg)] text-xs space-y-0.5"
+                        >
+                          <p className="font-medium text-[var(--color-primary)]">
+                            {t.firstName} {t.lastName}{" "}
+                            {idx === 0 ? "(Lead)" : ""}
+                          </p>
+                          {t.email && (
+                            <p className="text-[11px] text-[var(--color-muted)] truncate">
+                              {t.email}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {form.scope === "specific" &&
                   selectedStudentsDetails.length > 0 && (
@@ -1391,8 +1652,6 @@ export default function ScheduleClassPage() {
     </div>
   );
 }
-
-/* ---------- Shared time-slot row editor ---------- */
 
 /* ---------- Shared time-slot row editor ---------- */
 

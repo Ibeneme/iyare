@@ -6,24 +6,51 @@ export interface WardInput {
   firstName: string;
   lastName: string;
   email: string;
+  password?: string;
   gradeId?: Id | null;
   subjectIds?: Id[];
 }
-export type WardUpdate = Partial<Omit<WardInput, "email">>;
+
+export type WardUpdate = Partial<Omit<WardInput, "email" | "password">>;
+
+export type UpdateWardArg =
+  | { id: Id; changes: WardUpdate; data?: never }
+  | ({ id: Id; changes?: never; data?: WardUpdate } & WardUpdate);
 
 /** GET /api/wards/catalogue: what a parent can pick from. */
-export interface Catalogue { grades: Pick<Grade, "_id" | "title" | "description">[]; subjects: Pick<Subject, "_id" | "name" | "code" | "gradeLevel">[] }
+export interface Catalogue {
+  grades: Pick<Grade, "_id" | "title" | "description">[];
+  subjects: Pick<Subject, "_id" | "name" | "code" | "gradeLevel">[];
+}
+
+const normalizeUpdatePayload = (arg: UpdateWardArg): { id: Id; changes: WardUpdate } => {
+  if ("changes" in arg && arg.changes) {
+    return { id: arg.id, changes: arg.changes };
+  }
+  if ("data" in arg && arg.data) {
+    return { id: arg.id, changes: arg.data };
+  }
+  const { id, ...rest } = arg as { id: Id } & Record<string, unknown>;
+  return { id, changes: rest as WardUpdate };
+};
 
 export const fetchWards = apiThunk<Student[]>("wards/fetch", async (_, api) => (await api.get("/api/wards")).data.data);
 export const fetchCatalogue = apiThunk<Catalogue>("wards/catalogue", async (_, api) => (await api.get("/api/wards/catalogue")).data.data);
 export const addWard = apiThunk<Student, WardInput>("wards/add", async (b, api) => (await api.post("/api/wards", b)).data.data);
-export const updateWard = apiThunk<Student, { id: Id; changes: WardUpdate }>("wards/update", async ({ id, changes }, api) => (await api.put(`/api/wards/${id}`, changes)).data.data);
+export const updateWard = apiThunk<Student, UpdateWardArg>("wards/update", async (arg, api) => {
+  const { id, changes } = normalizeUpdatePayload(arg);
+  return (await api.put(`/api/wards/${id}`, changes)).data.data;
+});
 export const removeWard = apiThunk<Id, Id>("wards/remove", async (id, api) => {
   await api.delete(`/api/wards/${id}`);
   return id;
 });
 
-interface State extends AsyncSlice { items: Student[]; catalogue: Catalogue | null }
+interface State extends AsyncSlice {
+  items: Student[];
+  catalogue: Catalogue | null;
+}
+
 const initialState: State = { ...idle, items: [], catalogue: null };
 
 const slice = createSlice({
@@ -39,4 +66,5 @@ const slice = createSlice({
     trackStatus(b, [fetchWards, addWard, updateWard, removeWard, fetchCatalogue]);
   },
 });
+
 export default slice.reducer;

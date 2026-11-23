@@ -7,6 +7,7 @@ import {
     fetchUserById,
     updateUser,
     clearUserState,
+    type CreateUserPayload,
 } from "../store/features/users/users.slice";
 
 // Inline User type inside the hook
@@ -28,12 +29,39 @@ interface ActionResult<T = any> {
 }
 
 // Payload for creating or editing user
-interface UserPayload {
-    name: string;
+export interface UserPayload {
+    name?: string;
+    firstName?: string;
+    lastName?: string;
     email: string;
     password?: string;
-    role: string;
+    role?: string;
+    userType?: "teacher" | "student" | "parent" | "admin";
+    [key: string]: any;
 }
+
+const splitName = (fullName?: string) => {
+    const parts = (fullName ?? "").trim().split(/\s+/).filter(Boolean);
+    return {
+        firstName: parts[0] ?? "",
+        lastName: parts.slice(1).join(" "),
+    };
+};
+
+const toCreateUserPayload = (userData: UserPayload): CreateUserPayload => {
+    const parsed = splitName(userData.name);
+    const firstName = userData.firstName ?? parsed.firstName;
+    const lastName = userData.lastName ?? parsed.lastName;
+    const resolvedType = (userData.userType ?? userData.role ?? "student") as CreateUserPayload["userType"];
+
+    return {
+        ...userData,
+        userType: resolvedType,
+        firstName,
+        lastName,
+        email: userData.email,
+    };
+};
 
 export const useUserActions = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -41,10 +69,11 @@ export const useUserActions = () => {
     // Add new user
     const addUser = async (userData: UserPayload): Promise<ActionResult<User>> => {
         try {
-            const res = await dispatch(createUser(userData)).unwrap();
+            const payload = toCreateUserPayload(userData);
+            const res = await dispatch(createUser(payload)).unwrap();
             return { success: true, data: res as unknown as User };
         } catch (err: any) {
-            return { success: false, error: err.message || "Failed to create user" };
+            return { success: false, error: err?.message || "Failed to create user" };
         }
     };
 
@@ -55,7 +84,7 @@ export const useUserActions = () => {
             const users = (res.users as unknown) as User[];
             return { success: true, data: users };
         } catch (err: any) {
-            return { success: false, error: err.message || `Failed to fetch users of type ${userType}` };
+            return { success: false, error: err?.message || `Failed to fetch users of type ${userType}` };
         }
     };
 
@@ -65,17 +94,23 @@ export const useUserActions = () => {
             const res = await dispatch(fetchUserById({ userType, id } as any)).unwrap();
             return { success: true, data: res as unknown as User };
         } catch (err: any) {
-            return { success: false, error: err.message || `Failed to fetch user ${id}` };
+            return { success: false, error: err?.message || `Failed to fetch user ${id}` };
         }
     };
 
     // Edit/update user
     const editUser = async (userType: string, id: string, updateData: Partial<UserPayload>): Promise<ActionResult<User>> => {
         try {
-            const res = await dispatch(updateUser({ userType, id, updateData } as any)).unwrap();
+            const parsed = updateData.name ? splitName(updateData.name) : null;
+            const normalizedUpdate = {
+                ...updateData,
+                ...(parsed && updateData.firstName === undefined ? { firstName: parsed.firstName } : {}),
+                ...(parsed && updateData.lastName === undefined ? { lastName: parsed.lastName } : {}),
+            };
+            const res = await dispatch(updateUser({ userType, id, updateData: normalizedUpdate } as any)).unwrap();
             return { success: true, data: res as unknown as User };
         } catch (err: any) {
-            return { success: false, error: err.message || `Failed to update user ${id}` };
+            return { success: false, error: err?.message || `Failed to update user ${id}` };
         }
     };
 

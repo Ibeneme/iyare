@@ -1,4 +1,11 @@
-import { useEffect, useState, useRef, FormEvent, ChangeEvent } from "react";
+import {
+  useEffect,
+  useState,
+  useRef,
+  FormEvent,
+  ChangeEvent,
+  ReactNode,
+} from "react";
 import {
   Loader2,
   ArrowLeft,
@@ -26,6 +33,10 @@ import {
   Volume2,
   Play,
   Pause,
+  Mail,
+  GraduationCap,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -36,6 +47,10 @@ import {
   deleteSubject,
   addSubjectMembers,
   removeSubjectMembers,
+  Subject,
+  StudentDetail,
+  ClassRecording,
+  GradeSummary,
 } from "../../../store/features/subjects/subjects.slice";
 import {
   fetchClasses,
@@ -59,82 +74,16 @@ import {
   Avatar,
 } from "../../../components/ui";
 
-interface PersonSummary {
-  _id: string;
-  firstName?: string;
-  lastName?: string;
-  name?: string;
-  email?: string;
-  subjects?: string[];
-  isSubscribed?: boolean;
-  gradeId?: string;
-}
-
-interface ClassRecording {
-  _id?: string;
-  url: string;
-  fileName?: string;
-  mimeType?: string;
-  durationSec?: number;
-  recordedBy?: string;
-  recordedAt?: string;
-}
-
-interface RawSubject {
-  _id: string;
-  name?: string;
-  code?: string;
-  description?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  __v?: number;
-  gradeLevel: Array<{
-    _id: string;
-    title: string;
-    description?: string;
-  }>;
-  grades: Array<{
-    _id: string;
-    title: string;
-    description?: string;
-  }>;
-  teachers: Array<{
-    _id: string;
-    firstName?: string;
-    lastName?: string;
-    name?: string;
-    email: string;
-  }>;
-  children: Array<{
-    _id: string;
-    firstName?: string;
-    lastName?: string;
-    name?: string;
-    email?: string;
-    subjects?: string[];
-    isSubscribed?: boolean;
-    gradeId?: string;
-  }>;
-  classes: Array<{
-    _id: string;
-    title: string;
-    date: string;
-    time: string;
-    duration: number;
-    recordings?: ClassRecording[];
-    teacherId?: {
-      _id: string;
-      firstName?: string;
-      lastName?: string;
-      name?: string;
-    };
-  }>;
-}
+interface PersonSummary extends StudentDetail {}
 
 type ResourceType = "assignment" | "note" | "announcement";
 type MobileTab = "classes" | "assignments" | "teachers" | "students";
 type MemberRole = "teacher" | "student";
+
+interface CurrentUserIdentity {
+  id?: string;
+  email?: string;
+}
 
 interface PendingRemoveMember {
   role: MemberRole;
@@ -149,7 +98,6 @@ interface PendingRemoveRecording {
   label: string;
 }
 
-/* ---------- Recurring schedule types (mirrors backend Class model) ---------- */
 type Frequency = "daily" | "weekly" | "monthly" | "none";
 
 interface TimeSlot {
@@ -187,7 +135,42 @@ interface ResourceForm {
   description: string;
 }
 
-const resourceIcons = {
+interface TeacherRef {
+  _id?: string;
+  id?: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+  email?: string;
+}
+
+interface ClassSessionRecord {
+  _id: string;
+  title?: string;
+  name?: string;
+  date?: string;
+  time?: string;
+  duration?: number;
+  status?: string;
+  schedules?: unknown[];
+  studentIds?: Array<string | StudentDetail>;
+  students?: Array<string | StudentDetail>;
+  student?: string | StudentDetail;
+  studentCount?: number;
+  recordings?: ClassRecording[];
+  assignedStudents?: StudentDetail[];
+  teacherId?: TeacherRef | string | null;
+  teacherIds?: Array<TeacherRef | string>;
+}
+
+interface ResourceRecord {
+  _id: string;
+  title?: string;
+  description?: string;
+  createdAt?: string;
+}
+
+const resourceIcons: Record<ResourceType, typeof ClipboardList> = {
   assignment: ClipboardList,
   note: FileText,
   announcement: Megaphone,
@@ -195,27 +178,116 @@ const resourceIcons = {
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+const getCurrentUserIdentity = (): CurrentUserIdentity => {
+  try {
+    for (const key of ["user", "currentUser", "authUser", "profile"]) {
+      const raw = localStorage.getItem(key) || sessionStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      const u = parsed?.user || parsed?.data || parsed;
+      if (u && typeof u === "object") {
+        return {
+          id: u._id || u.id || u.userId || undefined,
+          email:
+            typeof u.email === "string"
+              ? u.email.trim().toLowerCase()
+              : undefined,
+        };
+      }
+    }
+  } catch {
+    // ignore storage parse errors
+  }
+  return {};
+};
+
+const extractTeacherId = (teacher: unknown): string | null => {
+  if (!teacher) return null;
+  if (typeof teacher === "string") return teacher.trim() || null;
+  if (typeof teacher === "object") {
+    const obj = teacher as { _id?: unknown; id?: unknown };
+    const val = obj._id ?? obj.id;
+    return val ? String(val).trim() : null;
+  }
+  return null;
+};
+
+const extractTeacherEmail = (teacher: unknown): string | null => {
+  if (!teacher || typeof teacher !== "object") return null;
+  const email = (teacher as { email?: unknown }).email;
+  return typeof email === "string" && email.trim()
+    ? email.trim().toLowerCase()
+    : null;
+};
+
+const isTeacherAssignedToClass = (
+  cls: ClassSessionRecord,
+  currentUser: CurrentUserIdentity,
+): boolean => {
+  const userId = currentUser.id ? String(currentUser.id).trim() : "";
+  const userEmail = currentUser.email
+    ? currentUser.email.trim().toLowerCase()
+    : "";
+
+  if (!userId && !userEmail) return false;
+
+  const candidates: unknown[] = [
+    ...(Array.isArray(cls.teacherIds) ? cls.teacherIds : []),
+    ...(cls.teacherId ? [cls.teacherId] : []),
+  ];
+
+  return candidates.some((entry) => {
+    const tId = extractTeacherId(entry);
+    if (userId && tId && tId === userId) return true;
+
+    const tEmail = extractTeacherEmail(entry);
+    if (userEmail && tEmail && tEmail === userEmail) return true;
+
+    return false;
+  });
+};
+
+const getErrorMessage = (err: unknown, fallback: string): string => {
+  if (typeof err === "string" && err.trim()) return err;
+  if (err && typeof err === "object" && "message" in err) {
+    const msg = (err as { message?: unknown }).message;
+    if (typeof msg === "string" && msg.trim()) return msg;
+  }
+  return fallback;
+};
+
 const getRecordingKey = (rec: ClassRecording, idx: number): string =>
   rec._id || `${rec.url}-${rec.fileName || "rec"}-${idx}`;
 
-const getSubjectName = (subj?: RawSubject | null): string =>
+const getSubjectName = (subj?: Subject | null): string =>
   subj?.name?.trim() || subj?.code?.trim() || "Untitled Subject";
 
 const getPersonDisplayName = (person?: {
   firstName?: string;
   lastName?: string;
   name?: string;
+  fullName?: string;
   email?: string;
   _id?: string;
 }): string => {
   const combined =
     `${person?.firstName || ""} ${person?.lastName || ""}`.trim();
   return (
+    person?.fullName?.trim() ||
     combined ||
     person?.name?.trim() ||
     person?.email?.trim() ||
     person?._id ||
     "Unnamed User"
+  );
+};
+
+const isStudentObject = (item: unknown): item is StudentDetail => {
+  if (!item || typeof item !== "object") return false;
+  const obj = item as Partial<StudentDetail>;
+  return Boolean(
+    obj._id &&
+    (obj.firstName || obj.lastName || obj.name || obj.fullName || obj.email),
   );
 };
 
@@ -232,63 +304,85 @@ const makeEmptyTimeSlot = (): TimeSlot => ({
   endTime: "10:00",
 });
 
-const normalizeTimeSlots = (slots: any): TimeSlot[] => {
+const normalizeTimeSlots = (slots: unknown): TimeSlot[] => {
   if (Array.isArray(slots) && slots.length > 0) {
-    return slots.map((t: any) => ({
-      startTime: t?.startTime || "09:00",
-      endTime: t?.endTime || "10:00",
-    }));
+    return slots.map((t) => {
+      const slot = (t && typeof t === "object" ? t : {}) as Partial<TimeSlot>;
+      return {
+        startTime: slot.startTime || "09:00",
+        endTime: slot.endTime || "10:00",
+      };
+    });
   }
   return [makeEmptyTimeSlot()];
 };
 
-const normalizeScheduleForForm = (s: any): ScheduleItem => {
-  const frequency: Frequency = s?.frequency || "weekly";
-  const startDate = s?.startDate ? String(s.startDate).split("T")[0] : "";
-  const endDate = s?.endDate ? String(s.endDate).split("T")[0] : "";
+const normalizeScheduleForForm = (raw: unknown): ScheduleItem => {
+  const s = (raw && typeof raw === "object" ? raw : {}) as {
+    frequency?: Frequency;
+    timeSlots?: unknown;
+    daysOfWeek?: unknown;
+    daysOfMonth?: unknown;
+    specificDates?: unknown;
+    startDate?: unknown;
+    endDate?: unknown;
+  };
+
+  const frequency: Frequency = s.frequency || "weekly";
+  const startDate = s.startDate ? String(s.startDate).split("T")[0] : "";
+  const endDate = s.endDate ? String(s.endDate).split("T")[0] : "";
 
   let daysOfWeek: DayOfWeekEntry[] = [];
-  if (Array.isArray(s?.daysOfWeek) && s.daysOfWeek.length > 0) {
+  if (Array.isArray(s.daysOfWeek) && s.daysOfWeek.length > 0) {
     if (typeof s.daysOfWeek[0] === "object" && s.daysOfWeek[0] !== null) {
-      daysOfWeek = s.daysOfWeek.map((d: any) => ({
-        day: typeof d.day === "number" ? d.day : 0,
-        timeSlots: normalizeTimeSlots(d.timeSlots),
-      }));
+      daysOfWeek = s.daysOfWeek.map((d) => {
+        const entry = d as { day?: unknown; timeSlots?: unknown };
+        return {
+          day: typeof entry.day === "number" ? entry.day : 0,
+          timeSlots: normalizeTimeSlots(entry.timeSlots),
+        };
+      });
     } else {
       const shared = normalizeTimeSlots(s.timeSlots);
-      daysOfWeek = s.daysOfWeek.map((day: number) => ({
-        day,
+      daysOfWeek = s.daysOfWeek.map((day) => ({
+        day: typeof day === "number" ? day : 0,
         timeSlots: shared.map((t) => ({ ...t })),
       }));
     }
   }
 
   let daysOfMonth: DayOfMonthEntry[] = [];
-  if (Array.isArray(s?.daysOfMonth) && s.daysOfMonth.length > 0) {
+  if (Array.isArray(s.daysOfMonth) && s.daysOfMonth.length > 0) {
     if (typeof s.daysOfMonth[0] === "object" && s.daysOfMonth[0] !== null) {
-      daysOfMonth = s.daysOfMonth.map((d: any) => ({
-        day: typeof d.day === "number" ? d.day : 1,
-        timeSlots: normalizeTimeSlots(d.timeSlots),
-      }));
+      daysOfMonth = s.daysOfMonth.map((d) => {
+        const entry = d as { day?: unknown; timeSlots?: unknown };
+        return {
+          day: typeof entry.day === "number" ? entry.day : 1,
+          timeSlots: normalizeTimeSlots(entry.timeSlots),
+        };
+      });
     } else {
       const shared = normalizeTimeSlots(s.timeSlots);
-      daysOfMonth = s.daysOfMonth.map((day: number) => ({
-        day,
+      daysOfMonth = s.daysOfMonth.map((day) => ({
+        day: typeof day === "number" ? day : 1,
         timeSlots: shared.map((t) => ({ ...t })),
       }));
     }
   }
 
   let specificDates: SpecificDateEntry[] = [];
-  if (Array.isArray(s?.specificDates) && s.specificDates.length > 0) {
+  if (Array.isArray(s.specificDates) && s.specificDates.length > 0) {
     if (typeof s.specificDates[0] === "object" && s.specificDates[0] !== null) {
-      specificDates = s.specificDates.map((d: any) => ({
-        date: d.date ? String(d.date).split("T")[0] : "",
-        timeSlots: normalizeTimeSlots(d.timeSlots),
-      }));
+      specificDates = s.specificDates.map((d) => {
+        const entry = d as { date?: unknown; timeSlots?: unknown };
+        return {
+          date: entry.date ? String(entry.date).split("T")[0] : "",
+          timeSlots: normalizeTimeSlots(entry.timeSlots),
+        };
+      });
     } else {
       const shared = normalizeTimeSlots(s.timeSlots);
-      specificDates = s.specificDates.map((d: string) => ({
+      specificDates = s.specificDates.map((d) => ({
         date: d ? String(d).split("T")[0] : "",
         timeSlots: shared.map((t) => ({ ...t })),
       }));
@@ -297,7 +391,7 @@ const normalizeScheduleForForm = (s: any): ScheduleItem => {
 
   return {
     frequency,
-    timeSlots: normalizeTimeSlots(s?.timeSlots),
+    timeSlots: normalizeTimeSlots(s.timeSlots),
     daysOfWeek,
     daysOfMonth,
     specificDates,
@@ -312,7 +406,7 @@ const formatTimeSlots = (slots: TimeSlot[] | undefined): string => {
 };
 
 const summarizeSchedules = (
-  schedules: ScheduleItem[] | any[] | undefined,
+  schedules: Array<ScheduleItem | unknown> | undefined,
 ): string => {
   if (!schedules || schedules.length === 0) return "No schedule set";
 
@@ -351,7 +445,7 @@ const summarizeSchedules = (
           if (s.specificDates.length === 0) return "One-off (no date set)";
           const parts = s.specificDates.map((d) => {
             const label = d.date
-              ? new Date(d.date + "T00:00:00").toLocaleDateString()
+              ? new Date(`${d.date}T00:00:00`).toLocaleDateString()
               : "—";
             const times = formatTimeSlots(d.timeSlots);
             return times ? `${label} ${times}` : label;
@@ -366,12 +460,58 @@ const summarizeSchedules = (
     .join("  |  ");
 };
 
-const extractUsersFromThunkResult = (res: any): PersonSummary[] => {
+const extractUsersFromThunkResult = (res: unknown): PersonSummary[] => {
   if (!res) return [];
-  if (Array.isArray(res?.users)) return res.users;
-  if (Array.isArray(res?.data)) return res.data;
-  if (Array.isArray(res)) return res;
+  if (Array.isArray(res)) return res as PersonSummary[];
+  if (typeof res === "object") {
+    const obj = res as { users?: unknown; data?: unknown };
+    if (Array.isArray(obj.users)) return obj.users as PersonSummary[];
+    if (Array.isArray(obj.data)) return obj.data as PersonSummary[];
+  }
   return [];
+};
+
+const extractGradeTitle = (subj: Subject | null): string => {
+  if (!subj) return "—";
+  if (Array.isArray(subj.gradeLevel) && subj.gradeLevel.length > 0) {
+    const first = subj.gradeLevel[0] as GradeSummary;
+    if (first?.title?.trim()) return first.title.trim();
+  }
+  if (Array.isArray(subj.grades) && subj.grades.length > 0) {
+    const first = subj.grades[0];
+    if (first?.title?.trim()) return first.title.trim();
+  }
+  if (typeof subj.gradeLevelTitle === "string" && subj.gradeLevelTitle.trim()) {
+    return subj.gradeLevelTitle.trim();
+  }
+  return "—";
+};
+
+const hasClassStudents = (
+  cls: ClassSessionRecord,
+  resolvedStudents?: StudentDetail[],
+): boolean => {
+  if (Array.isArray(resolvedStudents) && resolvedStudents.length > 0) {
+    return true;
+  }
+  if (typeof cls.studentCount === "number" && cls.studentCount > 0) {
+    return true;
+  }
+  const rawList = [
+    ...(Array.isArray(cls.studentIds) ? cls.studentIds : []),
+    ...(Array.isArray(cls.assignedStudents) ? cls.assignedStudents : []),
+    ...(Array.isArray(cls.students) ? cls.students : []),
+    ...(cls.student ? [cls.student] : []),
+  ];
+  return rawList.some((entry) => {
+    if (!entry) return false;
+    if (typeof entry === "string") return Boolean(entry.trim());
+    if (typeof entry === "object") {
+      const obj = entry as { _id?: unknown; id?: unknown };
+      return Boolean(obj._id || obj.id);
+    }
+    return false;
+  });
 };
 
 export default function SubjectDetails() {
@@ -381,15 +521,28 @@ export default function SubjectDetails() {
 
   const type = getUserType();
   const isAdmin = type === "admin" || type === "superadmin";
-  const canManage = isAdmin || type === "teacher";
+  const isTeacher = type === "teacher";
+  const canManage = isAdmin || isTeacher;
+  const currentUser = getCurrentUserIdentity();
 
-  const usersState = useSelector((state: RootState) => (state as any).users);
+  const usersState = useSelector(
+    (state: RootState) =>
+      (
+        state as RootState & {
+          users?: {
+            teachers?: PersonSummary[];
+            students?: PersonSummary[];
+            byType?: { teacher?: PersonSummary[]; student?: PersonSummary[] };
+          };
+        }
+      ).users,
+  );
 
-  const [subject, setSubject] = useState<RawSubject | null>(null);
+  const [subject, setSubject] = useState<Subject | null>(null);
   const [subjectLoading, setSubjectLoading] = useState(true);
   const [subjectError, setSubjectError] = useState<string | null>(null);
 
-  const [classes, setClasses] = useState<any[]>([]);
+  const [classes, setClasses] = useState<ClassSessionRecord[]>([]);
   const [classesLoading, setClassesLoading] = useState(true);
   const [classesError, setClassesError] = useState<string | null>(null);
 
@@ -398,13 +551,15 @@ export default function SubjectDetails() {
   const [deletingClass, setDeletingClass] = useState(false);
 
   const [activeTab, setActiveTab] = useState<ResourceType>("assignment");
-  const [resources, setResources] = useState<any[]>([]);
+  const [resources, setResources] = useState<ResourceRecord[]>([]);
   const [resourcesLoading, setResourcesLoading] = useState(true);
   const [resourcesError, setResourcesError] = useState<string | null>(null);
 
   const [isAddResourceOpen, setIsAddResourceOpen] = useState(false);
   const [isEditResourceOpen, setIsEditResourceOpen] = useState(false);
-  const [editingResource, setEditingResource] = useState<any | null>(null);
+  const [editingResource, setEditingResource] = useState<ResourceRecord | null>(
+    null,
+  );
   const [resourceForm, setResourceForm] = useState<ResourceForm>({
     title: "",
     description: "",
@@ -419,8 +574,8 @@ export default function SubjectDetails() {
   const [isDeleteSubjectOpen, setIsDeleteSubjectOpen] = useState(false);
   const [deletingSubject, setDeletingSubject] = useState(false);
 
-  // Admin: Recordings modal + audio playback/remove state
-  const [recordingsClass, setRecordingsClass] = useState<any | null>(null);
+  const [recordingsClass, setRecordingsClass] =
+    useState<ClassSessionRecord | null>(null);
   const [playingRecordingKey, setPlayingRecordingKey] = useState<string | null>(
     null,
   );
@@ -429,7 +584,6 @@ export default function SubjectDetails() {
   const [removingRecording, setRemovingRecording] = useState(false);
   const audioElementsRef = useRef<Record<string, HTMLAudioElement | null>>({});
 
-  /* ---------------- Admin: Add / Remove Teachers & Students ---------------- */
   const [memberModalRole, setMemberModalRole] = useState<MemberRole | null>(
     null,
   );
@@ -443,13 +597,25 @@ export default function SubjectDetails() {
     useState<PendingRemoveMember | null>(null);
   const [removingMember, setRemovingMember] = useState(false);
 
+  const [selectedStudentDetail, setSelectedStudentDetail] =
+    useState<StudentDetail | null>(null);
+  const [studentSearchQuery, setStudentSearchQuery] = useState("");
+  const [expandedClassStudentsId, setExpandedClassStudentsId] = useState<
+    string | null
+  >(null);
+
   const [mobileTab, setMobileTab] = useState<MobileTab>("classes");
 
   const subjectDisplayName = getSubjectName(subject);
+  const enrolledStudents: StudentDetail[] =
+    subject?.children && subject.children.length > 0
+      ? subject.children
+      : subject?.students || [];
 
   useEffect(() => {
+    const elements = audioElementsRef.current;
     return () => {
-      Object.values(audioElementsRef.current).forEach((el) => {
+      Object.values(elements).forEach((el) => {
         try {
           el?.pause();
         } catch {
@@ -469,7 +635,6 @@ export default function SubjectDetails() {
       return;
     }
 
-    // Pause any other currently playing audio track
     Object.entries(audioElementsRef.current).forEach(([key, el]) => {
       if (key !== recKey && el && !el.paused) {
         el.pause();
@@ -511,7 +676,7 @@ export default function SubjectDetails() {
       ),
     );
 
-    setRecordingsClass((prev: any) =>
+    setRecordingsClass((prev) =>
       prev && prev._id === classId
         ? { ...prev, recordings: filterRecordings(prev.recordings) }
         : prev,
@@ -536,14 +701,12 @@ export default function SubjectDetails() {
     const { classId, key, recording } = pendingRemoveRecording;
     setRemovingRecording(true);
     try {
-      // Optional: if you have a backend endpoint or Redux thunk to delete a single
-      // recording from DB/Backblaze, call it here before updating state.
       void recording;
       handleRemoveRecordingFromState(classId, key);
       toast.success("Recording removed");
       setPendingRemoveRecording(null);
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to remove recording");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to remove recording"));
     } finally {
       setRemovingRecording(false);
     }
@@ -565,14 +728,12 @@ export default function SubjectDetails() {
     setSubjectError(null);
     dispatch(fetchSubjectById(id))
       .unwrap()
-      .then((data: any) => {
+      .then((data) => {
         setSubject(data);
         setSubjectLoading(false);
       })
-      .catch((err: any) => {
-        const msg =
-          (typeof err === "string" ? err : err?.message) ||
-          "Failed to load subject";
+      .catch((err: unknown) => {
+        const msg = getErrorMessage(err, "Failed to load subject");
         setSubjectError(msg);
         toast.error(msg);
         setSubjectLoading(false);
@@ -585,14 +746,12 @@ export default function SubjectDetails() {
     setClassesError(null);
     dispatch(fetchClasses(id))
       .unwrap()
-      .then((data: any[]) => {
-        setClasses(data);
+      .then((data: unknown) => {
+        setClasses(Array.isArray(data) ? (data as ClassSessionRecord[]) : []);
         setClassesLoading(false);
       })
-      .catch((err: any) => {
-        const msg =
-          (typeof err === "string" ? err : err?.message) ||
-          "Failed to load classes";
+      .catch((err: unknown) => {
+        const msg = getErrorMessage(err, "Failed to load classes");
         setClassesError(msg);
         toast.error(msg);
         setClassesLoading(false);
@@ -605,14 +764,12 @@ export default function SubjectDetails() {
     setResourcesError(null);
     dispatch(fetchResources({ type: activeTab, subjectId: id }))
       .unwrap()
-      .then((data: any[]) => {
-        setResources(data);
+      .then((data: unknown) => {
+        setResources(Array.isArray(data) ? (data as ResourceRecord[]) : []);
         setResourcesLoading(false);
       })
-      .catch((err: any) => {
-        const msg =
-          (typeof err === "string" ? err : err?.message) ||
-          "Failed to load resources";
+      .catch((err: unknown) => {
+        const msg = getErrorMessage(err, "Failed to load resources");
         setResourcesError(msg);
         toast.error(msg);
         setResourcesLoading(false);
@@ -630,17 +787,13 @@ export default function SubjectDetails() {
       await dispatch(deleteSubject(id)).unwrap();
       toast.success("Subject deleted");
       navigate("/app/subjects");
-    } catch (err: any) {
-      toast.error(
-        (typeof err === "string" ? err : err?.message) || "Delete failed",
-      );
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Delete failed"));
     } finally {
       setDeletingSubject(false);
       closeDeleteSubject();
     }
   };
-
-  /* ---------------- Admin Member Handlers (via fetchAllUsersByType) ---------------- */
 
   const loadCandidatesForRole = async (role: MemberRole) => {
     setLoadingMembersList(true);
@@ -657,11 +810,8 @@ export default function SubjectDetails() {
       const payload = await dispatch(fetchAllUsersByType(role)).unwrap();
       const list = extractUsersFromThunkResult(payload);
       setAvailableMembers(list);
-    } catch (err: any) {
-      const msg =
-        (typeof err === "string" ? err : err?.message) ||
-        `Failed to load ${role}s`;
-      toast.error(msg);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, `Failed to load ${role}s`));
     } finally {
       setLoadingMembersList(false);
     }
@@ -699,7 +849,7 @@ export default function SubjectDetails() {
 
     setSavingMembers(true);
     try {
-      const updated: any = await dispatch(
+      const res = await dispatch(
         addSubjectMembers({
           subjectId: id,
           teacherIds:
@@ -709,10 +859,10 @@ export default function SubjectDetails() {
         }),
       ).unwrap();
 
-      if (updated?._id) {
-        setSubject(updated);
+      if (res?._id) {
+        setSubject(res);
       } else {
-        const refreshed: any = await dispatch(fetchSubjectById(id)).unwrap();
+        const refreshed = await dispatch(fetchSubjectById(id)).unwrap();
         setSubject(refreshed);
       }
 
@@ -722,11 +872,8 @@ export default function SubjectDetails() {
           : `${selectedMemberIds.length} student(s) added to subject`,
       );
       closeAddMemberModal();
-    } catch (err: any) {
-      toast.error(
-        (typeof err === "string" ? err : err?.message) ||
-          `Failed to add ${memberModalRole}(s)`,
-      );
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, `Failed to add ${memberModalRole}(s)`));
     } finally {
       setSavingMembers(false);
     }
@@ -750,7 +897,7 @@ export default function SubjectDetails() {
     const { role, memberId } = pendingRemoveMember;
     setRemovingMember(true);
     try {
-      const updated: any = await dispatch(
+      const res = await dispatch(
         removeSubjectMembers({
           subjectId: id,
           teacherIds: role === "teacher" ? [memberId] : undefined,
@@ -758,8 +905,8 @@ export default function SubjectDetails() {
         }),
       ).unwrap();
 
-      if (updated?._id) {
-        setSubject(updated);
+      if (res?._id) {
+        setSubject(res);
       } else {
         setSubject((prev) => {
           if (!prev) return prev;
@@ -777,30 +924,29 @@ export default function SubjectDetails() {
         });
       }
 
+      if (selectedStudentDetail?._id === memberId) {
+        setSelectedStudentDetail(null);
+      }
+
       toast.success(
         role === "teacher"
           ? "Teacher removed from subject"
           : "Student removed from subject",
       );
       setPendingRemoveMember(null);
-    } catch (err: any) {
-      toast.error(
-        (typeof err === "string" ? err : err?.message) ||
-          `Failed to remove ${role}`,
-      );
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, `Failed to remove ${role}`));
     } finally {
       setRemovingMember(false);
     }
   };
-
-  /* ---------------- Class: one-click navigation & delete ---------------- */
 
   const handleNewSession = () => {
     if (!id) return;
     navigate(`/app/subjects/${id}/classes/new`);
   };
 
-  const handleEditSession = (cls: any) => {
+  const handleEditSession = (cls: ClassSessionRecord) => {
     if (!id || !cls?._id) return;
     navigate(`/app/subjects/${id}/classes/${cls._id}/edit`);
   };
@@ -819,18 +965,24 @@ export default function SubjectDetails() {
     try {
       await dispatch(deleteClass(deleteClassId)).unwrap();
       setClasses((prev) => prev.filter((c) => c._id !== deleteClassId));
-      toast.success("Class deleted");
-    } catch (err: any) {
-      toast.error(
-        (typeof err === "string" ? err : err?.message) || "Delete failed",
+      setSubject((prev) =>
+        prev
+          ? {
+              ...prev,
+              classes: (prev.classes || []).filter(
+                (c) => c._id !== deleteClassId,
+              ),
+            }
+          : prev,
       );
+      toast.success("Class deleted");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Delete failed"));
     } finally {
       setDeletingClass(false);
       closeDeleteClass();
     }
   };
-
-  /* ---------------- Resources ---------------- */
 
   const openAddResource = () => {
     setResourceForm({ title: "", description: "" });
@@ -839,7 +991,7 @@ export default function SubjectDetails() {
   };
   const closeAddResource = () => setIsAddResourceOpen(false);
 
-  const openEditResource = (res: any) => {
+  const openEditResource = (res: ResourceRecord) => {
     setEditingResource(res);
     setResourceForm({
       title: res.title || "",
@@ -863,32 +1015,34 @@ export default function SubjectDetails() {
   const handleSaveResource = async (e: FormEvent) => {
     e.preventDefault();
     setResourceSubmitted(true);
-    if (!resourceForm.title.trim()) return;
+    if (!resourceForm.title.trim() || !id) return;
     setResourceSaving(true);
     const payload = {
       type: activeTab,
-      subjectId: id!,
+      subjectId: id,
       title: resourceForm.title.trim(),
       description: resourceForm.description.trim() || undefined,
     };
     try {
       if (editingResource) {
-        const result = await dispatch(
+        const result = (await dispatch(
           updateResource({ ...payload, _id: editingResource._id }),
-        ).unwrap();
+        ).unwrap()) as ResourceRecord;
         setResources((prev) =>
           prev.map((r) => (r._id === result._id ? result : r)),
         );
         toast.success("Updated!");
         closeEditResource();
       } else {
-        const result = await dispatch(addResource(payload)).unwrap();
+        const result = (await dispatch(
+          addResource(payload),
+        ).unwrap()) as ResourceRecord;
         setResources((prev) => [result, ...prev]);
         toast.success("Created!");
         closeAddResource();
       }
-    } catch (err: any) {
-      toast.error((typeof err === "string" ? err : err?.message) || "Failed");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed"));
     } finally {
       setResourceSaving(false);
     }
@@ -911,17 +1065,15 @@ export default function SubjectDetails() {
       ).unwrap();
       setResources((prev) => prev.filter((r) => r._id !== deleteResourceId));
       toast.success("Deleted");
-    } catch (err: any) {
-      toast.error(
-        (typeof err === "string" ? err : err?.message) || "Delete failed",
-      );
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Delete failed"));
     } finally {
       setDeletingResource(false);
       closeDeleteResource();
     }
   };
 
-  const gradeTitle = subject?.gradeLevel?.[0]?.title?.trim() || "—";
+  const gradeTitle = extractGradeTitle(subject);
   const isActive = Boolean(subject?.isActive);
   const anyError = subjectError || classesError || resourcesError;
   const anyLoading = subjectLoading || classesLoading || resourcesLoading;
@@ -938,37 +1090,239 @@ export default function SubjectDetails() {
         { key: "assignments", label: "Resources", icon: ClipboardList },
       ] as const);
 
+  const subjectClassesMap = new Map<string, ClassSessionRecord>(
+    (subject?.classes || []).map((c) => [String(c._id), c]),
+  );
+
+  const mergedClasses: ClassSessionRecord[] = (() => {
+    if (classes.length > 0) {
+      return classes.map((cls) => {
+        const fromSubject = subjectClassesMap.get(String(cls._id));
+        if (!fromSubject) return cls;
+        return {
+          ...fromSubject,
+          ...cls,
+          teacherId: cls.teacherId ?? fromSubject.teacherId,
+          teacherIds:
+            Array.isArray(cls.teacherIds) && cls.teacherIds.length > 0
+              ? cls.teacherIds
+              : fromSubject.teacherIds || cls.teacherIds,
+          studentIds:
+            Array.isArray(cls.studentIds) &&
+            cls.studentIds.some(isStudentObject)
+              ? cls.studentIds
+              : fromSubject.studentIds || cls.studentIds,
+          students:
+            Array.isArray(cls.students) && cls.students.some(isStudentObject)
+              ? cls.students
+              : fromSubject.students || cls.students,
+          assignedStudents:
+            Array.isArray(cls.assignedStudents) &&
+            cls.assignedStudents.length > 0
+              ? cls.assignedStudents
+              : fromSubject.assignedStudents || [],
+        };
+      });
+    }
+    return subject?.classes || [];
+  })();
+
+  const getAssignedStudentsForClass = (
+    cls: ClassSessionRecord,
+  ): StudentDetail[] => {
+    const enrolledMap = new Map<string, StudentDetail>(
+      enrolledStudents.map((st) => [String(st._id), st]),
+    );
+
+    const rawCandidates: Array<string | StudentDetail> = [
+      ...(Array.isArray(cls?.studentIds) ? cls.studentIds : []),
+      ...(Array.isArray(cls?.assignedStudents) ? cls.assignedStudents : []),
+      ...(Array.isArray(cls?.students) ? cls.students : []),
+      ...(cls?.student ? [cls.student] : []),
+    ];
+
+    const seen = new Set<string>();
+    const resolved: StudentDetail[] = [];
+
+    for (const item of rawCandidates) {
+      if (!item) continue;
+
+      if (isStudentObject(item)) {
+        const key = String(item._id);
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        resolved.push({
+          ...enrolledMap.get(key),
+          ...item,
+          _id: key,
+          fullName: getPersonDisplayName(item),
+        });
+      } else {
+        const key =
+          typeof item === "object" && item !== null && "_id" in item
+            ? String((item as { _id?: unknown })._id || "")
+            : String(item).trim();
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        const match = enrolledMap.get(key);
+        if (match) {
+          resolved.push(match);
+        }
+      }
+    }
+
+    return resolved;
+  };
+
+  // Show all classes to admins, only assigned classes to teachers,
+  // and only classes with enrolled students to students/parents.
+  const visibleClasses: ClassSessionRecord[] = (() => {
+    if (isAdmin) {
+      return mergedClasses;
+    }
+    if (isTeacher) {
+      return mergedClasses.filter((cls) =>
+        isTeacherAssignedToClass(cls, currentUser),
+      );
+    }
+    return mergedClasses.filter((cls) =>
+      hasClassStudents(cls, getAssignedStudentsForClass(cls)),
+    );
+  })();
+
+  const renderClassStudentsPreview = (
+    cls: ClassSessionRecord,
+    assignedStudents: StudentDetail[],
+    isExpanded: boolean,
+    onToggle: () => void,
+  ) => {
+    if (!isAdmin) return null;
+
+    const visiblePreview = isExpanded
+      ? assignedStudents
+      : assignedStudents.slice(0, 3);
+    const remainingCount = assignedStudents.length - visiblePreview.length;
+
+    return (
+      <div
+        className="mt-2.5 pt-2.5 border-t border-[var(--color-card-border)]/70 space-y-2"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[11px] font-semibold text-[var(--color-primary)] inline-flex items-center gap-1.5">
+            <Users size={12} />
+            Students in class ({assignedStudents.length})
+          </span>
+
+          {assignedStudents.length > 2 && (
+            <button
+              type="button"
+              onClick={onToggle}
+              className="text-[11px] font-medium text-[var(--color-muted)] hover:text-[var(--color-primary)] inline-flex items-center gap-0.5"
+            >
+              <span>{isExpanded ? "Show less" : "View all"}</span>
+              {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          {visiblePreview.map((st) => {
+            const stName = getPersonDisplayName(st);
+            return (
+              <button
+                key={st._id}
+                type="button"
+                onClick={() => setSelectedStudentDetail(st)}
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-border)] text-left hover:border-[var(--color-primary)] transition-colors min-w-0"
+              >
+                <Avatar name={stName} size={24} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-[var(--color-primary)] truncate">
+                    {stName}
+                  </p>
+                  <p className="text-[10px] text-[var(--color-muted)] truncate">
+                    {st.email || "No email"}
+                    {st.gradeTitle ? ` · ${st.gradeTitle}` : ""}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {!isExpanded && remainingCount > 0 && (
+          <button
+            type="button"
+            onClick={onToggle}
+            className="text-[11px] font-medium text-[var(--color-primary)] hover:underline"
+          >
+            +{remainingCount} more{" "}
+            {remainingCount === 1 ? "student" : "students"} in{" "}
+            {cls.title || "class"}
+          </button>
+        )}
+      </div>
+    );
+  };
+
   const renderClassesBody = () => {
-    if (classes.length === 0) {
+    if (visibleClasses.length === 0) {
       return (
         <EmptyState
           title="No class sessions yet"
-          text="No classes are scheduled for this subject yet."
+          text={
+            isTeacher
+              ? "No classes in this subject are assigned to you yet."
+              : "No classes with enrolled students are available for this subject yet."
+          }
         />
       );
     }
 
     return (
       <div className="divide-y divide-[var(--color-card-border)]">
-        {classes.map((cls) => {
+        {visibleClasses.map((cls) => {
           const sessionTitle = cls.title?.trim() || "Untitled Session";
+          const assignedStudents = getAssignedStudentsForClass(cls);
+          const isExpanded = expandedClassStudentsId === cls._id;
+
           return (
-            <ClassCard
-              key={cls._id}
-              cls={{ ...cls, title: sessionTitle }}
-              canManage={canManage}
-              isAdmin={isAdmin}
-              onOpen={() =>
-                navigate(
-                  `/app/live/${cls._id}/${encodeURIComponent(
-                    sessionTitle,
-                  )}/${encodeURIComponent(subjectDisplayName)}`,
-                )
-              }
-              onEdit={() => handleEditSession(cls)}
-              onDelete={() => openDeleteClass(cls._id)}
-              onViewRecordings={() => setRecordingsClass(cls)}
-            />
+            <div key={cls._id} className="space-y-1">
+              <ClassCard
+                cls={{ ...cls, title: sessionTitle }}
+                assignedStudents={assignedStudents}
+                canManage={canManage}
+                isAdmin={isAdmin}
+                onOpen={() =>
+                  navigate(
+                    `/app/live/${cls._id}/${encodeURIComponent(
+                      sessionTitle,
+                    )}/${encodeURIComponent(subjectDisplayName)}`,
+                  )
+                }
+                onEdit={() => handleEditSession(cls)}
+                onDelete={() => openDeleteClass(cls._id)}
+                onViewRecordings={() => setRecordingsClass(cls)}
+                onToggleStudents={() =>
+                  setExpandedClassStudentsId((prev) =>
+                    prev === cls._id ? null : cls._id,
+                  )
+                }
+                isStudentsExpanded={isExpanded}
+                renderStudentsSection={() =>
+                  renderClassStudentsPreview(
+                    cls,
+                    assignedStudents,
+                    isExpanded,
+                    () =>
+                      setExpandedClassStudentsId((prev) =>
+                        prev === cls._id ? null : cls._id,
+                      ),
+                  )
+                }
+              />
+            </div>
           );
         })}
       </div>
@@ -1102,7 +1456,7 @@ export default function SubjectDetails() {
   };
 
   const renderStudentsBody = () => {
-    if (!subject?.children || subject.children.length === 0) {
+    if (enrolledStudents.length === 0) {
       return (
         <EmptyState
           title="No students enrolled"
@@ -1115,63 +1469,117 @@ export default function SubjectDetails() {
       );
     }
 
-    return (
-      <div className="divide-y divide-[var(--color-card-border)]">
-        {subject.children.map((student) => {
-          const fullName = getPersonDisplayName(student);
-          return (
-            <div
-              key={student._id}
-              className="py-3 first:pt-1 last:pb-1 flex items-start justify-between gap-3"
-            >
-              <div className="flex items-start gap-3 min-w-0 flex-1">
-                <Avatar name={fullName} size={32} />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-sm text-[var(--color-primary)] truncate">
-                    {fullName}
-                  </p>
-                  {student.email && (
-                    <p className="text-xs text-[var(--color-muted)] truncate">
-                      {student.email}
-                    </p>
-                  )}
-                  <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                    {student.isSubscribed !== undefined && (
-                      <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-[var(--row-bg)] text-[var(--color-muted)] font-medium">
-                        {student.isSubscribed ? (
-                          <CheckCircle2 size={11} />
-                        ) : (
-                          <XCircle size={11} />
-                        )}
-                        {student.isSubscribed ? "Subscribed" : "Unsubscribed"}
-                      </span>
-                    )}
-                    {Array.isArray(student.subjects) && (
-                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--row-bg)] text-[var(--color-muted)] font-medium">
-                        {student.subjects.length}{" "}
-                        {student.subjects.length === 1 ? "subject" : "subjects"}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
+    const q = studentSearchQuery.trim().toLowerCase();
+    const visibleStudents = q
+      ? enrolledStudents.filter((st) => {
+          const name = getPersonDisplayName(st).toLowerCase();
+          const email = (st.email || "").toLowerCase();
+          const grade = (st.gradeTitle || "").toLowerCase();
+          return name.includes(q) || email.includes(q) || grade.includes(q);
+        })
+      : enrolledStudents;
 
-              {isAdmin && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    requestRemoveMember("student", student._id, fullName)
-                  }
-                  aria-label={`Remove ${fullName}`}
-                  title="Remove student from subject"
-                  className="p-1.5 rounded-lg text-[var(--color-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors shrink-0"
+    return (
+      <div className="space-y-3">
+        {enrolledStudents.length > 2 && (
+          <div className="relative">
+            <Search
+              size={13}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)]"
+            />
+            <input
+              type="text"
+              value={studentSearchQuery}
+              onChange={(e) => setStudentSearchQuery(e.target.value)}
+              placeholder="Filter assigned students…"
+              className="w-full form-input !pl-8 !min-h-0 !py-1.5 text-xs"
+            />
+          </div>
+        )}
+
+        {visibleStudents.length === 0 ? (
+          <p className="text-xs text-[var(--color-muted)] py-4 text-center">
+            No students match &ldquo;{studentSearchQuery.trim()}&rdquo;.
+          </p>
+        ) : (
+          <div className="divide-y divide-[var(--color-card-border)]">
+            {visibleStudents.map((student) => {
+              const fullName = getPersonDisplayName(student);
+              const subjCount =
+                student.subjectsCount ??
+                (Array.isArray(student.subjects) ? student.subjects.length : 0);
+
+              return (
+                <div
+                  key={student._id}
+                  onClick={() => setSelectedStudentDetail(student)}
+                  className="py-3 first:pt-1 last:pb-1 flex items-start justify-between gap-3 cursor-pointer hover:bg-[var(--row-bg)]/50 rounded-xl px-2 -mx-2 transition-colors"
                 >
-                  <UserMinus size={14} />
-                </button>
-              )}
-            </div>
-          );
-        })}
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    <Avatar name={fullName} size={34} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-sm text-[var(--color-primary)] truncate">
+                          {fullName}
+                        </p>
+                        {student.gradeTitle && (
+                          <span className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--row-bg)] text-[var(--color-primary)] font-medium">
+                            {student.gradeTitle}
+                          </span>
+                        )}
+                      </div>
+
+                      {student.email && (
+                        <p className="text-xs text-[var(--color-muted)] truncate mt-0.5">
+                          {student.email}
+                        </p>
+                      )}
+
+                      {student.phone && (
+                        <p className="text-[11px] text-[var(--color-muted)] truncate">
+                          {student.phone}
+                        </p>
+                      )}
+
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                        {student.isSubscribed !== undefined && (
+                          <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-[var(--row-bg)] text-[var(--color-muted)] font-medium">
+                            {student.isSubscribed ? (
+                              <CheckCircle2 size={11} />
+                            ) : (
+                              <XCircle size={11} />
+                            )}
+                            {student.isSubscribed
+                              ? "Subscribed"
+                              : "Unsubscribed"}
+                          </span>
+                        )}
+                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--row-bg)] text-[var(--color-muted)] font-medium">
+                          {subjCount} {subjCount === 1 ? "subject" : "subjects"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        requestRemoveMember("student", student._id, fullName);
+                      }}
+                      aria-label={`Remove ${fullName}`}
+                      title="Remove student from subject"
+                      className="p-1.5 rounded-lg text-[var(--color-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors shrink-0"
+                    >
+                      <UserMinus size={14} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   };
@@ -1179,7 +1587,7 @@ export default function SubjectDetails() {
   const existingMemberIds = new Set(
     memberModalRole === "teacher"
       ? (subject?.teachers || []).map((t) => t._id)
-      : (subject?.children || []).map((s) => s._id),
+      : enrolledStudents.map((s) => s._id),
   );
 
   const filteredCandidates = availableMembers.filter((person) => {
@@ -1188,7 +1596,8 @@ export default function SubjectDetails() {
     const q = memberSearch.toLowerCase();
     const name = getPersonDisplayName(person).toLowerCase();
     const email = (person.email || "").toLowerCase();
-    return name.includes(q) || email.includes(q);
+    const grade = (person.gradeTitle || "").toLowerCase();
+    return name.includes(q) || email.includes(q) || grade.includes(q);
   });
 
   const modalRecordings: ClassRecording[] = Array.isArray(
@@ -1258,11 +1667,10 @@ export default function SubjectDetails() {
         </Panel>
       ) : (
         <>
-          {/* ========== DESKTOP LAYOUT (lg and up) ========== */}
           <div className="hidden lg:grid lg:grid-cols-12 gap-6 items-start">
             <div className="lg:col-span-8 space-y-6">
               <Panel
-                title={`Class sessions (${classes.length})`}
+                title={`Class sessions (${visibleClasses.length})`}
                 actions={
                   canManage ? (
                     <button
@@ -1332,7 +1740,7 @@ export default function SubjectDetails() {
                   <div className="py-2.5 flex items-center justify-between gap-2">
                     <span className="text-[var(--color-muted)]">Sessions</span>
                     <span className="font-medium text-[var(--color-primary)]">
-                      {classes.length}
+                      {visibleClasses.length}
                     </span>
                   </div>
                   {isAdmin && (
@@ -1350,7 +1758,7 @@ export default function SubjectDetails() {
                           Students
                         </span>
                         <span className="font-medium text-[var(--color-primary)]">
-                          {subject?.children?.length || 0}
+                          {enrolledStudents.length}
                         </span>
                       </div>
                     </>
@@ -1377,7 +1785,7 @@ export default function SubjectDetails() {
                   </Panel>
 
                   <Panel
-                    title={`Enrolled students (${subject?.children?.length || 0})`}
+                    title={`Enrolled students (${enrolledStudents.length})`}
                     actions={
                       <button
                         type="button"
@@ -1396,11 +1804,10 @@ export default function SubjectDetails() {
             </div>
           </div>
 
-          {/* ========== MOBILE CONTENT (below lg) ========== */}
           <div className="lg:hidden space-y-4">
             {mobileTab === "classes" && (
               <Panel
-                title={`Class sessions (${classes.length})`}
+                title={`Class sessions (${visibleClasses.length})`}
                 actions={
                   canManage ? (
                     <button
@@ -1476,7 +1883,7 @@ export default function SubjectDetails() {
 
             {isAdmin && mobileTab === "students" && (
               <Panel
-                title={`Enrolled students (${subject?.children?.length || 0})`}
+                title={`Enrolled students (${enrolledStudents.length})`}
                 actions={
                   <button
                     type="button"
@@ -1495,7 +1902,6 @@ export default function SubjectDetails() {
         </>
       )}
 
-      {/* ========== MOBILE BOTTOM NAV BAR ========== */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[var(--color-card)] border-t border-[var(--color-card-border)]">
         <div className="flex items-center justify-around h-14 px-2 max-w-lg mx-auto">
           {mobileNavTabs.map((tab) => {
@@ -1520,8 +1926,94 @@ export default function SubjectDetails() {
         </div>
       </nav>
 
-      {/* MODALS */}
       <AnimatePresence>
+        {selectedStudentDetail && (
+          <Modal
+            title="Student details"
+            onClose={() => setSelectedStudentDetail(null)}
+          >
+            <div className="space-y-4">
+              <div className="flex items-center gap-3.5 pb-3 border-b border-[var(--color-card-border)]">
+                <Avatar
+                  name={getPersonDisplayName(selectedStudentDetail)}
+                  size={46}
+                />
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base font-semibold text-[var(--color-primary)] truncate">
+                    {getPersonDisplayName(selectedStudentDetail)}
+                  </h3>
+                  <p className="text-xs text-[var(--color-muted)]">
+                    Student ID: {selectedStudentDetail._id}
+                  </p>
+                </div>
+              </div>
+
+              <div className="divide-y divide-[var(--color-card-border)] text-sm">
+                <div className="py-2.5 flex items-center justify-between gap-3">
+                  <span className="text-[var(--color-muted)] inline-flex items-center gap-1.5">
+                    <Mail size={14} /> Email
+                  </span>
+                  <span className="font-medium text-[var(--color-primary)] truncate">
+                    {selectedStudentDetail.email || "—"}
+                  </span>
+                </div>
+
+                {selectedStudentDetail.phone && (
+                  <div className="py-2.5 flex items-center justify-between gap-3">
+                    <span className="text-[var(--color-muted)]">Phone</span>
+                    <span className="font-medium text-[var(--color-primary)]">
+                      {selectedStudentDetail.phone}
+                    </span>
+                  </div>
+                )}
+
+                <div className="py-2.5 flex items-center justify-between gap-3">
+                  <span className="text-[var(--color-muted)] inline-flex items-center gap-1.5">
+                    <GraduationCap size={14} /> Grade
+                  </span>
+                  <span className="font-medium text-[var(--color-primary)]">
+                    {selectedStudentDetail.gradeTitle || gradeTitle || "—"}
+                  </span>
+                </div>
+
+                <div className="py-2.5 flex items-center justify-between gap-3">
+                  <span className="text-[var(--color-muted)]">
+                    Subscription
+                  </span>
+                  <span className="font-medium text-[var(--color-primary)]">
+                    {selectedStudentDetail.isSubscribed === undefined
+                      ? "—"
+                      : selectedStudentDetail.isSubscribed
+                        ? "Active / Subscribed"
+                        : "Unsubscribed"}
+                  </span>
+                </div>
+
+                <div className="py-2.5 flex items-center justify-between gap-3">
+                  <span className="text-[var(--color-muted)]">
+                    Enrolled subjects
+                  </span>
+                  <span className="font-medium text-[var(--color-primary)]">
+                    {selectedStudentDetail.subjectsCount ??
+                      selectedStudentDetail.subjects?.length ??
+                      0}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedStudentDetail(null)}
+                  className="btn btn-secondary !min-h-0 !py-2 !px-4 text-xs"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
+
         {isAdmin && recordingsClass && (
           <Modal
             title={`Recordings · ${recordingsClass.title?.trim() || "Session"}`}
@@ -1760,7 +2252,7 @@ export default function SubjectDetails() {
                   type="text"
                   value={memberSearch}
                   onChange={(e) => setMemberSearch(e.target.value)}
-                  placeholder={`Search ${memberModalRole}s by name or email…`}
+                  placeholder={`Search ${memberModalRole}s by name, email, or grade…`}
                   className="w-full form-input !pl-8 !min-h-0 !py-2 text-xs"
                 />
               </div>
@@ -1795,11 +2287,11 @@ export default function SubjectDetails() {
                           <p className="text-xs font-semibold text-[var(--color-primary)] truncate">
                             {fullName}
                           </p>
-                          {person.email && (
-                            <p className="text-[11px] text-[var(--color-muted)] truncate">
-                              {person.email}
-                            </p>
-                          )}
+                          <p className="text-[11px] text-[var(--color-muted)] truncate">
+                            {[person.email, person.gradeTitle]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </p>
                         </div>
                       </label>
                     );
@@ -2020,15 +2512,13 @@ export default function SubjectDetails() {
   );
 }
 
-/* ---------- Sub-components ---------- */
-
 const Modal = ({
   title,
   children,
   onClose,
 }: {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
   onClose: () => void;
 }) => (
   <div
@@ -2047,7 +2537,7 @@ const Modal = ({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.98, y: 12 }}
       transition={{ duration: 0.16, ease: "easeOut" }}
-      className="relative bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-t-3xl sm:rounded-3xl  w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
+      className="relative bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
     >
       <div className="px-5 py-4 sm:px-6 sm:py-5 border-b border-[var(--color-card-border)] flex items-center justify-between gap-4 shrink-0">
         <h2 className="text-base sm:text-lg font-semibold text-[var(--color-primary)]">
@@ -2072,7 +2562,11 @@ const InputGroup = ({
   ...props
 }: {
   label: string;
-  [key: string]: any;
+  name: string;
+  value: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  required?: boolean;
+  placeholder?: string;
 }) => (
   <div className="space-y-1.5">
     <label className="form-label block">{label}</label>
@@ -2080,30 +2574,40 @@ const InputGroup = ({
   </div>
 );
 
-/* ---------- Class card ---------- */
-
 const ClassCard = ({
   cls,
+  assignedStudents,
   canManage,
   isAdmin,
   onOpen,
   onEdit,
   onDelete,
   onViewRecordings,
+  onToggleStudents,
+  isStudentsExpanded,
+  renderStudentsSection,
 }: {
-  cls: any;
+  cls: ClassSessionRecord;
+  assignedStudents: StudentDetail[];
   canManage: boolean;
   isAdmin: boolean;
   onOpen: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onViewRecordings: () => void;
+  onToggleStudents: () => void;
+  isStudentsExpanded: boolean;
+  renderStudentsSection: () => ReactNode;
 }) => {
   const status: string = cls.status || "upcoming";
   const isRecurring =
     Array.isArray(cls.schedules) &&
-    cls.schedules.some((s: any) => s.frequency && s.frequency !== "none");
-  const studentCount = cls.studentCount ?? cls.studentIds?.length ?? 0;
+    cls.schedules.some((s) => {
+      if (!s || typeof s !== "object") return false;
+      const freq = (s as { frequency?: unknown }).frequency;
+      return typeof freq === "string" && freq !== "none";
+    });
+  const studentCount = assignedStudents.length;
   const recordingsCount = Array.isArray(cls.recordings)
     ? cls.recordings.length
     : 0;
@@ -2112,81 +2616,97 @@ const ClassCard = ({
   return (
     <div
       onClick={onOpen}
-      className="py-3.5 first:pt-1 last:pb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-[var(--row-bg)]/50 rounded-2xl px-2 -mx-2 transition-colors"
+      className="py-3.5 first:pt-1 last:pb-1 flex flex-col justify-between gap-2.5 cursor-pointer hover:bg-[var(--row-bg)]/50 rounded-2xl px-2 -mx-2 transition-colors"
     >
-      <div className="flex items-start gap-3 min-w-0 flex-1">
-        <span className="p-2 rounded-xl bg-[var(--row-bg)] text-[var(--color-primary)] shrink-0 mt-0.5">
-          {isRecurring ? <Repeat size={15} /> : <Calendar size={15} />}
-        </span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-start gap-3 min-w-0 flex-1">
+          <span className="p-2 rounded-xl bg-[var(--row-bg)] text-[var(--color-primary)] shrink-0 mt-0.5">
+            {isRecurring ? <Repeat size={15} /> : <Calendar size={15} />}
+          </span>
 
-        <div className="min-w-0 flex-1 space-y-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h4 className="font-semibold text-sm text-[var(--color-primary)] break-words">
-              {displayTitle}
-            </h4>
-            <StatusPill status={status} />
-          </div>
-
-          <p className="text-xs text-[var(--color-muted)] leading-relaxed">
-            {summarizeSchedules(cls.schedules)}
-          </p>
-
-          {isAdmin && (
-            <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--color-muted)]">
-              <span className="inline-flex items-center gap-1.5">
-                <Users size={12} />
-                <span>
-                  {studentCount} {studentCount === 1 ? "student" : "students"}
-                </span>
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Disc size={12} />
-                <span>
-                  {recordingsCount}{" "}
-                  {recordingsCount === 1 ? "recording" : "recordings"}
-                </span>
-              </span>
+          <div className="min-w-0 flex-1 space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 className="font-semibold text-sm text-[var(--color-primary)] break-words">
+                {displayTitle}
+              </h4>
+              <StatusPill status={status} />
             </div>
+
+            <p className="text-xs text-[var(--color-muted)] leading-relaxed">
+              {summarizeSchedules(cls.schedules)}
+            </p>
+
+            {isAdmin && (
+              <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--color-muted)]">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleStudents();
+                  }}
+                  className="inline-flex items-center gap-1 hover:text-[var(--color-primary)] transition-colors font-medium"
+                >
+                  <Users size={12} />
+                  <span>
+                    {studentCount} {studentCount === 1 ? "student" : "students"}
+                  </span>
+                  {isStudentsExpanded ? (
+                    <ChevronUp size={12} />
+                  ) : (
+                    <ChevronDown size={12} />
+                  )}
+                </button>
+                <span className="inline-flex items-center gap-1.5">
+                  <Disc size={12} />
+                  <span>
+                    {recordingsCount}{" "}
+                    {recordingsCount === 1 ? "recording" : "recordings"}
+                  </span>
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div
+          className="flex items-center gap-1.5 shrink-0 self-end sm:self-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={onViewRecordings}
+              className="btn btn-secondary !min-h-0 !py-1 !px-2.5 text-xs inline-flex items-center gap-1"
+            >
+              <Disc size={13} />
+              <span>Recordings ({recordingsCount})</span>
+            </button>
+          )}
+
+          {canManage && (
+            <>
+              <button
+                type="button"
+                onClick={onEdit}
+                aria-label={`Edit ${displayTitle}`}
+                className="p-1.5 rounded-lg text-[var(--color-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--row-bg)] transition-colors"
+              >
+                <Edit2 size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={onDelete}
+                aria-label={`Delete ${displayTitle}`}
+                className="p-1.5 rounded-lg text-[var(--color-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors"
+              >
+                <Trash2 size={14} />
+              </button>
+            </>
           )}
         </div>
       </div>
 
-      <div
-        className="flex items-center gap-1.5 shrink-0 self-end sm:self-center"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {isAdmin && (
-          <button
-            type="button"
-            onClick={onViewRecordings}
-            className="btn btn-secondary !min-h-0 !py-1 !px-2.5 text-xs inline-flex items-center gap-1"
-          >
-            <Disc size={13} />
-            <span>Recordings ({recordingsCount})</span>
-          </button>
-        )}
-
-        {canManage && (
-          <>
-            <button
-              type="button"
-              onClick={onEdit}
-              aria-label={`Edit ${displayTitle}`}
-              className="p-1.5 rounded-lg text-[var(--color-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--row-bg)] transition-colors"
-            >
-              <Edit2 size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={onDelete}
-              aria-label={`Delete ${displayTitle}`}
-              className="p-1.5 rounded-lg text-[var(--color-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors"
-            >
-              <Trash2 size={14} />
-            </button>
-          </>
-        )}
-      </div>
+      {renderStudentsSection()}
     </div>
   );
 };

@@ -188,7 +188,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
   const [userPhoneNumber, setUserPhoneNumber] = useState("");
   const [parentId, setParentId] = useState("");
 
-  // Teacher-specific
+  // Teacher-specific (grades optional)
   const [selectedGradeIds, setSelectedGradeIds] = useState<string[]>([]);
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
   const [grades, setGrades] = useState<Grade[]>([]);
@@ -548,7 +548,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
     navigate(`/app/user/${userType}/${id}`);
   };
 
-
   /* ------------------------------------------------------------------ */
   /* Reset Forms */
   /* ------------------------------------------------------------------ */
@@ -629,8 +628,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
         if (!userEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail))
           errors.email = "Valid email is required";
         if (!userPhoneNumber) errors.phoneNumber = "Phone number is required";
-        if (userType === "teacher" && selectedGradeIds.length === 0)
-          errors.grades = "Please select at least one grade";
 
         setFormErrorsUsers(errors);
         if (Object.keys(errors).length > 0) {
@@ -645,10 +642,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
           phoneNumber: userPhoneNumber,
           userType,
           ...(userType === "student" && parentId && { parentId }),
-          ...(userType === "teacher" && {
-            gradeIds: selectedGradeIds,
-            subjectIds: selectedSubjectIds,
-          }),
+          ...(userType === "teacher" &&
+            selectedGradeIds.length > 0 && {
+              gradeIds: selectedGradeIds,
+            }),
+          ...(userType === "teacher" &&
+            selectedSubjectIds.length > 0 && {
+              subjectIds: selectedSubjectIds,
+            }),
         };
 
         const res: any = await dispatch(createUser(body)).unwrap();
@@ -1393,7 +1394,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
 
                         {userType === "teacher" && (
                           <>
-                            {/* Grades */}
+                            {/* Grades (Optional) */}
                             <div className="pt-2">
                               <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-2">
@@ -1402,8 +1403,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                   </span>
                                   <h3 className="text-sm font-semibold text-[var(--color-primary)]">
                                     Assign Grades{" "}
-                                    <span className="text-[var(--color-danger)]">
-                                      *
+                                    <span className="text-xs font-normal text-[var(--color-muted)]">
+                                      (Optional)
                                     </span>
                                   </h3>
                                 </div>
@@ -1484,7 +1485,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userType }) => {
                                       2
                                     </span>
                                     <h3 className="text-sm font-semibold text-[var(--color-primary)]">
-                                      Assign Subjects
+                                      Assign Subjects{" "}
+                                      <span className="text-xs font-normal text-[var(--color-muted)]">
+                                        (Optional)
+                                      </span>
                                     </h3>
                                   </div>
                                   <span className="text-xs font-semibold text-[var(--color-muted)]">
