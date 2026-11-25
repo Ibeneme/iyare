@@ -135,6 +135,82 @@ export default function PricingPage() {
     }
   };
 
+  const handleToggleActive = async (plan: Pricing) => {
+    const otherActiveCount = items.filter(
+      (item) => item._id !== plan._id && item.isActive,
+    ).length;
+
+    if (plan.isActive && otherActiveCount === 0) {
+      toast.error(
+        "You can't turn off all plans. At least one subscription plan must stay on.",
+      );
+      return;
+    }
+
+    const turningOn = !plan.isActive;
+    const confirmed = await confirm({
+      title: turningOn
+        ? "Turn on subscription plan"
+        : "Turn off subscription plan",
+      message: turningOn
+        ? `Turn on ${plan.name}? Customers will be able to select this plan.`
+        : `Turn off ${plan.name}? Customers will no longer be able to select this plan.`,
+      cancelLabel: "Cancel",
+      confirmLabel: turningOn ? "Turn on" : "Turn off",
+      danger: !turningOn,
+    });
+
+    if (!confirmed) return;
+
+    const r = await dispatch(
+      updatePricing({
+        id: plan._id,
+        changes: { isActive: turningOn },
+      }),
+    );
+
+    if (updatePricing.fulfilled.match(r)) {
+      toast.success(
+        turningOn ? `${plan.name} turned on` : `${plan.name} turned off`,
+      );
+    } else {
+      toast.error(String(r.payload));
+    }
+  };
+
+  const handleDeletePlan = async (plan: Pricing) => {
+    const otherActiveCount = items.filter(
+      (item) => item._id !== plan._id && item.isActive,
+    ).length;
+
+    if (plan.isActive && otherActiveCount === 0) {
+      toast.error(
+        "You can't turn off all plans. Turn on another plan first before removing this one.",
+      );
+      return;
+    }
+
+    if (
+      await confirm({
+        title: "Delete subscription tier",
+        message: `Delete ${plan.name}?`,
+        cancelLabel: "Cancel",
+        confirmLabel: "Delete",
+        danger: true,
+      })
+    ) {
+      if (editingPlan?._id === plan._id) closeEditModal();
+      const r = await dispatch(deletePricing(plan._id));
+      if (deletePricing.fulfilled.match(r)) {
+        toast.success(`${plan.name} deleted`);
+      } else {
+        toast.error(String(r.payload));
+      }
+    }
+  };
+
+  const activeCount = items.filter((item) => item.isActive).length;
+
   return (
     <div className="page">
       <PageHeader
@@ -227,7 +303,7 @@ export default function PricingPage() {
 
       <Panel
         title="Price list"
-        subtitle="Click any row to open the edit modal."
+        subtitle="You can't turn off all plans—at least one plan must remain active. Click any row to open the edit modal."
       >
         {items.length === 0 ? (
           <EmptyState
@@ -251,6 +327,8 @@ export default function PricingPage() {
                   const featureCount = Array.isArray(p.meta?.features)
                     ? p.meta.features.length
                     : 0;
+                  const isLastActivePlan = p.isActive && activeCount <= 1;
+
                   return (
                     <tr
                       key={p._id}
@@ -291,37 +369,38 @@ export default function PricingPage() {
                         </button>
                         <button
                           type="button"
+                          disabled={isLastActivePlan}
                           aria-label={p.isActive ? "Turn off" : "Turn on"}
-                          className="p-2"
-                          onClick={() =>
-                            dispatch(
-                              updatePricing({
-                                id: p._id,
-                                changes: { isActive: !p.isActive },
-                              }),
-                            )
+                          title={
+                            isLastActivePlan
+                              ? "You can't turn off all plans"
+                              : p.isActive
+                                ? "Turn off"
+                                : "Turn on"
                           }
+                          className={`p-2 ${
+                            isLastActivePlan
+                              ? "opacity-40 cursor-not-allowed"
+                              : ""
+                          }`}
+                          onClick={() => void handleToggleActive(p)}
                         >
                           <Power size={15} />
                         </button>
                         <button
                           type="button"
                           aria-label="Delete"
-                          className="p-2 hover:text-red-600"
-                          onClick={async () => {
-                            if (
-                              await confirm({
-                                title: "Delete subscription tier",
-                                message: `Delete ${p.name}?`,
-                                cancelLabel: "Cancel",
-                                confirmLabel: "Delete",
-                                danger: true,
-                              })
-                            ) {
-                              if (editingPlan?._id === p._id) closeEditModal();
-                              dispatch(deletePricing(p._id));
-                            }
-                          }}
+                          title={
+                            isLastActivePlan
+                              ? "You can't turn off all plans"
+                              : "Delete"
+                          }
+                          className={`p-2 hover:text-red-600 ${
+                            isLastActivePlan
+                              ? "opacity-40 cursor-not-allowed"
+                              : ""
+                          }`}
+                          onClick={() => void handleDeletePlan(p)}
                         >
                           <Trash2 size={15} />
                         </button>

@@ -106,8 +106,6 @@ export default function SubjectsManager() {
 
   const [viewLayout, setViewLayout] = useState<ViewLayout>("ledger");
   const [isAddEditOpen, setIsAddEditOpen] = useState(false);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [subjectToDelete, setSubjectToDelete] = useState<string | null>(null);
@@ -258,14 +256,8 @@ export default function SubjectsManager() {
     setFormStep(1);
   };
 
-  const openDetails = (subject: Subject) => {
-    setSelectedSubject(subject);
-    setIsDetailsOpen(true);
-  };
-
-  const closeDetails = () => {
-    setIsDetailsOpen(false);
-    setSelectedSubject(null);
+  const openSubjectDetails = (subjectId: string) => {
+    navigate(`/app/subjects/${subjectId}`);
   };
 
   const openDeleteConfirm = (id: string) => {
@@ -437,11 +429,11 @@ export default function SubjectsManager() {
     <div className="flex items-center gap-1.5 shrink-0">
       <button
         type="button"
-        onClick={() => openDetails(subject)}
+        onClick={() => openSubjectDetails(subject._id)}
         className="btn btn-secondary !min-h-0 !py-1.5 !px-3 text-xs inline-flex items-center gap-1.5"
       >
         <Eye size={13} />
-        <span>Syllabus</span>
+        <span>Open</span>
       </button>
       {isAdmin && (
         <>
@@ -757,134 +749,6 @@ export default function SubjectsManager() {
           </div>
         )}
       </Panel>
-
-      {/* ==================== DETAILS MODAL ==================== */}
-      <AnimatePresence>
-        {isDetailsOpen && selectedSubject && (
-          <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center p-3 sm:p-6">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closeDetails}
-              className="fixed inset-0 bg-black/45 backdrop-blur-xs"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98, y: 12 }}
-              transition={{ duration: 0.16, ease: "easeOut" }}
-              className="relative bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-t-3xl sm:rounded-3xl shadow-[var(--shadow-elevated)] w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
-            >
-              <div className="px-5 py-4 sm:px-6 sm:py-5 border-b border-[var(--color-card-border)] flex items-center justify-between gap-4 shrink-0">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base sm:text-lg font-semibold text-[var(--color-primary)] truncate">
-                      {selectedSubject.name}
-                    </h3>
-                    <span className="text-[11px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-[var(--row-bg)] text-[var(--color-muted)] shrink-0">
-                      {selectedSubject.code}
-                    </span>
-                  </div>
-                  <p className="text-xs text-[var(--color-muted)] mt-0.5">
-                    Subject details and syllabus overview
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={closeDetails}
-                  aria-label="Close subject details"
-                  className="p-2 rounded-xl text-[var(--color-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--row-bg)] transition-colors shrink-0"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <div className="overflow-y-auto flex-1 px-5 sm:px-6 py-4 space-y-4 text-sm">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="p-3.5 rounded-2xl bg-[var(--row-bg)] border border-[var(--color-card-border)]">
-                    <span className="form-label block mb-0.5">Grade level</span>
-                    <span className="font-medium text-[var(--color-primary)]">
-                      {selectedSubject.gradeLevelTitle}
-                    </span>
-                  </div>
-                  <div className="p-3.5 rounded-2xl bg-[var(--row-bg)] border border-[var(--color-card-border)] flex items-center justify-between">
-                    <div>
-                      <span className="form-label block mb-0.5">Status</span>
-                      <StatusPill
-                        status={
-                          selectedSubject.isActive ? "active" : "inactive"
-                        }
-                      />
-                    </div>
-                    <div className="text-right">
-                      <span className="form-label block mb-0.5">Students</span>
-                      <span className="font-medium text-[var(--color-primary)]">
-                        {selectedSubject.children.length}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-[var(--row-bg)] border border-[var(--color-card-border)]">
-                  <span className="form-label block mb-1">Teachers</span>
-                  <span className="font-medium text-[var(--color-primary)]">
-                    {selectedSubject.teachers.length > 0
-                      ? selectedSubject.teachers
-                          .map((t) => `${t.firstName} ${t.lastName}`.trim())
-                          .join(", ")
-                      : "Unassigned"}
-                  </span>
-                </div>
-
-                <div>
-                  <span className="form-label block mb-1.5">
-                    Syllabus overview
-                  </span>
-                  <div className="p-4 rounded-2xl bg-[var(--row-bg)] border border-[var(--color-card-border)] max-h-56 overflow-y-auto text-sm leading-relaxed whitespace-pre-wrap break-words text-[var(--color-primary)]">
-                    {selectedSubject.description ||
-                      "No syllabus overview has been provided for this subject."}
-                  </div>
-                </div>
-              </div>
-
-              <div className="px-5 py-4 sm:px-6 border-t border-[var(--color-card-border)] bg-[var(--row-bg)]/50 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={closeDetails}
-                  className="btn btn-secondary justify-center"
-                >
-                  Close
-                </button>
-                {isAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const target = selectedSubject;
-                      closeDetails();
-                      openAddEdit(target);
-                    }}
-                    className="btn btn-secondary justify-center"
-                  >
-                    Edit subject
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const id = selectedSubject._id;
-                    closeDetails();
-                    navigate(`/app/subjects/${id}`);
-                  }}
-                  className="btn btn-primary inline-flex items-center justify-center gap-2"
-                >
-                  <Eye size={15} /> Open subject
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* ==================== ADD / EDIT MODAL (2 STEPS) ==================== */}
       <AnimatePresence>

@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store/index";
-//import { fetchPricing } from "../../store/slices/pricingSlice"; // adjust path if your slice lives elsewhere
 
 import PricingHeroSection from "./PricingHeroSection";
 import PlanCard from "./PlanCard";
@@ -10,24 +9,19 @@ import PricingLoadingScreen from "./PricingLoadingScreen";
 import PricingTrustNote from "./PricingTrustNote";
 import { PLAN_FEATURES } from "./planCatalog";
 import { fetchPricing } from "../../store/features/pricing/pricing.slice";
-import type { Currency, Pricing }  from "../../store/models";
+import type { Currency, Pricing } from "../../store/models";
 
-interface PlanConfig {
+interface Plan {
+  id: string;
+  planKey: string;
   name: string;
   duration: string;
-  months: number;
-  discount: number;
-  popular?: boolean;
-  features: string[];
-  planId: string;
-  planKeys: string[];
-}
-
-interface Plan extends Omit<PlanConfig, "discount" | "planKeys"> {
-  original: number;
   price: number;
+  original?: number;
   savings: number;
   currency: Currency;
+  popular?: boolean;
+  features: string[];
 }
 
 interface LocationState {
@@ -35,78 +29,75 @@ interface LocationState {
   parentId?: string;
 }
 
-const DEFAULT_MONTHLY_PRICES: Record<Currency, number> = {
-  NGN: 50000,
-  USD: 100,
-} as Record<Currency, number>;
-
-const PLAN_CONFIGS: PlanConfig[] = [
-  {
-    name: "1 Month",
-    duration: "30 days access",
-    months: 1,
-    discount: 0,
-    popular: false,
-    features: PLAN_FEATURES.monthly,
-    planId: "monthly",
-    planKeys: ["monthly", "1_month", "1-month", "30_days"],
-  },
-  {
-    name: "3 Months",
-    duration: "90 days access",
-    months: 3,
-    discount: 0.033,
-    popular: true,
-    features: PLAN_FEATURES.quarterly,
-    planId: "quarterly",
-    planKeys: ["quarterly", "3_months", "3-months", "90_days"],
-  },
-  {
-    name: "6 Months",
-    duration: "180 days access",
-    months: 6,
-    discount: 0.067,
-    popular: false,
-    features: PLAN_FEATURES.semiannual,
-    planId: "semiannual",
-    planKeys: ["semiannual", "6_months", "6-months", "180_days"],
-  },
-];
-
-function getAmountForCurrency(
-  pricing: Pricing | undefined,
-  currency: Currency,
-): number | undefined {
-  if (!pricing?.prices) return undefined;
-  const direct = pricing.prices[currency];
-  if (typeof direct === "number" && direct > 0) return direct;
-  if (currency !== "NGN" && typeof pricing.prices.NGN === "number") {
-    return pricing.prices.NGN;
+function getFallbackFeatures(pricing: Pricing): string[] {
+  if (
+    Array.isArray(pricing.meta?.features) &&
+    pricing.meta.features.length > 0
+  ) {
+    return pricing.meta.features;
   }
-  return undefined;
+  const key = pricing.planKey?.toLowerCase() || "";
+  if (key.includes("1") || key.includes("month")) return PLAN_FEATURES.monthly;
+  if (key.includes("3") || key.includes("quarter"))
+    return PLAN_FEATURES.quarterly;
+  if (key.includes("6") || key.includes("semi"))
+    return PLAN_FEATURES.semiannual;
+  return [];
 }
 
-function findMatchingPricing(
-  items: Pricing[],
-  config: PlanConfig,
-): Pricing | undefined {
-  const activeItems = items.filter((item) => item.isActive !== false);
-  const pool = activeItems.length > 0 ? activeItems : items;
+function getCurrencyAmount(pricing: Pricing, currency: Currency): number {
+  const direct = pricing.prices?.[currency];
+  if (typeof direct === "number" && Number.isFinite(direct)) {
+    return direct;
+  }
+  if (currency !== "NGN" && typeof pricing.prices?.NGN === "number") {
+    return pricing.prices.NGN;
+  }
+  return 0;
+}
 
-  const byKey = pool.find((item) => {
-    const key = item.planKey?.toLowerCase();
-    const name = item.name?.toLowerCase();
-    return (
-      (key && config.planKeys.includes(key)) ||
-      (name &&
-        (name.includes(config.name.toLowerCase()) ||
-          name.includes(config.planId.toLowerCase())))
-    );
-  });
-  if (byKey) return byKey;
+// Adapts grid layout cleanly for 1, 2, 3, 4, or 5+ active plans
+function getGridLayoutClasses(count: number): {
+  containerClass: string;
+  itemClass: string;
+} {
+  if (count === 1) {
+    return {
+      containerClass: "mt-12 sm:mt-16 flex justify-center pt-8",
+      itemClass: "w-full max-w-md flex",
+    };
+  }
 
-  const targetDays = config.months * 30;
-  return pool.find((item) => item.durationDays === targetDays);
+  if (count === 2) {
+    return {
+      containerClass:
+        "mt-12 sm:mt-16 mx-auto grid max-w-4xl grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-stretch pt-8",
+      itemClass: "w-full flex",
+    };
+  }
+
+  if (count === 3) {
+    return {
+      containerClass:
+        "mt-12 sm:mt-16 mx-auto grid max-w-6xl grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch pt-8",
+      itemClass: "w-full flex",
+    };
+  }
+
+  if (count === 4) {
+    return {
+      containerClass:
+        "mt-12 sm:mt-16 mx-auto grid max-w-7xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch pt-8",
+      itemClass: "w-full flex",
+    };
+  }
+
+  // 5 or more plans: responsive multi-row layout without cramped cards
+  return {
+    containerClass:
+      "mt-12 sm:mt-16 mx-auto grid max-w-7xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 items-stretch pt-8",
+    itemClass: "w-full flex",
+  };
 }
 
 const PricingPage: React.FC = () => {
@@ -123,12 +114,12 @@ const PricingPage: React.FC = () => {
 
   const { studentIds, parentId } = (location.state as LocationState) || {};
 
-  // 1. Fetch subscription pricing from Redux slice
+  // Fetch subscription pricing from backend/DB
   useEffect(() => {
     dispatch(fetchPricing({ kind: "subscription" }));
   }, [dispatch]);
 
-  // 2. Detect user location
+  // Detect user location
   useEffect(() => {
     let isMounted = true;
 
@@ -160,37 +151,51 @@ const PricingPage: React.FC = () => {
   }, []);
 
   const activeCurrency: Currency = useMemo(() => {
-    if (isNigeria === false) return "USD" as Currency;
-    return "NGN" as Currency;
+    return isNigeria === false ? ("USD" as Currency) : ("NGN" as Currency);
   }, [isNigeria]);
 
+  // Only include active subscription plans directly from DB
   const plans: Plan[] = useMemo(() => {
-    const monthlyItem = findMatchingPricing(pricingItems, PLAN_CONFIGS[0]);
-    const fallbackMonthlyBase =
-      getAmountForCurrency(monthlyItem, activeCurrency) ??
-      DEFAULT_MONTHLY_PRICES[activeCurrency] ??
-      50000;
+    const list = Array.isArray(pricingItems) ? pricingItems : [];
 
-    return PLAN_CONFIGS.map(({ discount, planKeys, ...plan }) => {
-      const matched = findMatchingPricing(pricingItems, {
-        ...plan,
-        discount,
-        planKeys,
+    return list
+      .filter(
+        (item: any) =>
+          item.isActive === true &&
+          (!item.kind ||
+            item.kind === "subscription" ||
+            item.kind === "product"),
+      )
+      .sort((a, b) => (a.durationDays ?? 0) - (b.durationDays ?? 0))
+      .map((item) => {
+        const price = getCurrencyAmount(item, activeCurrency);
+        const compareAt =
+          activeCurrency === "NGN" &&
+          typeof item.meta?.compareAtNGN === "number"
+            ? item.meta.compareAtNGN
+            : undefined;
+        const savings =
+          activeCurrency === "NGN" && typeof item.meta?.savingsNGN === "number"
+            ? item.meta.savingsNGN
+            : compareAt && compareAt > price
+              ? compareAt - price
+              : 0;
+
+        return {
+          id: item._id || item.planKey || item.name,
+          planKey: item.planKey || item.name,
+          name: item.name,
+          duration:
+            item.meta?.billingLabel ||
+            (item.durationDays ? `${item.durationDays} days access` : ""),
+          price,
+          original: savings > 0 ? compareAt : undefined,
+          savings,
+          currency: activeCurrency,
+          popular: Boolean(item.meta?.badge),
+          features: getFallbackFeatures(item),
+        };
       });
-
-      const backendAmount = getAmountForCurrency(matched, activeCurrency);
-      const original = backendAmount ?? fallbackMonthlyBase * plan.months;
-      const price = Math.floor(original * (1 - discount));
-      const savings = Math.max(0, original - price);
-
-      return {
-        ...plan,
-        original,
-        price,
-        savings,
-        currency: activeCurrency,
-      };
-    });
   }, [pricingItems, activeCurrency]);
 
   const handleButtonClick = (plan: Plan) => {
@@ -200,7 +205,7 @@ const PricingPage: React.FC = () => {
         state: {
           parentId,
           studentIds,
-          planId: plan.planId,
+          planId: plan.planKey,
           totalAmount,
           currency: plan.currency,
         },
@@ -226,9 +231,11 @@ const PricingPage: React.FC = () => {
     return <PricingLoadingScreen message="Finding the best prices for you…" />;
   }
 
+  const { containerClass, itemClass } = getGridLayoutClasses(plans.length);
+
   return (
-    <main className="lp-section overflow-hidden">
-      <div className="lp-container">
+    <main className="lp-section overflow-x-clip">
+      <div className="lp-container px-4 sm:px-6">
         <PricingHeroSection
           label="Simple, fair pricing"
           before="Pick the plan that"
@@ -247,40 +254,53 @@ const PricingPage: React.FC = () => {
           }
         />
 
-        <div className="mt-16 grid gap-6 md:grid-cols-3 md:items-stretch pt-4">
-          {plans.map((plan, index) => (
-            <PlanCard
-              key={plan.planId}
-              index={index}
-              name={plan.name}
-              duration={plan.duration}
-              priceText={formatPrice(plan.price, plan.currency)}
-              originalText={
-                plan.savings > 0
-                  ? formatPrice(plan.original, plan.currency)
-                  : undefined
-              }
-              savingsText={
-                plan.savings > 0
-                  ? formatPrice(plan.savings, plan.currency)
-                  : undefined
-              }
-              priceNote={
-                plan.savings > 0
-                  ? undefined
-                  : isNigeria === false
-                    ? "one-time payment"
-                    : "per student"
-              }
-              features={plan.features}
-              popular={plan.popular}
-              buttonLabel={
-                studentIds && studentIds.length > 0 ? "Pay now" : "Get started"
-              }
-              onSelect={() => handleButtonClick(plan)}
-            />
-          ))}
-        </div>
+        {plans.length === 0 ? (
+          <div className="mt-12 sm:mt-16 mx-auto max-w-xl rounded-2xl border p-8 text-center">
+            <p className="text-base font-medium">
+              No active subscription plans are available right now.
+            </p>
+          </div>
+        ) : (
+          <div className={containerClass}>
+            {plans.map((plan, index) => (
+              <div key={plan.id} className={itemClass}>
+                <div className="w-full flex flex-col [&>*]:flex-1">
+                  <PlanCard
+                    index={index}
+                    name={plan.name}
+                    duration={plan.duration}
+                    priceText={formatPrice(plan.price, plan.currency)}
+                    originalText={
+                      plan.original !== undefined
+                        ? formatPrice(plan.original, plan.currency)
+                        : undefined
+                    }
+                    savingsText={
+                      plan.savings > 0
+                        ? formatPrice(plan.savings, plan.currency)
+                        : undefined
+                    }
+                    priceNote={
+                      plan.savings > 0
+                        ? undefined
+                        : isNigeria === false
+                          ? "one-time payment"
+                          : "per student"
+                    }
+                    features={plan.features}
+                    popular={plan.popular}
+                    buttonLabel={
+                      studentIds && studentIds.length > 0
+                        ? "Pay now"
+                        : "Get started"
+                    }
+                    onSelect={() => handleButtonClick(plan)}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         <PricingTrustNote>
           Payments are processed securely by Paystack

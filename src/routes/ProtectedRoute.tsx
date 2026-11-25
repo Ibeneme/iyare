@@ -1,29 +1,34 @@
 import { signInPathFor } from "../config/roles";
-import { useEffect, useState } from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Navigate, Outlet } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { verifyAuthToken } from "../store/features/auth/auth.slice";
 import { AppDispatch } from "../store/index";
 import { getCookie, clearAuthCookies } from "../utils/cookies";
+import { isTokenExpired } from "../utils/auth";
 import { Loader2 } from "lucide-react";
 
 const ProtectedRoute = () => {
-  const [isVerifying, setIsVerifying] = useState(true);
-  const [isValid, setIsValid] = useState(false);
-  const dispatch = useDispatch<AppDispatch>();
-  const location = useLocation();
-
   const token = getCookie("token");
   const storedUserType = getCookie("userType");
+  const looksValidLocally = !!token && !isTokenExpired(token);
+
+  const [isValid, setIsValid] = useState(looksValidLocally);
+  const [isVerifying, setIsVerifying] = useState(!!token && !looksValidLocally);
+  const dispatch = useDispatch<AppDispatch>();
+  const hasCheckedRef = useRef(false);
 
   useEffect(() => {
+    if (hasCheckedRef.current) return;
+    hasCheckedRef.current = true;
+
+    if (!token) {
+      setIsVerifying(false);
+      setIsValid(false);
+      return;
+    }
+
     const checkToken = async () => {
-      setIsVerifying(true);
-      if (!token) {
-        setIsVerifying(false);
-        setIsValid(false);
-        return;
-      }
       try {
         const resultAction = await dispatch(verifyAuthToken());
         if (verifyAuthToken.fulfilled.match(resultAction)) {
@@ -52,8 +57,10 @@ const ProtectedRoute = () => {
         setIsVerifying(false);
       }
     };
+
     checkToken();
-  }, [dispatch, location.pathname, token, storedUserType]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (isVerifying) {
     return (

@@ -2,25 +2,41 @@ import React, { useEffect, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, Users, Loader2, AlertCircle } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Users,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
 import { AppDispatch } from "../../store/index";
 import { signInUser } from "../../store/features/users/users.slice";
 import AuthShell from "./AuthShell";
 import { PATHS } from "../../routes/paths";
-import { setAuthCookies, clearAuthCookies, setCookie } from "../../utils/cookies";
+import {
+  setAuthCookies,
+  clearAuthCookies,
+  setCookie,
+} from "../../utils/cookies";
 
 const getAuthErrorMessage = (err: unknown): string => {
   if (!err) return "Invalid credentials. Please try again.";
   if (typeof err === "string") return err;
   if (typeof err === "object") {
     const record = err as Record<string, any>;
-    return record.message || record.error || "Invalid credentials. Please try again.";
+    return (
+      record.message || record.error || "Invalid credentials. Please try again."
+    );
   }
   return "Invalid credentials. Please try again.";
 };
 
 const SignIn: React.FC = () => {
-  useEffect(() => { clearAuthCookies(); }, []);
+  useEffect(() => {
+    clearAuthCookies();
+  }, []);
 
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -68,10 +84,16 @@ const SignIn: React.FC = () => {
 
       setCookie("userEmail", user?.email || "");
       setCookie("userId", user?._id || "");
+      setAuthCookies({ token, user, userType });
+
+      if (userType === "student") {
+        navigate("/app/subjects");
+        return;
+      }
 
       if (
-        (userType === "student" && (!user?.subjects || user.subjects.length === 0)) ||
-        (userType === "parent" && (!user?.children || user.children.length === 0))
+        userType === "parent" &&
+        (!user?.children || user.children.length === 0)
       ) {
         navigate("/account-setup", { state: { user, token, userType } });
         return;
@@ -87,13 +109,28 @@ const SignIn: React.FC = () => {
       if (!isUserSubscribed(user, userType)) {
         const studentDetails =
           userType === "parent" && user?.children?.length
-            ? user.children.map((c: any) => ({ _id: c._id, firstName: c.firstName, lastName: c.lastName, class: c.class || "", subjects: c.subjects || [] }))
-            : [{ _id: user?._id, firstName: user?.firstName, lastName: user?.lastName, class: user?.class || "", subjects: user?.subjects || [] }];
-        navigate("/plans", { state: { parentId: user?.parentId || null, studentDetails } });
+            ? user.children.map((c: any) => ({
+                _id: c._id,
+                firstName: c.firstName,
+                lastName: c.lastName,
+                class: c.class || "",
+                subjects: c.subjects || [],
+              }))
+            : [
+                {
+                  _id: user?._id,
+                  firstName: user?.firstName,
+                  lastName: user?.lastName,
+                  class: user?.class || "",
+                  subjects: user?.subjects || [],
+                },
+              ];
+        navigate("/plans", {
+          state: { parentId: user?.parentId || null, studentDetails },
+        });
         return;
       }
 
-      setAuthCookies({ token, user, userType });
       navigate("/app/subjects");
     } catch (err: any) {
       const message = getAuthErrorMessage(err);
@@ -118,23 +155,35 @@ const SignIn: React.FC = () => {
       subtitle="Sign in to continue learning"
       badge={
         <span className="badge-gray">
-          <Users className="w-3.5 h-3.5" /> Signing in as {userType === "parent" ? "Parent" : "Student"}
+          <Users className="w-3.5 h-3.5" /> Signing in as{" "}
+          {userType === "parent" ? "Parent" : "Student"}
         </span>
       }
       footer={
         <p className="text-center text-sm text-muted mt-5">
           Not a {userType}?{" "}
-          <button type="button" onClick={() => setUserType(otherType)} className="font-semibold text-primary hover:underline">
+          <button
+            type="button"
+            onClick={() => setUserType(otherType)}
+            className="font-semibold text-primary hover:underline"
+          >
             Sign in as {otherType}
           </button>
           {" · "}
-          <Link to={PATHS.adminSignIn} className="font-semibold text-primary hover:underline">
+          <Link
+            to={PATHS.adminSignIn}
+            className="font-semibold text-primary hover:underline"
+          >
             Staff portal
           </Link>
         </p>
       }
     >
-      <div role="tablist" aria-label="Account type" className="flex gap-1 p-1 bg-surface rounded-full mb-6">
+      <div
+        role="tablist"
+        aria-label="Account type"
+        className="flex gap-1 p-1 bg-surface rounded-full mb-6"
+      >
         {(["student", "parent"] as const).map((type) => (
           <button
             key={type}
@@ -143,7 +192,9 @@ const SignIn: React.FC = () => {
             aria-selected={userType === type}
             onClick={() => setUserType(type)}
             className={`flex-1 py-2 px-4 rounded-full font-medium text-sm transition-all capitalize ${
-              userType === type ? "bg-card text-primary shadow-card" : "text-muted hover:text-primary"
+              userType === type
+                ? "bg-card text-primary shadow-card"
+                : "text-muted hover:text-primary"
             }`}
           >
             {type}
@@ -154,43 +205,107 @@ const SignIn: React.FC = () => {
       <form onSubmit={handleSubmit} className="space-y-4">
         <AnimatePresence mode="wait">
           {userType === "student" ? (
-            <motion.div key="student" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
-              <label htmlFor="signin-id" className="form-label">Student email / ID</label>
+            <motion.div
+              key="student"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+            >
+              <label htmlFor="signin-id" className="form-label">
+                Student email / ID
+              </label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtle" />
-                <input id="signin-id" type="text" autoComplete="username" placeholder="john.doe@yare.ng" value={studentId} onChange={(e) => setStudentId(e.target.value)} required className="form-input pl-10" />
+                <input
+                  id="signin-id"
+                  type="text"
+                  autoComplete="username"
+                  placeholder="john.doe@yare.ng"
+                  value={studentId}
+                  onChange={(e) => setStudentId(e.target.value)}
+                  required
+                  className="form-input pl-10"
+                />
               </div>
             </motion.div>
           ) : (
-            <motion.div key="parent" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
-              <label htmlFor="signin-email" className="form-label">Parent email</label>
+            <motion.div
+              key="parent"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+            >
+              <label htmlFor="signin-email" className="form-label">
+                Parent email
+              </label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtle" />
-                <input id="signin-email" type="email" autoComplete="email" placeholder="parent@yare.ng" value={email} onChange={(e) => setEmail(e.target.value)} required className="form-input pl-10" />
+                <input
+                  id="signin-email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="parent@yare.ng"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="form-input pl-10"
+                />
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         <div>
-          <label htmlFor="signin-password" className="form-label">Password</label>
+          <label htmlFor="signin-password" className="form-label">
+            Password
+          </label>
           <div className="relative">
             <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-subtle" />
-            <input id="signin-password" type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required className="form-input pl-10 pr-11" />
-            <button type="button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-subtle hover:text-primary transition-colors">
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            <input
+              id="signin-password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="form-input pl-10 pr-11"
+            />
+            <button
+              type="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-subtle hover:text-primary transition-colors"
+            >
+              {showPassword ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
             </button>
           </div>
         </div>
 
         <div className="text-right">
-          <button type="button" onClick={() => navigate("/forgot-password", { state: { userType } })} className="text-sm text-muted hover:text-primary font-medium transition-colors">
+          <button
+            type="button"
+            onClick={() =>
+              navigate("/forgot-password", { state: { userType } })
+            }
+            className="text-sm text-muted hover:text-primary font-medium transition-colors"
+          >
             Forgot password?
           </button>
         </div>
 
         <button type="submit" disabled={loading} className="btn-primary w-full">
-          {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing in…</> : "Sign in"}
+          {loading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" /> Signing in…
+            </>
+          ) : (
+            "Sign in"
+          )}
         </button>
 
         <AnimatePresence>
